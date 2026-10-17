@@ -96,7 +96,7 @@ describe('Handshake: Field app ⇄ HQ app (real code on both sides)', () => {
     expect(summary.ok).toBe(true);
     expect(summary.newRecords).toBe(2); // the survey + the complete animal
     expect(summary.newPhotos).toBe(1);
-    expect(JSON.stringify(summary)).toMatch(/held|rejected|incomplete/i);
+    expect(summary.heldAside).toBe(1); // the unfinished animal: kept aside, not dropped
 
     const row = await hq.records.get(recordKey('encounter', e.id));
     expect(row).toBeTruthy();
@@ -166,5 +166,28 @@ describe('Handshake: Field app ⇄ HQ app (real code on both sides)', () => {
     const summary = await importBundleFile(readOut(made.uri), made.fileName, hq);
     expect(summary.newCorrectionResponses).toBe(1);
     expect(summary.updatedRecords).toBe(1);
+  });
+
+  it('B: an HQ location fix, accepted on the phone, is stored as moved, green and with the choice recorded', async () => {
+    const p = await phone();
+    const s = p.state();
+    const t2 = s.transects!.features.find((f) => f.properties.transectId === 'T-LS-02') as Transect;
+    const before = (p.records.getSealed(ids.animal) as { location: import('@sciworks/shared').Location }).location;
+    const right = parseTyped('16P 825749 1153170', 'utm16n') as { lat: number; lon: number };
+    const proposed = { ...before, lat: right.lat, lon: right.lon, original: { lat: before.lat, lon: before.lon }, check: checkCoordinate(right, t2, s.project!) };
+    const c = await createCorrection({ key: recordKey('encounter', ids.animal), fieldPath: 'location', proposed, reason: 'Northing digits swapped', by: 'p-dm' }, hq);
+    const back = await makeHqBundle('team-b', {}, hq);
+    p.receive.receiveHqBundle(back.bytes, back.fileName);
+    const corrections = await import('@/sync/corrections');
+    const location = await import('@/model/location');
+    const item = corrections.inbox().find((i) => i.request.correctionId === c.correctionId)!;
+    corrections.acceptCorrection(item, { personId: 'p-b-1', at: 'x', project: s.project, transects: s.transects });
+    const loc = (p.records.getSealed(ids.animal) as { location: import('@sciworks/shared').Location }).location;
+    expect(location.isMoved(loc)).toBe(true);
+    expect(loc.check.decision?.reason).toMatch(/^HQ correction/);
+    expect(location.whereNow(loc, { transect: t2, project: s.project! }).band).toBe('green');
+    // A later accuracy tap on the animal screen keeps HQ's point.
+    const after = location.onEntryChange(loc, loc.typed!.raw, loc.typed!.format, 4, { transect: t2, project: s.project!, personId: 'p-b-1', now: () => 'x' });
+    expect([after.location?.lat, after.location?.lon]).toEqual([loc.lat, loc.lon]);
   });
 });

@@ -4,11 +4,9 @@
 import {
   FORMAT_LABELS,
   checkCoordinate,
-  measureAgainstTransect,
   parseTyped,
   type CoordCheck,
   type CoordFormat,
-  type CoordSuggestion,
   type Location,
   type Project,
   type Transect,
@@ -17,6 +15,7 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { getMeta, setMeta } from '@/db/meta';
+import { acceptSuggestion, isMoved, keepTyped, onEntryChange, whereNow, type EntryContext, type LocationChange } from '@/model/location';
 
 import { Chips, Hint, NumberInput, s as fs } from './fields';
 import { TransectStrip, type StripPoint } from './TransectStrip';
@@ -66,11 +65,7 @@ export function bandWords(check: CoordCheck, transectId: string): { icon: string
   }
 }
 
-export interface LocationChange {
-  location: Location | undefined;
-  /** Distance along the line to store automatically, if the point is trusted. */
-  autoDistanceM?: number;
-}
+export type { LocationChange } from '@/model/location';
 
 export function LocationEntry({
   location,
@@ -114,80 +109,34 @@ export function LocationEntry({
     [typedPoint, accuracy, raw, format, previousChainageM, typedDistanceM, transect, project],
   );
 
-  const decision = location?.typed?.raw === raw && location.typed.format === format ? location.check.decision : undefined;
-
-  function base(c: CoordCheck, p: { lat: number; lon: number }): Location {
-    return {
-      lat: p.lat,
-      lon: p.lon,
-      ...(accuracy && accuracy > 0 ? { accuracyM: accuracy } : {}),
-      source: 'typed',
-      typed: { raw, format },
-      check: c,
-    };
-  }
+  const ctx: EntryContext = { transect, project, personId, now, previousChainageM, typedDistanceM };
+  const sameEntry = location?.typed?.raw === raw && location.typed.format === format;
+  const decision = sameEntry ? location!.check.decision : undefined;
+  // The stored point is somewhere other than the typed text says (a used suggestion or an HQ correction), or it
+  // came from a GPS file with nothing typed: show where it is now.
+  const moved = location && ((sameEntry && isMoved(location)) || (!location.typed && !raw.trim())) ? location : null;
+  const movedNow = moved ? whereNow(moved, ctx) : null;
+  const byHq = !!decision?.reason?.startsWith('HQ correction');
 
   function emit(nextRaw: string, nextFormat: CoordFormat, nextAccuracy: number | undefined) {
-    const p = nextRaw.trim() ? parseTyped(nextRaw, nextFormat) : null;
-    if (!p || 'error' in p) return; // keep what was stored; the error is shown on screen
-    const c = checkCoordinate(
-      { ...p, accuracyM: nextAccuracy, typed: { raw: nextRaw, format: nextFormat }, previousChainageM, typedDistanceM },
-      transect,
-      project,
-    );
-    const withDecision: CoordCheck =
-      retaking && c.band === 'green' ? { ...c, decision: { kind: 're-taken', by: personId, at: now() } } : c;
-    onChange({
-      location: {
-        lat: p.lat,
-        lon: p.lon,
-        ...(nextAccuracy && nextAccuracy > 0 ? { accuracyM: nextAccuracy } : {}),
-        source: 'typed',
-        typed: { raw: nextRaw, format: nextFormat },
-        check: withDecision,
-      },
-      autoDistanceM: c.band === 'green' ? Math.round(c.chainageM) : undefined,
-    });
-  }
-
-  function accept(sg: CoordSuggestion) {
-    if (!check || !typedPoint) return;
-    onChange({
-      location: {
-        ...base(
-          { ...check, decision: { kind: 'accepted-suggestion', suggestionKind: sg.kind, by: personId, at: now() } },
-          { lat: sg.lat, lon: sg.lon },
-        ),
-        original: { lat: typedPoint.lat, lon: typedPoint.lon },
-      },
-      autoDistanceM: Math.round(sg.chainageM),
-    });
+    onChange(onEntryChange(location, nextRaw, nextFormat, nextAccuracy, ctx, retaking));
   }
 
   function keep(kind: 'kept-original' | 'override') {
-    if (!check || !typedPoint) return;
-    onChange({
-      location: base(
-        { ...check, decision: { kind, by: personId, at: now(), ...(kind === 'override' ? { reason: reason.trim() } : {}) } },
-        typedPoint,
-      ),
-      autoDistanceM: Math.round(check.chainageM),
-    });
+    onChange(keepTyped(raw, format, accuracy, kind, reason.trim() || undefined, ctx));
     setOverriding(false);
   }
 
-  const accepted = decision?.kind === 'accepted-suggestion' && location ? location : null;
-  const acceptedMeasure = accepted ? measureAgainstTransect(accepted.lat, accepted.lon, transect) : null;
-
   const points: StripPoint[] = [];
   if (check) points.push({ chainageM: check.chainageM, offsetM: check.offsetM, kind: 'typed', label: 'typed' });
-  if (accepted && acceptedMeasure) {
-    points.push({ chainageM: acceptedMeasure.chainageM, offsetM: acceptedMeasure.offsetM, kind: 'accepted', label: `${acceptedMeasure.offsetM.toFixed(0)} m` });
+  if (moved && movedNow) {
+    points.push({ chainageM: movedNow.chainageM, offsetM: movedNow.offsetM, kind: 'accepted', label: `${movedNow.offsetM.toFixed(0)} m` });
   } else if (check) {
     check.suggestions.forEach((sg, i) => points.push({ chainageM: sg.chainageM, offsetM: sg.offsetM, kind: 'suggestion', label: `${i + 1}` }));
   }
 
   const words = check ? bandWords(check, transect.properties.transectId) : null;
+  const movedWords = moved && movedNow ? bandWords({ ...moved.check, ...movedNow }, transect.properties.transectId) : null;
   const needsChoice = check && check.band !== 'green' && !decision;
 
   return (
@@ -219,21 +168,27 @@ export function LocationEntry({
       <Text style={fs.small}>{FORMAT_LABELS[format]} · type it exactly as the GPS shows it</Text>
       {parsed && 'error' in parsed && <Hint text={parsed.error} tone="info" />}
 
-      {/* Once a suggestion is used, the box shows where the point is now (green). What was typed stays on the
-          record and is named underneath, so nothing is hidden. */}
-      {accepted && acceptedMeasure && check && (
-        <View style={[styles.band, { borderColor: colors.green }]} accessibilityLiveRegion="polite">
-          <Text style={[styles.bandWord, { color: colors.green }]}>✓ On the line (suggestion used)</Text>
+      {/* Once the point has moved (a suggestion used, or an HQ correction), the box shows where it is now.
+          What was typed stays on the record and is named underneath, so nothing is hidden. */}
+      {moved && movedNow && movedWords && (
+        <View style={[styles.band, { borderColor: movedWords.color }]} accessibilityLiveRegion="polite">
+          <Text style={[styles.bandWord, { color: movedWords.color }]}>
+            {movedWords.icon} {movedWords.word}
+            {moved.typed ? (byHq ? ' (corrected by HQ)' : ' (suggestion used)') : ''}
+          </Text>
           <Text style={styles.bandDetail}>
-            {acceptedMeasure.offsetM.toFixed(1)} m from {transect.properties.transectId}, {Math.round(acceptedMeasure.chainageM)} m along.
+            {movedNow.offsetM.toFixed(1)} m from {transect.properties.transectId}, {Math.round(movedNow.chainageM)} m along.
           </Text>
-          <Text style={styles.flag}>
-            You typed {raw.trim()}, which was {distance(check.offsetM)} off. That is kept on the record.
-          </Text>
+          {moved.typed && check && (
+            <Text style={styles.flag}>
+              You typed {raw.trim()}, which was {distance(check.offsetM)} off. That is kept on the record.
+            </Text>
+          )}
+          {!moved.typed && <Text style={styles.flag}>From the {moved.source === 'garmin-gpx' ? 'Garmin file' : "phone's GPS"}.</Text>}
         </View>
       )}
 
-      {!accepted && check && words && (
+      {!moved && check && words && (
         <View style={[styles.band, { borderColor: words.color }]} accessibilityLiveRegion="polite">
           <Text style={[styles.bandWord, { color: words.color }]}>
             {words.icon} {words.word}
@@ -273,7 +228,7 @@ export function LocationEntry({
                 {sg.raw ? `${sg.raw} · ` : ''}
                 {sg.offsetM.toFixed(1)} m from the line, {Math.round(sg.chainageM)} m along
               </Text>
-              <Button label="Use this" onPress={() => accept(sg)} />
+              <Button label="Use this" onPress={() => onChange(acceptSuggestion(raw, format, accuracy, sg, ctx))} />
             </View>
           ))}
         </View>

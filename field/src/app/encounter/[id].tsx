@@ -2,7 +2,7 @@
 import { checkRanges, type Encounter, type Transect } from '@sciworks/shared';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Chips, FieldInput, FieldLabel, Hint, NumberInput, s as fs } from '@/components/fields';
@@ -12,9 +12,10 @@ import { newId } from '@/db/meta';
 import { listPhotos, photoUri, savePhoto } from '@/db/photos';
 import { listRecords } from '@/db/records';
 import { useRecord } from '@/hooks/useRecord';
-import { pickPhoto, takePhoto, type ShotResult } from '@/lib/camera';
+import { pickPhoto, recoverPendingPhoto, takePhoto, type ShotResult } from '@/lib/camera';
 import { clockOf, nowIso } from '@/lib/time';
 import { GROUPS, byGroup, effectiveFields, getPath, setPath, type EffectiveField } from '@/model/form';
+import { nextDistance } from '@/model/location';
 import { missingForHq, type LocalEncounter } from '@/model/records';
 import { useField } from '@/state/field';
 
@@ -34,6 +35,13 @@ export default function EncounterScreen() {
   const now = () => nowIso(tz);
 
   const fields = useMemo(() => (template ? effectiveFields(template, overlay, 'encounter') : []), [template, overlay]);
+
+  // Android can close the app while the camera is open; if so, the photo is picked up here when we come back.
+  useEffect(() => {
+    if (id) addPhoto(() => recoverPendingPhoto(id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
   if (!e || !project || !template || !person) return <P>Animal not found.</P>;
 
   const transect = transects?.features.find((f) => f.properties.transectId === e.transectId) as Transect | undefined;
@@ -93,7 +101,7 @@ export default function EncounterScreen() {
               ))}
             </View>
             <View style={styles.row}>
-              <Button label="Take photo" style={styles.flex} onPress={() => addPhoto(takePhoto)} />
+              <Button label="Take photo" style={styles.flex} onPress={() => addPhoto(() => takePhoto(id))} />
               <Button label="From library" kind="secondary" style={styles.flex} onPress={() => addPhoto(pickPhoto)} />
             </View>
             <Hint text={photoError} />
@@ -109,12 +117,12 @@ export default function EncounterScreen() {
             now={now}
             previousChainageM={previousChainageM}
             typedDistanceM={e.distanceAlongM?.source === 'typed' ? e.distanceAlongM.value : undefined}
-            onChange={({ location, autoDistanceM }) =>
+            onChange={({ location, distance }) =>
               update((r) => {
                 const next = { ...r, location };
-                if (autoDistanceM !== undefined && r.distanceAlongM?.source !== 'typed') {
-                  next.distanceAlongM = { value: autoDistanceM, source: 'auto' };
-                }
+                const d = nextDistance(r.distanceAlongM, distance);
+                if (d) next.distanceAlongM = d;
+                else delete next.distanceAlongM;
                 return next;
               })
             }

@@ -67,7 +67,8 @@ export function Chips<T extends string | number>({
   );
 }
 
-/** Keeps the typed text (so "12." survives) and reports a number, or undefined when empty. */
+/** Keeps the typed text (so "12." survives) and reports a number, or undefined when the box is emptied.
+ * Text that isn't a number (e.g. "4..5") is never saved and never wipes the last good value; the box says so. */
 export function NumberInput({
   value,
   onChange,
@@ -80,26 +81,37 @@ export function NumberInput({
   integer?: boolean;
 }) {
   const [text, setText] = useState(value === undefined ? '' : String(value));
+  const parse = (t: string) => (t.trim() === '' ? undefined : Number(t.trim().replace(',', '.')));
+  const typed = parse(text);
+  const notANumber = typed !== undefined && Number.isNaN(typed);
   useEffect(() => {
     // Only follow the stored value when it changed from outside (e.g. a correction was accepted).
-    const typed = text.trim() === '' ? undefined : Number(text.replace(',', '.'));
-    if (typed !== value && !Number.isNaN(typed)) setText(value === undefined ? '' : String(value));
+    const t = parse(text);
+    if (t !== value && !(t !== undefined && Number.isNaN(t))) setText(value === undefined ? '' : String(value));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
   return (
-    <TextInput
-      style={s.input}
-      value={text}
-      placeholder={placeholder ?? '—'}
-      placeholderTextColor={colors.dim}
-      keyboardType={integer ? 'number-pad' : 'decimal-pad'}
-      returnKeyType="done"
-      onChangeText={(t) => {
-        setText(t);
-        const n = Number(t.replace(',', '.'));
-        onChange(t.trim() === '' || Number.isNaN(n) ? undefined : n);
-      }}
-    />
+    <View style={s.gap}>
+      <TextInput
+        style={s.input}
+        value={text}
+        placeholder={placeholder ?? '—'}
+        placeholderTextColor={colors.dim}
+        keyboardType={integer ? 'number-pad' : 'decimal-pad'}
+        returnKeyType="done"
+        onChangeText={(t) => {
+          setText(t);
+          const n = parse(t);
+          if (n !== undefined && Number.isNaN(n)) return; // not a number yet: keep what is saved
+          onChange(n);
+        }}
+      />
+      {notANumber && (
+        <Text style={[s.hint, s.hintWarn]}>
+          ⚠ Not a number, so not saved{value !== undefined ? ` (still ${value})` : ''}. Fix it, or clear the box.
+        </Text>
+      )}
+    </View>
   );
 }
 

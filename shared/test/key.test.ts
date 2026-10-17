@@ -74,4 +74,10 @@ describe('runKey (rules)', () => {
     expect(r.candidates).toHaveLength(pack.taxa.length);
     expect(r.checkNext).toBe('dorsalRowsMidbody');
   });
+
+  it('never suggests a trait that is already entered, even one it ignores (reviewer case)', () => {
+    const r = runKey({ dorsalRowsMidbody: 17, analPlate: 'divided', ventrals: 180, subcaudals: 150 }, pack); // tail not marked
+    expect(r.checkNext).not.toBe('subcaudals');
+    expect(['dorsalRowsMidbody', 'analPlate', 'ventrals']).not.toContain(r.checkNext);
+  });
 });

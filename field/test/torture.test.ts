@@ -68,7 +68,8 @@ describe('Torture test', () => {
     typingId = ids[29]!;
     const e = app.records.getRecord(typingId)!;
     for (const text of ['S', 'Sn', 'Sna', 'Snake under a lo']) app.records.saveDraft({ ...e, notes: text });
-    app.records.flushDrafts(); // AppState 'background' → flush; then the process dies
+    const { sendAppState } = await import('../test/shims/misc');
+    sendAppState('background'); // the phone leaves the app: the real AppState hook flushes; then the process dies
   });
 
   it('3. "reboot": the half-typed note is recovered and sealed; nothing else changed', async () => {

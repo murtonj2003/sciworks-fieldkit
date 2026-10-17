@@ -158,8 +158,13 @@ export function runKey(input: Input, pack: SpeciesPack): KeyResult {
   const top = ranked[0]?.score ?? 0;
   const contenders = ranked.filter((c) => c.score >= top - 0.35).slice(0, 8);
   const contenderTaxa = contenders.map((c) => pack.taxa.find((t) => t.taxonId === c.taxonId)!).filter(Boolean);
-  const entered = new Set(used.map((u) => u.trait));
-  const open = TRAIT_ORDER.filter((t) => !entered.has(t) && !(t === 'subcaudals' && input.tailCondition && input.tailCondition !== 'intact'));
+  // Never suggest a trait that already has a value, even one the key is ignoring (subcaudals with the tail not
+  // marked intact); and don't suggest subcaudals at all unless the tail is intact.
+  const entered = new Set<TraitKey>(TRAIT_ORDER.filter((t) => {
+    const v = input[t as keyof ScaleCounts];
+    return v !== undefined && v !== null && (v as unknown) !== '';
+  }));
+  const open = TRAIT_ORDER.filter((t) => !entered.has(t) && !(t === 'subcaudals' && input.tailCondition !== 'intact'));
   let checkNext: TraitKey | undefined;
   let best = { pairs: 0, withData: 0 };
   for (const trait of open) {

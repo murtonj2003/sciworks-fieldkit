@@ -111,9 +111,13 @@ export default function Storage() {
   }
 
   function tryDelete() {
+    if ((first<{ n: number }>('SELECT COUNT(*) AS n FROM record_revs')?.n ?? 0) === 0) {
+      say('No records on this phone yet, so there is nothing to try deleting. Make a record first.');
+      return;
+    }
     try {
-      run('DELETE FROM record_revs WHERE rowid = (SELECT MIN(rowid) FROM record_revs)');
-      say('✗ A record was deleted. This should never happen.');
+      const changed = run('DELETE FROM record_revs WHERE rowid = (SELECT MIN(rowid) FROM record_revs)');
+      say(changed > 0 ? '✗ A record was deleted. This should never happen.' : 'Nothing was deleted.');
     } catch (e) {
       say(`✓ The database refused to delete: ${String((e as Error).message ?? e).replace(/^.*?: /, '')}`);
     }

@@ -116,7 +116,6 @@ describe('Field storage, start to handover', () => {
     const app = await startApp();
     expect(() => app.db.run("UPDATE record_revs SET json = '{}'")).toThrow(/append-only/);
     expect(() => app.db.run('DELETE FROM record_revs')).toThrow(/append-only/);
-    expect(() => app.db.run('DELETE FROM photos')).not.toThrow(); // no rows yet; the trigger fires per row
   });
 
   it('stores the demo swapped-digit coordinate with the original kept and the fix accepted', async () => {
@@ -160,6 +159,8 @@ describe('Field storage, start to handover', () => {
     expect(app.records.seal(e.id)).toBe(1);
     expect(app.model.missingForHq(e)).toEqual([]);
     expect(Math.round(fix.chainageM)).toBe(FACTS.demoTypo.fixedDistanceAlongM);
+    expect((await app.photos.verifyPhotos()).ok).toBe(1);
+    expect(() => app.db.run('DELETE FROM photos')).toThrow(/never deleted/); // a real photo row now exists
     expect((await app.photos.verifyPhotos()).ok).toBe(1);
   });
 
@@ -241,6 +242,7 @@ describe('Field storage, start to handover', () => {
       overlayRev: 1,
       changes: [
         { fieldKey: 'herp.relativeHumidityPct', what: 'show-hide', value: true, at: 'x', by: 'p-b-lead' },
+        { fieldKey: 'mass', what: 'range', value: { min: 1, max: 900 }, at: 'x', by: 'p-b-lead' }, // inside limits: applied
         { fieldKey: 'svl', what: 'range', value: { min: 100, max: 1800 }, at: 'x', by: 'p-b-lead' },
         { fieldKey: 'svl', what: 'range', value: { min: 1, max: 1800 }, at: 'x', by: 'p-b-lead' }, // below minFloor 5: ignored
         { fieldKey: 'sex', what: 'show-hide', value: true, at: 'x', by: 'p-b-lead' }, // core, not allowed: ignored
@@ -269,6 +271,8 @@ describe('Field storage, start to handover', () => {
     const enc = app.form.effectiveFields(s.template!, overlay, 'encounter');
     const svl = enc.find((f) => f.key === 'svl')!;
     expect([svl.min, svl.max]).toEqual([50, 2500]); // the last range change broke the limits, so the template's stands
+    const mass = enc.find((f) => f.key === 'mass')!;
+    expect([mass.min, mass.max]).toEqual([1, 900]); // a range inside HQ's limits is applied
     expect(enc.find((f) => f.key === 'sex')?.hidden).toBeFalsy();
     expect(enc.find((f) => f.key === 'perchHeightM')?.path).toBe('teamFields.perchHeightM');
     expect(app.form.setPath({}, 'teamFields.perchHeightM', 1.5)).toEqual({ teamFields: { perchHeightM: 1.5 } });

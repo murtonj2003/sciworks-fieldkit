@@ -3,6 +3,8 @@ import { File } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
+import { getMeta, setMeta } from '@/db/meta';
+
 export interface ShotResult {
   bytes: Uint8Array;
   width: number;
@@ -22,12 +24,33 @@ async function shrink(asset: ImagePicker.ImagePickerAsset): Promise<ShotResult> 
   return { bytes, width: saved.width, height: saved.height };
 }
 
-export async function takePhoto(): Promise<ShotResult | { error: string } | null> {
+/** `recordId` is remembered while the camera is open: Android may close the app behind the camera, and
+ * recoverPendingPhoto() then finds the shot when the animal screen opens again. */
+export async function takePhoto(recordId: string): Promise<ShotResult | { error: string } | null> {
   const perm = await ImagePicker.requestCameraPermissionsAsync();
   if (!perm.granted) return { error: 'The camera is not allowed. Turn it on in the phone settings.' };
-  const res = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 1 });
-  if (res.canceled || !res.assets[0]) return null;
-  return shrink(res.assets[0]);
+  setMeta('pendingPhotoFor', recordId);
+  try {
+    const res = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 1 });
+    if (res.canceled || !res.assets[0]) return null;
+    return await shrink(res.assets[0]);
+  } finally {
+    setMeta('pendingPhotoFor', '');
+  }
+}
+
+/** A photo taken just before Android closed the app (Android only; null elsewhere or if none). */
+export async function recoverPendingPhoto(recordId: string): Promise<ShotResult | null> {
+  if (getMeta('pendingPhotoFor') !== recordId) return null;
+  try {
+    const pending = await ImagePicker.getPendingResultAsync();
+    if (!pending || 'code' in pending || pending.canceled || !pending.assets[0]) return null;
+    return await shrink(pending.assets[0]);
+  } catch {
+    return null;
+  } finally {
+    setMeta('pendingPhotoFor', '');
+  }
 }
 
 export async function pickPhoto(): Promise<ShotResult | null> {

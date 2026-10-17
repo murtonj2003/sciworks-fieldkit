@@ -37,8 +37,20 @@ export function acceptCorrection(
     const transect = ctx.transects?.features.find((f) => f.properties.transectId === next.transectId);
     if (transect) {
       const loc = next.location as Location;
+      const before = record.recordType === 'encounter' ? record.location : undefined;
       const check = checkCoordinate({ lat: loc.lat, lon: loc.lon, accuracyM: loc.accuracyM }, transect, ctx.project);
-      next = { ...next, location: { ...loc, check } };
+      // Record the surveyor's choice, and where the point was, so the screen shows the corrected point (not the
+      // typed text again) and a later accuracy change keeps it.
+      const decision = { kind: 'accepted-suggestion' as const, reason: `HQ correction: ${item.request.reason}`, by: ctx.personId, at: ctx.at };
+      next = {
+        ...next,
+        location: {
+          ...loc,
+          ...(loc.original ? {} : before ? { original: { lat: before.lat, lon: before.lon } } : {}),
+          ...(loc.typed ? {} : before?.typed ? { typed: before.typed } : {}),
+          check: { ...check, decision },
+        },
+      };
       if (next.distanceAlongM?.source !== 'typed') next = { ...next, distanceAlongM: { value: Math.round(check.chainageM), source: 'auto' } };
     }
   }
