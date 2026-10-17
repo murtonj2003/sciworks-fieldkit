@@ -9,7 +9,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Chips, NumberInput, TextBox, useFieldStyles } from '@/components/fields';
 import { BandMarker, Icon } from '@/components/Icon';
-import { Button, Group, GroupTitle, Hint, Row, T, Tag } from '@/components/ui';
+import { BottomBar, Button, Group, GroupTitle, Hint, Row, T, Tag } from '@/components/ui';
 import { newId } from '@/db/meta';
 import { addChangeRequest, addProvisionalTaxon, listChangeRequests, listProvisionalTaxa, saveOverlay } from '@/db/team';
 import { nowIso } from '@/lib/time';
@@ -36,12 +36,12 @@ const useStyles = makeStyles((t) => ({
   success: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingTop: 11, paddingBottom: 12, paddingHorizontal: 14, borderRadius: radius.card, backgroundColor: t.onFill },
   successText: { ...type.sub, color: t.onInk, flex: 1 },
   list: { backgroundColor: t.card, borderRadius: radius.card, overflow: 'hidden' },
-  row: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingHorizontal: 14 },
+  row: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingLeft: 14, paddingRight: 8 },
   rowTop: { alignItems: 'flex-start', paddingTop: 11, paddingBottom: 10 },
   sep: { height: 1, backgroundColor: t.hair, marginLeft: 14 },
   sepTile: { height: 1, backgroundColor: t.hair, marginLeft: 54 },
-  rowTitle: { ...type.body, color: t.ink },
-  rowSub: { ...type.sub, color: t.ink2 },
+  rowTitle: { ...type.sub, fontWeight: '600', color: t.ink },
+  rowSub: { ...type.small, fontWeight: '400', color: t.ink2 },
   editor: { gap: 14, paddingHorizontal: 14, paddingBottom: 14 },
   tile: { width: 30, height: 30, borderRadius: radius.tile, backgroundColor: t.tile, alignItems: 'center', justifyContent: 'center' },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 30, paddingLeft: 8, paddingRight: 10, borderRadius: radius.pill, backgroundColor: t.group, marginRight: 4 },
@@ -49,7 +49,7 @@ const useStyles = makeStyles((t) => ({
   rowBtn: { minHeight: 56, borderRadius: radius.card, backgroundColor: t.sec, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18 },
   rowBtnText: { ...type.title, color: t.ink, flex: 1 },
   err: { flexDirection: 'row', gap: 6, alignItems: 'center', marginHorizontal: 4 },
-  errText: { ...type.sub, color: t.offTintInk, flex: 1 },
+  errText: { ...type.sub, fontWeight: '500', color: t.offTintInk, flex: 1 },
 }));
 
 export default function FormSettings() {
@@ -303,11 +303,15 @@ export default function FormSettings() {
 
         {isLead && addOpen && (
           <>
-            <GroupTitle>Add a field</GroupTitle>
-            <Group style={{ gap: 12, paddingVertical: 12 }}>
+            <Group style={{ paddingTop: 6, paddingHorizontal: 8, paddingBottom: 8, gap: 14, marginTop: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 8, paddingHorizontal: 6 }}>
+                <Icon name="plus" size={20} color={t.ink2} />
+                <Text style={[type.head, { color: t.ink }]}>Add a field</Text>
+              </View>
               <View style={fs.field}>
                 <Text style={[fs.label, { marginHorizontal: 4 }]}>Name</Text>
                 <TextBox
+                  error={nameError}
                   value={draft.label || undefined}
                   onChange={(v) => {
                     setDraft({ ...draft, label: v ?? '' });
@@ -360,7 +364,6 @@ export default function FormSettings() {
                   <TextBox value={choicesText || undefined} onChange={(v) => setChoicesText(v ?? '')} />
                 </View>
               )}
-              <Button label="Add field" icon="plus" onPress={addField} />
             </Group>
           </>
         )}
@@ -405,6 +408,11 @@ export default function FormSettings() {
           </>
         )}
       </ScrollView>
+      {isLead && addOpen && (
+        <BottomBar>
+          <Button label="Add field" onPress={addField} />
+        </BottomBar>
+      )}
     </View>
   );
 }

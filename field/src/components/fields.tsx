@@ -98,11 +98,14 @@ export function Chips<T extends string | number>({
   value,
   onChange,
   multi,
+  onGround,
 }: {
   options: { code: T; label: string }[];
   value: T | T[] | undefined;
   onChange: (v: T | T[] | undefined) => void;
   multi?: boolean;
+  /** Chips sitting straight on the screen ground (not in a grey group) are grey; selected turns white + ring. */
+  onGround?: boolean;
 }) {
   const s = useFieldStyles();
   const { t } = useTheme();
@@ -122,7 +125,7 @@ export function Chips<T extends string | number>({
                 onChange(on ? arr.filter((c) => c !== o.code) : [...arr, o.code]);
               } else onChange(on ? undefined : o.code);
             }}
-            style={({ pressed }) => [s.chip, on && s.chipOn, pressed && { backgroundColor: t.secPress }]}
+            style={({ pressed }) => [s.chip, onGround && !on && { backgroundColor: t.grey }, on && s.chipOn, pressed && { backgroundColor: onGround ? t.greyPress : t.secPress }]}
           >
             {on && <Icon name="check" size={18} color={t.ink} strokeWidth={2.25} />}
             <Text style={[s.chipText, on && s.chipTextOn]}>{o.label}</Text>
@@ -203,12 +206,12 @@ export function NumberInput({
   );
 }
 
-export function TextBox({ value, onChange, multiline, placeholder }: { value: string | undefined; onChange: (v: string | undefined) => void; multiline?: boolean; placeholder?: string }) {
+export function TextBox({ value, onChange, multiline, placeholder, error }: { value: string | undefined; onChange: (v: string | undefined) => void; multiline?: boolean; placeholder?: string; error?: boolean }) {
   const s = useFieldStyles();
   const { t } = useTheme();
   const [focus, setFocus] = useState(false);
   return (
-    <View style={[s.box, focus && s.boxFocus, multiline && { alignItems: 'flex-start' }]}>
+    <View style={[s.box, focus && s.boxFocus, error && s.boxError, multiline && { alignItems: 'flex-start' }]}>
       <TextInput
         style={[s.text, multiline && s.multiline]}
         value={value ?? ''}

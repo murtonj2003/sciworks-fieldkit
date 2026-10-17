@@ -164,7 +164,7 @@ export function Button({
         {
           minHeight: size,
           borderRadius: radius.pill,
-          paddingHorizontal: size >= 64 ? 26 : 22,
+          paddingHorizontal: size >= 64 ? 26 : size === 48 ? 18 : 22,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
@@ -273,3 +273,42 @@ export const colors = {
   amber: day.nearMark,
   red: day.offMark,
 };
+
+/** The 72 px primary pill with a white disc holding the icon (kit `.fk-btn--disc`): Add animal. */
+export function DiscButton({ label, icon = 'plus', onPress }: { label: string; icon?: IconName; onPress: () => void }) {
+  const { t } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        height: 72,
+        borderRadius: radius.pill,
+        backgroundColor: pressed ? t.priPress : t.pri,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingLeft: 28,
+        paddingRight: 8,
+        transform: [{ scale: pressed ? 0.98 : 1 }],
+      })}
+    >
+      <Text style={[type.title, { fontSize: 20, color: t.onPri }]}>{label}</Text>
+      <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: t.onPri, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name={icon} size={26} color={t.pri} strokeWidth={2.25} />
+      </View>
+    </Pressable>
+  );
+}
+
+/** "Saved" with a mint tick, for the small bar's trailing slot on record screens. */
+export function SavedMark() {
+  const { t } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingRight: 4 }} accessibilityLabel="Saved on this phone">
+      <Icon name="check" size={18} color={t.onMark} strokeWidth={2.25} />
+      <Text style={[type.sub, { color: t.ink2 }]}>Saved</Text>
+    </View>
+  );
+}

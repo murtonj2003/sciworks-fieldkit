@@ -1,29 +1,41 @@
-// Start a survey: pick the transect and who is walking it, then Start (the time is taken automatically).
+// P2a · Start a survey: pick the transect and who is walking it, then Start (the time is taken automatically).
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
-import { Chips, FieldLabel } from '@/components/fields';
+import { Chips } from '@/components/fields';
 import { TransectMap } from '@/components/TransectMap';
-import { Button, P } from '@/components/ui';
+import { BottomBar, Button, Group, GroupTitle, T } from '@/components/ui';
 import { saveDraftNow, seal } from '@/db/records';
 import { effectiveFields, withDefaults } from '@/model/form';
 import { newSurvey } from '@/model/factory';
 import { astroAtStart } from '@/model/survey';
 import { useField } from '@/state/field';
+import { makeStyles } from '@/theme/ThemeProvider';
+import { radius, type } from '@/theme/theme';
+
+const thousands = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+const useStyles = makeStyles((t) => ({
+  wrap: { flex: 1, backgroundColor: t.ground },
+  page: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
+  help: { ...type.small, fontWeight: '400', color: t.ink2, marginTop: 6, marginHorizontal: 4 },
+  mapCard: { backgroundColor: t.card, borderRadius: radius.card, paddingHorizontal: 6, paddingVertical: 4 },
+}));
 
 export default function NewSurvey() {
   const field = useField();
   const { project, template, person, transects, overlay } = field;
-  const team = project?.teams.find((t) => t.teamId === person?.teamId);
+  const s = useStyles();
+  const team = project?.teams.find((x) => x.teamId === person?.teamId);
   const teamTransects = (transects?.features ?? []).filter((f) => team?.transectIds.includes(f.properties.transectId));
   const [transectId, setTransectId] = useState<string | undefined>(teamTransects[0]?.properties.transectId);
   const [surveyors, setSurveyors] = useState<string[]>(person ? [person.personId] : []);
 
-  if (!project || !template || !person) return <P>Load a project and choose a person first.</P>;
+  if (!project || !template || !person) return <T>Load a project and choose a person first.</T>;
   const fields = effectiveFields(template, overlay, 'survey');
-  const label = (key: string) => fields.find((f) => f.key === key);
   const teamPeople = project.people.filter((p) => p.teamId === person.teamId);
+  const chosen = teamTransects.find((f) => f.properties.transectId === transectId);
 
   function start() {
     if (!project || !template || !person || !transectId) return;
@@ -38,42 +50,45 @@ export default function NewSurvey() {
     router.replace({ pathname: '/survey/[id]', params: { id: sv.id } });
   }
 
+  const n = surveyors.length || 1;
   return (
-    <View style={styles.wrap}>
-      <ScrollView contentContainerStyle={styles.page}>
-        {label('transectId') && <FieldLabel field={label('transectId')!} />}
+    <View style={s.wrap}>
+      <ScrollView contentContainerStyle={s.page}>
+        <GroupTitle>Transect</GroupTitle>
         <Chips
+          onGround
           options={teamTransects.map((f) => ({ code: f.properties.transectId, label: f.properties.transectId }))}
           value={transectId}
           onChange={(v) => setTransectId(v as string | undefined)}
         />
-        {transectId && teamTransects.find((f) => f.properties.transectId === transectId) && (
-          <TransectMap transect={teamTransects.find((f) => f.properties.transectId === transectId)!} />
+        {chosen && (
+          <>
+            <Text style={s.help}>
+              {chosen.properties.name} · {thousands(chosen.properties.lengthM)} m
+            </Text>
+            <Group style={{ marginTop: 10 }}>
+              <View style={s.mapCard}>
+                <TransectMap transect={chosen} />
+              </View>
+            </Group>
+          </>
         )}
-        {transectId && (
-          <P dim>
-            {teamTransects.find((f) => f.properties.transectId === transectId)?.properties.name} ·{' '}
-            {Math.round(teamTransects.find((f) => f.properties.transectId === transectId)?.properties.lengthM ?? 0)} m
-          </P>
-        )}
-        {label('surveyorIds') && <FieldLabel field={label('surveyorIds')!} />}
+        <View style={{ height: 10 }} />
+        <GroupTitle>Surveyors</GroupTitle>
         <Chips
+          onGround
           multi
           options={teamPeople.map((p) => ({ code: p.personId, label: p.name }))}
           value={surveyors}
           onChange={(v) => setSurveyors((v as string[] | undefined) ?? [])}
         />
-        <P dim>{surveyors.length} surveyors. The start time is taken when you tap Start.</P>
+        <Text style={s.help}>
+          {n} {n === 1 ? 'surveyor' : 'surveyors'}. The start time is taken when you tap Start.
+        </Text>
       </ScrollView>
-      <View style={styles.bottom}>
-        <Button label="Start survey" onPress={start} disabled={!transectId} />
-      </View>
+      <BottomBar>
+        <Button label="Start survey" size={72} onPress={start} disabled={!transectId} />
+      </BottomBar>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: '#FFFFFF' },
-  page: { padding: 16, gap: 12, paddingBottom: 24 },
-  bottom: { padding: 16, borderTopWidth: 1, borderTopColor: '#DDDDDD' },
-});

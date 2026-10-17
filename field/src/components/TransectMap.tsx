@@ -2,9 +2,12 @@
 // Plain SVG so it works offline and in Expo Go. A satellite background needs a map library and offline tiles
 // (P3); this keeps the same shape and position so it can sit on top of one later.
 import type { CoordBand, Transect } from '@sciworks/shared';
+import { Platform } from 'react-native';
 import Svg, { Circle, G, Line, Polyline, Text as SvgText } from 'react-native-svg';
 
-import { colors } from './ui';
+import { useTheme } from '@/theme/ThemeProvider';
+
+import { MarkShape } from './Icon';
 
 export interface MapPoint {
   lat: number;
@@ -18,12 +21,6 @@ const H = 190;
 const PAD = 26;
 const M_PER_DEG_LAT = 111_320;
 
-const BAND_COLOR: Record<CoordBand, string> = {
-  green: colors.green,
-  amber: colors.amber,
-  red: colors.red,
-  'outside-bbox': colors.red,
-};
 
 /** A round scale-bar length for the map's width: 100 m, 200 m, 500 m, 1 km… */
 function niceLength(m: number): number {
@@ -32,6 +29,8 @@ function niceLength(m: number): number {
 }
 
 export function TransectMap({ transect, points = [] }: { transect: Transect; points?: MapPoint[] }) {
+  const { t } = useTheme();
+  const tf = Platform.OS === 'web' ? { fontFamily: 'system-ui, -apple-system, Helvetica, Arial, sans-serif' } : { fontFeatureSettings: "'tnum'" };
   const line = transect.geometry.coordinates as [number, number][];
   if (line.length < 2) return null;
   const lats = line.map(([, la]) => la);
@@ -57,13 +56,13 @@ export function TransectMap({ transect, points = [] }: { transect: Transect; poi
 
   return (
     <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} accessibilityLabel={`Map of transect ${transect.properties.transectId}`}>
-      <Polyline points={pts.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke={colors.ink} strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />
-      <Circle cx={start.x} cy={start.y} r={8} fill={colors.primary} />
-      <SvgText x={start.x} y={start.y - 12} fontSize={13} fontWeight="700" fill={colors.primary} textAnchor="middle">
+      <Polyline points={pts.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke={t.transect} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
+      <Circle cx={start.x} cy={start.y} r={7} fill={t.ink} />
+      <SvgText x={start.x + 11} y={start.y + 4} fontSize={12} fontWeight="600" fill={t.ink} {...tf}>
         Start
       </SvgText>
-      <Circle cx={end.x} cy={end.y} r={8} fill="#FFFFFF" stroke={colors.ink} strokeWidth={3} />
-      <SvgText x={end.x} y={end.y - 12} fontSize={13} fontWeight="700" fill={colors.ink} textAnchor="middle">
+      <Circle cx={end.x} cy={end.y} r={7} fill={t.card} stroke={t.ink} strokeWidth={2.5} />
+      <SvgText x={end.x + 11} y={end.y + 4} fontSize={12} fontWeight="600" fill={t.ink} {...tf}>
         End
       </SvgText>
       {points.map((p, i) => {
@@ -72,9 +71,9 @@ export function TransectMap({ transect, points = [] }: { transect: Transect; poi
         if (!inside) return null; // a far-off point would squash the map; the strip and the list still show it
         return (
           <G key={i}>
-            <Circle cx={q.x} cy={q.y} r={6} fill={p.band ? BAND_COLOR[p.band] : colors.dim} stroke="#FFFFFF" strokeWidth={2} />
+            <MarkShape band={p.band ?? 'none'} x={q.x - 8} y={q.y - 8} size={16} />
             {p.label ? (
-              <SvgText x={q.x + 9} y={q.y + 4} fontSize={12} fontWeight="700" fill={colors.ink}>
+              <SvgText x={q.x + 11} y={q.y + 4} fontSize={12} fontWeight="700" fill={t.ink} {...tf}>
                 {p.label}
               </SvgText>
             ) : null}
@@ -82,13 +81,13 @@ export function TransectMap({ transect, points = [] }: { transect: Transect; poi
         );
       })}
       <G>
-        <Line x1={W - PAD} y1={18} x2={W - PAD} y2={40} stroke={colors.ink} strokeWidth={2} />
-        <SvgText x={W - PAD} y={14} fontSize={12} fontWeight="700" fill={colors.ink} textAnchor="middle">
+        <Line x1={W - PAD} y1={18} x2={W - PAD} y2={40} stroke={t.ink2} strokeWidth={2} />
+        <SvgText x={W - PAD} y={14} fontSize={12} fontWeight="700" fill={t.ink2} textAnchor="middle" {...tf}>
           N
         </SvgText>
       </G>
-      <Line x1={PAD} y1={H - 10} x2={PAD + barPx} y2={H - 10} stroke={colors.ink} strokeWidth={3} />
-      <SvgText x={PAD + barPx + 6} y={H - 6} fontSize={12} fill={colors.dim}>
+      <Line x1={PAD} y1={H - 10} x2={PAD + barPx} y2={H - 10} stroke={t.ink2} strokeWidth={2} />
+      <SvgText x={PAD + barPx + 6} y={H - 6} fontSize={12} fill={t.ink2} {...tf}>
         {bar >= 1000 ? `${bar / 1000} km` : `${bar} m`}
       </SvgText>
     </Svg>
