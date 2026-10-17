@@ -99,11 +99,14 @@ export function Chips<T extends string | number>({
   onChange,
   multi,
   onGround,
+  grid,
 }: {
   options: { code: T; label: string }[];
   value: T | T[] | undefined;
   onChange: (v: T | T[] | undefined) => void;
   multi?: boolean;
+  /** Equal-width chips on one line, so a trait's options line up (kit `.k-grid2/3`); long words wrap inside. */
+  grid?: boolean;
   /** Chips sitting straight on the screen ground (not in a grey group) are grey; selected turns white + ring. */
   onGround?: boolean;
 }) {
@@ -111,7 +114,7 @@ export function Chips<T extends string | number>({
   const { t } = useTheme();
   const selected = (code: T) => (Array.isArray(value) ? value.includes(code) : value === code);
   return (
-    <View style={s.chips}>
+    <View style={[s.chips, grid && { flexWrap: 'nowrap' }]}>
       {options.map((o) => {
         const on = selected(o.code);
         return (
@@ -125,10 +128,16 @@ export function Chips<T extends string | number>({
                 onChange(on ? arr.filter((c) => c !== o.code) : [...arr, o.code]);
               } else onChange(on ? undefined : o.code);
             }}
-            style={({ pressed }) => [s.chip, onGround && !on && { backgroundColor: t.grey }, on && s.chipOn, pressed && { backgroundColor: onGround ? t.greyPress : t.secPress }]}
+            style={({ pressed }) => [
+              s.chip,
+              grid && { flex: 1, minWidth: 0, paddingHorizontal: 8 },
+              onGround && !on && { backgroundColor: t.grey },
+              on && s.chipOn,
+              pressed && { backgroundColor: onGround ? t.greyPress : t.secPress },
+            ]}
           >
             {on && <Icon name="check" size={20} color={t.ink} strokeWidth={2.25} />}
-            <Text style={[s.chipText, on && s.chipTextOn]}>{o.label}</Text>
+            <Text style={[s.chipText, on && s.chipTextOn, grid && { textAlign: 'center', flexShrink: 1, lineHeight: 20 }]}>{o.label}</Text>
           </Pressable>
         );
       })}
@@ -146,9 +155,14 @@ export function NumberInput({
   unit,
   prefix,
   accessibilityLabel,
+  onBlur,
+  boxStyle,
 }: {
   value: number | undefined;
   onChange: (v: number | undefined) => void;
+  onBlur?: () => void;
+  /** e.g. a grey box when the input sits on a white card (kit `.k-next .fk-num`). */
+  boxStyle?: object;
   placeholder?: string;
   integer?: boolean;
   unit?: string;
@@ -170,7 +184,7 @@ export function NumberInput({
   }, [value]);
   return (
     <View style={s.gap}>
-      <View style={[s.box, focus && s.boxFocus, notANumber && s.boxError]}>
+      <View style={[s.box, boxStyle, focus && s.boxFocus, notANumber && s.boxError]}>
         {prefix ? <Text style={s.prefix}>{prefix}</Text> : null}
         <TextInput
           style={s.numText}
@@ -181,7 +195,10 @@ export function NumberInput({
           keyboardType={integer ? 'number-pad' : 'decimal-pad'}
           returnKeyType="done"
           onFocus={() => setFocus(true)}
-          onBlur={() => setFocus(false)}
+          onBlur={() => {
+            setFocus(false);
+            onBlur?.();
+          }}
           onChangeText={(x) => {
             setText(x);
             const n = parse(x);

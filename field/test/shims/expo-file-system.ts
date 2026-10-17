@@ -65,6 +65,9 @@ export class File {
   bytesSync() {
     return new Uint8Array(fs.readFileSync(this.path));
   }
+  base64Sync() {
+    return fs.readFileSync(this.path).toString('base64');
+  }
 }
 
 export const Paths = {

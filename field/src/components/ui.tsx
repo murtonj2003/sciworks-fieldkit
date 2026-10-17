@@ -126,7 +126,8 @@ export function Button({
   disabled,
   style,
 }: {
-  label: string;
+  /** Plain words, or words with an italic species name inside. */
+  label: ReactNode;
   onPress: () => void;
   /** primary = black pill · white = white pill (on grey) · grey/secondary = grey pill (on white or the ground) · link = text button. */
   kind?: ButtonKind;

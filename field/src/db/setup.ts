@@ -6,7 +6,7 @@ import { all, first, run } from './db';
 import { nowIso } from '@/lib/time';
 
 /** Overlays are per team: 'overlay:team-b'. */
-export type SetupKey = 'project' | 'template' | 'transects' | 'species-pack' | 'attribution' | `overlay:${string}`;
+export type SetupKey = 'project' | 'template' | 'transects' | 'species-pack' | 'attribution' | `overlay:${string}` | `basemap:${string}`;
 
 export const overlayKey = (teamId: string): SetupKey => `overlay:${teamId}`;
 

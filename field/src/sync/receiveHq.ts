@@ -3,6 +3,7 @@
 import { readBundle, type HqBundleParts, type Manifest, type Project, type Template } from '@sciworks/shared';
 import { Directory, File, Paths } from 'expo-file-system';
 
+import { saveBasemaps } from '@/db/basemaps';
 import { run } from '@/db/db';
 import {
   addChangeRequestDecisions,
@@ -96,6 +97,7 @@ export function receiveHqBundle(bytes: Uint8Array, fileName: string): ReceiveRes
   if (hq.attribution !== undefined && putSetupIfChanged('attribution', hq.attribution, source)) {
     changes.push('Credits for the species data updated');
   }
+  changes.push(...saveBasemaps(hq.basemaps ?? [], hq.basemapFiles ?? {}, source, manifest.createdAt));
 
   // Feedback.
   const receipts = addReceipts(hq.receipts ?? []);

@@ -55,6 +55,12 @@ export class File {
     if (v) store.set(next, v);
     this.uri = next;
   }
+  base64Sync(): string {
+    const b = store.get(this.uri) ?? new Uint8Array();
+    let bin = '';
+    for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode(...b.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
   async bytes(): Promise<Uint8Array> {
     if (!this.uri.startsWith('mem://')) return new Uint8Array(await (await fetch(this.uri)).arrayBuffer()); // a bundled asset
     return store.get(this.uri) ?? new Uint8Array();

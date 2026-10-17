@@ -17,12 +17,14 @@ import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 
 import { getMeta, setMeta } from '@/db/meta';
+import type { LonLat } from '@/lib/mapFrame';
 import { acceptSuggestion, isMoved, keepTyped, onEntryChange, whereNow, type EntryContext, type LocationChange } from '@/model/location';
 import { makeStyles, useTheme } from '@/theme/ThemeProvider';
 import { radius, type } from '@/theme/theme';
 
 import { NumberInput, TextBox, useFieldStyles } from './fields';
 import { BAND_WORD, BandMarker, Icon, type Band } from './Icon';
+import { TransectMap, type MapPoint } from './TransectMap';
 import { TransectStrip, type StripPoint } from './TransectStrip';
 import { Button, Group, Hint, Pair, T } from './ui';
 
@@ -129,6 +131,7 @@ const useStyles = makeStyles((t) => ({
   blockTitle: { ...type.headBold },
   blockDetail: { ...type.sub, marginTop: 2 },
   strip: { backgroundColor: t.card, borderRadius: radius.card, paddingTop: 8, paddingHorizontal: 10, paddingBottom: 4 },
+  mapCard: { backgroundColor: t.card, borderRadius: radius.card, paddingHorizontal: 6, paddingVertical: 4, marginTop: 8 },
   dym: { backgroundColor: t.group, borderRadius: radius.group, paddingTop: 11, paddingHorizontal: 8, paddingBottom: 2, marginTop: 10 },
   dymHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingHorizontal: 6 },
   src: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 26, paddingLeft: 7, paddingRight: 9, borderRadius: radius.tag, backgroundColor: t.card },
@@ -242,6 +245,25 @@ export function LocationEntry({
   if (check) points.push({ chainageM: check.chainageM, offsetM: check.offsetM, kind: 'typed', band: check.band });
   if (moved && movedNow) points.push({ chainageM: movedNow.chainageM, offsetM: movedNow.offsetM, kind: 'accepted' });
   else check?.suggestions.forEach((sg) => points.push({ chainageM: sg.chainageM, offsetM: sg.offsetM, kind: 'suggestion' }));
+
+  // The small north-up map (on the satellite picture when HQ sent one): the line, where the point was typed and
+  // the fix. A typo that lands more than 3 km away is left off, or the line would shrink to a dot; the strip
+  // above still shows it.
+  const typedOnMap = !!check && !!typedPoint && check.offsetM <= 3000;
+  const mapPoints: MapPoint[] = [];
+  const mapLinks: { from: LonLat; to: LonLat }[] = [];
+  if (check && typedPoint && typedOnMap) {
+    mapPoints.push({ lat: typedPoint.lat, lon: typedPoint.lon, band: moved ? 'typed' : check.band, label: 'as typed' });
+  }
+  if (moved && movedNow) {
+    mapPoints.push({ lat: moved.lat, lon: moved.lon, band: movedNow.band, label: check?.suggestions.length === 1 || !check ? 'used' : undefined });
+    if (typedOnMap && typedPoint) mapLinks.push({ from: typedPoint, to: moved });
+  } else if (check) {
+    check.suggestions.forEach((sg, i) => {
+      mapPoints.push({ lat: sg.lat, lon: sg.lon, suggestion: i + 1, label: check.suggestions.length === 1 ? 'suggestion' : undefined });
+      if (typedOnMap && typedPoint) mapLinks.push({ from: typedPoint, to: sg });
+    });
+  }
 
   const needsChoice = !!check && check.band !== 'green' && !decision;
   const prefix = FORMATS.find((f) => f.code === format)?.prefix;
@@ -373,6 +395,11 @@ export function LocationEntry({
               points={points}
               transectId={transect.properties.transectId}
             />
+          </View>
+        )}
+        {check && mapPoints.length > 0 && (
+          <View style={s.mapCard}>
+            <TransectMap transect={transect} height={170} points={mapPoints} fit={mapPoints} links={mapLinks} />
           </View>
         )}
       </Group>
