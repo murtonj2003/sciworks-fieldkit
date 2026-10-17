@@ -205,9 +205,17 @@ export async function runKeyTool(ctx: ToolContext, input: { recordKey: string })
 
 const DRAFTABLE: FieldDef['type'][] = ['measurement', 'number', 'choice', 'text', 'boolean', 'location']
 
+/** The model sometimes sends a number as text ("435" or "435 mm"): read the number out of it. */
+export function numberFrom(v: unknown): number | undefined {
+  if (typeof v === 'number' && Number.isFinite(v)) return v
+  if (typeof v !== 'string') return undefined
+  const m = v.trim().replace(/,/g, '').match(/^(-?\d+(?:\.\d+)?)\s*(?:mm|g|m|°C|degC|%|h)?$/i)
+  return m ? Number(m[1]) : undefined
+}
+
 export async function draftCorrection(
   ctx: ToolContext,
-  input: { recordKey: string; fieldPath: string; proposedValue?: number | string | boolean; proposedLat?: number; proposedLon?: number; reason: string },
+  input: { recordKey: string; fieldPath: string; proposedNumber?: number; proposedValue?: number | string | boolean; proposedLat?: number; proposedLon?: number; reason: string },
 ) {
   const row = await recordOrThrow(ctx, input.recordKey)
   const template = ctx.setup.templates.find((t) => t.coreVersion === row.data.coreVersion) ?? ctx.setup.template
@@ -225,11 +233,13 @@ export async function draftCorrection(
     const check = transect && ctx.setup.project ? checkCoordinate({ lat: input.proposedLat, lon: input.proposedLon, accuracyM: loc.accuracyM }, transect, ctx.setup.project) : loc.check
     proposed = { ...loc, lat: input.proposedLat, lon: input.proposedLon, original: loc.original ?? { lat: loc.lat, lon: loc.lon }, check } satisfies Location
   } else if (field.type === 'measurement') {
-    if (typeof input.proposedValue !== 'number') return { error: 'For a measurement, proposedValue must be a number in the field unit.' }
-    proposed = { ...((current as object | undefined) ?? { unit: field.unit }), value: input.proposedValue }
+    const n = input.proposedNumber ?? numberFrom(input.proposedValue)
+    if (n === undefined) return { error: `For a measurement, give proposedNumber as a number in ${field.unit ?? 'the field unit'} (got ${JSON.stringify(input.proposedValue)}).` }
+    proposed = { ...((current as object | undefined) ?? { unit: field.unit }), value: n }
   } else if (field.type === 'number') {
-    if (typeof input.proposedValue !== 'number') return { error: 'proposedValue must be a number.' }
-    proposed = input.proposedValue
+    const n = input.proposedNumber ?? numberFrom(input.proposedValue)
+    if (n === undefined) return { error: `Give proposedNumber as a number (got ${JSON.stringify(input.proposedValue)}).` }
+    proposed = n
   } else if (field.type === 'choice') {
     const code = String(input.proposedValue)
     if (!field.choices?.some((c) => c.code === code)) return { error: `Choose one of: ${field.choices?.map((c) => c.code).join(', ')}.` }

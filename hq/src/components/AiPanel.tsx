@@ -7,7 +7,7 @@ import type { Project } from '@sciworks/shared'
 import { db, type RecordRow } from '../db'
 import { Icon, Mark } from '../kit/Icons'
 import { AiTags, Dialog } from '../kit/ui'
-import { AI_MODEL, isRunning, requestStop } from '../lib/ai/agent'
+import { AI_MODEL, requestStop } from '../lib/ai/agent'
 import { forgetApiKey, getApiKey, getAutoReview, maskedKey, setApiKey, setAutoReview } from '../lib/ai/apiKey'
 import { fmtValue, recordTitle } from '../lib/format'
 import { shortTime } from '../lib/time'
@@ -49,7 +49,7 @@ export function AiPanel({ onClose, onSelect, onReviewAll, onKeyChanged }: Props)
               Stop
             </button>
           )}
-          <button className="fk-btn fk-btn--primary fk-btn--36" onClick={onReviewAll} disabled={!key || !online || isRunning()}>
+          <button className="fk-btn fk-btn--primary fk-btn--36" onClick={onReviewAll} disabled={!key || !online || run?.state === 'running'}>
             <Icon name="reviewer" />
             Review everything not yet approved
           </button>

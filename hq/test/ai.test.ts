@@ -79,6 +79,24 @@ describe('W7 · AI reviewer tools (read-only + draft)', () => {
   })
 })
 
+describe('W7 · numbers sent as text (found in the first live run)', () => {
+  it('draft_correction accepts "435", "435 mm" or proposedNumber for a measurement', async () => {
+    const d = await loaded()
+    await d.aiRuns.add({ runId: 'r', startedAt: '', state: 'running', model: AI_MODEL, scopeKeys: [], scopeLabel: '', steps: [], draftIds: [], noteIds: [] })
+    const ctx = { d, setup: await loadSetup(d), runId: 'r', scopeKeys: [] }
+    const key = await svlKey(d)
+    const asText = (await draftCorrection(ctx, { recordKey: key, fieldPath: 'svl', proposedValue: '435', reason: 'extra zero' })) as { error?: string }
+    expect(asText.error).toBeUndefined()
+    expect((await d.corrections.toArray())[0]?.proposed).toMatchObject({ value: 435, unit: 'mm' })
+    const withUnit = (await draftCorrection(ctx, { recordKey: key, fieldPath: 'mass', proposedValue: '3.8 g', reason: 'x' })) as { error?: string }
+    expect(withUnit.error).toBeUndefined()
+    const typed = (await draftCorrection(ctx, { recordKey: key, fieldPath: 'tailLength', proposedNumber: 14, reason: 'x' })) as { error?: string }
+    expect(typed.error).toBeUndefined()
+    const bad = (await draftCorrection(ctx, { recordKey: key, fieldPath: 'svl', proposedValue: 'about four hundred', reason: 'x' })) as { error?: string }
+    expect(bad.error).toContain('got "about four hundred"')
+  })
+})
+
 describe('W7 · the review loop (scripted API)', () => {
   it('flags the 4,350 mm SVL and drafts 435 mm; records are untouched; the draft stays at HQ until approved', async () => {
     const d = await loaded()

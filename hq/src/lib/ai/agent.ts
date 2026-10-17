@@ -151,11 +151,12 @@ function makeTools(ctx: ToolContext) {
     betaZodTool({
       name: 'draft_correction',
       description:
-        'Draft a correction request for the Data Manager to approve. It does NOT change the record. fieldPath is the template path (e.g. "svl", "mass", "tailLength", "sex", "location"). For measurements give proposedValue as a number in the field unit (mm or g). For location give proposedLat and proposedLon.',
+        'Draft a correction request for the Data Manager to approve. It does NOT change the record. fieldPath is the template path (e.g. "svl", "mass", "tailLength", "sex", "location"). For a measurement or number give proposedNumber (a JSON number in the field unit, mm or g, e.g. 435). For a choice or text give proposedValue. For location give proposedLat and proposedLon.',
       inputSchema: z.object({
         recordKey,
         fieldPath: z.string(),
-        proposedValue: z.union([z.number(), z.string(), z.boolean()]).optional(),
+        proposedNumber: z.number().optional().describe('For measurements and numbers: the value as a JSON number in the field unit, e.g. 435'),
+        proposedValue: z.union([z.number(), z.string(), z.boolean()]).optional().describe('For choices (the choice code) and text'),
         proposedLat: z.number().optional(),
         proposedLon: z.number().optional(),
         reason: z.string().describe('One or two plain-words sentences the surveyor will read, citing what the checker found.'),
