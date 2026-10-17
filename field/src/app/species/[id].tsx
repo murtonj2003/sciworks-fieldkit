@@ -1,5 +1,5 @@
 // Pick a species from the site's pack (or the Team Lead's shortlist), or mark it unidentified.
-import type { Taxon } from '@sciworks/shared';
+import { searchTaxa, type Taxon, type TaxonMatch } from '@sciworks/shared';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -24,12 +24,12 @@ export default function SpeciesPicker() {
     () => (template ? effectiveFields(template, overlay, 'encounter').find((f) => f.type === 'taxon')?.subset : undefined),
     [template, overlay],
   );
-  const taxa = useMemo(() => {
+  // Forgiving search (shared searchTaxa): a misheard or misspelt name still finds the species, marked as a
+  // close match so the surveyor checks it. An empty box shows the whole list.
+  const rows = useMemo((): { taxon: Taxon; match?: TaxonMatch }[] => {
     const list = (pack?.taxa ?? []).filter((t) => all || !subset || subset.includes(t.taxonId));
-    const needle = q.trim().toLowerCase();
-    return needle
-      ? list.filter((t) => `${t.scientificName} ${t.commonName ?? ''} ${t.family ?? ''}`.toLowerCase().includes(needle))
-      : list;
+    if (!q.trim()) return list.map((taxon) => ({ taxon }));
+    return searchTaxa(q, list, { limit: list.length }).map((match) => ({ taxon: match.taxon, match }));
   }, [pack, subset, all, q]);
 
   function choose(change: (e: LocalEncounter) => LocalEncounter) {
@@ -66,8 +66,8 @@ export default function SpeciesPicker() {
         )}
       </View>
       <FlatList
-        data={taxa}
-        keyExtractor={(t) => t.taxonId}
+        data={rows}
+        keyExtractor={(r) => r.taxon.taxonId}
         contentContainerStyle={styles.list}
         ListHeaderComponent={
           <View style={styles.header}>
@@ -102,9 +102,13 @@ export default function SpeciesPicker() {
             ))}
           </View>
         }
-        renderItem={({ item }) => (
+        ListEmptyComponent={q.trim() ? <P dim>No species in the pack matches “{q.trim()}”. Try fewer letters, or Unidentified.</P> : null}
+        renderItem={({ item: { taxon: item, match } }) => (
           <Pressable style={({ pressed }) => [styles.row, item.dangerous && styles.danger, pressed && { opacity: 0.6 }]} onPress={() => pickTaxon(item)}>
             <Text style={styles.name}>{item.scientificName}</Text>
+            {(match?.reason === 'spelling' || match?.reason === 'sounds-like') && (
+              <Text style={fs.small}>Close match for “{q.trim()}”{match.matched !== item.scientificName ? ` (${match.matched})` : ''}. Check it’s the right one.</Text>
+            )}
             <Text style={fs.small}>
               {item.commonName ? `${item.commonName} · ` : ''}
               {item.family}

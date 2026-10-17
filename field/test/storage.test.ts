@@ -274,15 +274,16 @@ describe('Field storage, start to handover', () => {
     expect(app.form.setPath({}, 'teamFields.perchHeightM', 1.5)).toEqual({ teamFields: { perchHeightM: 1.5 } });
     expect(app.form.setPath({ teamFields: { perchHeightM: 1.5 } }, 'teamFields.perchHeightM', undefined)).toEqual({});
   });
-  it('F5: the Team Lead adds a field offline; the next animal form shows it and HQ gets a request', async () => {
+  it('F5: the Team Lead adds "Number of individuals" offline; the next animal form shows it and HQ gets a request', async () => {
     const app = await startApp();
     const [overlayModel, team] = await Promise.all([import('@/model/overlay'), import('@/db/team')]);
     const s = app.state();
     expect(s.person?.role).toBe('team-lead');
     expect(s.overlay?.overlayRev).toBe(2); // Team B's baseline from the demo HQ bundle already has perch height
     const at = '2026-10-17T20:00:00-06:00';
-    const def = overlayModel.teamFieldDef({ label: 'Distance to water', type: 'number', unit: 'm', recordType: 'encounter' }, s.template!, s.overlay!);
-    expect(def).toMatchObject({ key: 'distanceToWater', path: 'teamFields.distanceToWater', tier: 'free', origin: 'team' });
+    const def = overlayModel.teamFieldDef({ label: 'Number of individuals', type: 'number', recordType: 'encounter' }, s.template!, s.overlay!);
+    expect(def).toMatchObject({ key: 'numberOfIndividuals', path: 'teamFields.numberOfIndividuals', tier: 'free', origin: 'team' });
+    expect(def.unit).toBeUndefined();
     const next = overlayModel.withAddedField(s.overlay!, def, s.person!, s.deviceId, at, 1);
     team.saveOverlay(next, s.person!.personId);
     team.addChangeRequest(overlayModel.promoteRequest(def, s.template!, s.person!, s.deviceId, at, app.meta.newId()));
@@ -291,7 +292,7 @@ describe('Field storage, start to handover', () => {
     expect(after.overlay?.overlayRev).toBe(3);
     expect(app.setup.allSetupVersions('overlay:team-b')).toEqual([2, 3]); // every overlay rev kept
     const fields = app.form.effectiveFields(after.template!, after.overlay, 'encounter');
-    expect(fields.find((f) => f.key === 'distanceToWater')?.hidden).toBeFalsy();
+    expect(fields.find((f) => f.key === 'numberOfIndividuals')?.hidden).toBeFalsy();
     expect(fields.find((f) => f.key === 'perchHeightM')).toBeTruthy();
 
     // A core field the team may not touch: refused with a reason, nothing saved.
@@ -300,10 +301,21 @@ describe('Field storage, start to handover', () => {
     expect(overlayModel.checkChange(svl, 'range', { min: 1, max: 100 })).toMatch(/no lower than 5/);
 
     const plan = app.send.planBundle('unconfirmed');
-    expect(plan.changeRequests.map((c) => c.proposal)).toEqual(["Add 'Distance to water (m)' to the core form"]);
+    expect(plan.changeRequests.map((c) => c.proposal)).toEqual(["Add 'Number of individuals' to the core form"]);
+
+    // The next animal records a value in it; the value travels in teamFields and the record is stamped overlayRev 3.
+    const ctx = { project: after.project!, template: after.template!, person: after.person!, deviceId: after.deviceId, overlayRev: after.overlay!.overlayRev };
+    const survey = app.records.getRecord(surveyId) as Parameters<typeof app.factory.newEncounter>[1];
+    const e = app.factory.newEncounter(ctx, survey);
+    const located = { ...e, location: (app.records.getSealed(encounterId) as Encounter).location };
+    app.records.saveDraftNow(app.form.setPath(located, 'teamFields.numberOfIndividuals', 3));
+    app.records.seal(e.id);
     const made = await app.send.makeFieldBundle(after, 'unconfirmed');
     const read = readBundle(new Uint8Array(fs.readFileSync(made.uri.replace('file://', ''))));
     expect(read.ok && read.field?.overlay?.overlayRev).toBe(3);
     expect(read.ok && read.manifest.overlayRev).toBe(3);
+    const sent = read.ok ? (read.field?.encounters ?? []).find((x) => x.id === e.id) : undefined;
+    expect(sent?.teamFields).toEqual({ numberOfIndividuals: 3 });
+    expect(sent?.overlayRev).toBe(3);
   });
 });

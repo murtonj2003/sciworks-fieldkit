@@ -26,7 +26,7 @@ export default function FormSettings() {
   const { template, overlay, person, project, pack } = field;
   const [open, setOpen] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
-  const [draft, setDraft] = useState<NewTeamField>({ label: '', type: 'number', unit: 'm', recordType: 'encounter' });
+  const [draft, setDraft] = useState<NewTeamField>({ label: '', type: 'number', recordType: 'encounter' });
   const [choicesText, setChoicesText] = useState('');
   const [species, setSpecies] = useState<{ name?: string; rank?: 'species' | 'genus' | 'family' | 'morphospecies'; notes?: string }>({ rank: 'species' });
 
@@ -56,7 +56,7 @@ export default function FormSettings() {
     saveOverlay(next, person!.personId);
     addChangeRequest(promoteRequest(def, template!, person!, field.deviceId, at, newId()));
     field.refresh();
-    setDraft({ label: '', type: 'number', unit: 'm', recordType: draft.recordType });
+    setDraft({ label: '', type: 'number', recordType: draft.recordType });
     setChoicesText('');
     setMsg(`✓ Added "${def.label}" (team change ${next.overlayRev}). It's on the next ${def.recordType === 'encounter' ? 'animal' : 'survey'} form now, and a request to add it to the core form goes to HQ in the next bundle.`);
   }

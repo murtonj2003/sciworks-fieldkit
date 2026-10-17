@@ -49,7 +49,7 @@ export function withChange(
   return { ...next, changes: [...o.changes, { ...change, at, by: person.personId }] };
 }
 
-/** 'Distance to water' → 'distanceToWater', made unique against existing keys. */
+/** 'Number of individuals' → 'numberOfIndividuals', made unique against existing keys. */
 export function keyFromLabel(label: string, taken: Set<string>): string {
   const words = label
     .normalize('NFKD')
