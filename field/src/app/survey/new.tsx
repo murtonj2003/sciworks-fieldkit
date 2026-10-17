@@ -5,7 +5,7 @@ import { ScrollView, Text, View } from 'react-native';
 
 import { Chips } from '@/components/fields';
 import { TransectMap } from '@/components/TransectMap';
-import { BottomBar, Button, Group, GroupTitle, T } from '@/components/ui';
+import { BottomBar, Button, GroupTitle, T } from '@/components/ui';
 import { saveDraftNow, seal } from '@/db/records';
 import { effectiveFields, withDefaults } from '@/model/form';
 import { newSurvey } from '@/model/factory';
@@ -66,11 +66,9 @@ export default function NewSurvey() {
             <Text style={s.help}>
               {chosen.properties.name} · {thousands(chosen.properties.lengthM)} m
             </Text>
-            <Group style={{ marginTop: 10 }}>
-              <View style={s.mapCard}>
-                <TransectMap transect={chosen} />
-              </View>
-            </Group>
+            <View style={[s.mapCard, { marginTop: 10 }]}>
+              <TransectMap transect={chosen} />
+            </View>
           </>
         )}
         <View style={{ height: 10 }} />
@@ -83,7 +81,9 @@ export default function NewSurvey() {
           onChange={(v) => setSurveyors((v as string[] | undefined) ?? [])}
         />
         <Text style={s.help}>
-          {n} {n === 1 ? 'surveyor' : 'surveyors'}. The start time is taken when you tap Start.
+          {surveyors.length === 0
+            ? "No one ticked. You'll be the surveyor. The start time is taken when you tap Start."
+            : `${n} ${n === 1 ? 'surveyor' : 'surveyors'}. The start time is taken when you tap Start.`}
         </Text>
       </ScrollView>
       <BottomBar>

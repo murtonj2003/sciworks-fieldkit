@@ -63,7 +63,7 @@ function Shell() {
         <Stack.Screen name="index" options={{ title: 'Fieldkit', headerShown: false }} />
         <Stack.Screen name="person" options={{ title: 'Who is using this phone?' }} />
         <Stack.Screen name="storage" options={{ title: 'Storage check' }} />
-        <Stack.Screen name="survey/new" options={{ title: 'Start a survey' }} />
+        <Stack.Screen name="survey/new" options={{ title: 'New survey' }} />
         <Stack.Screen name="survey/[id]" options={{ title: 'Survey' }} />
         <Stack.Screen name="encounter/[id]" options={{ title: 'Animal' }} />
         <Stack.Screen name="species/[id]" options={{ title: 'Species' }} />

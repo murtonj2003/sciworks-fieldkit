@@ -3,7 +3,7 @@
 // warnings as amber hints (never block), animal rows with band marks + status chips.
 import type { WeatherBlock } from '@sciworks/shared';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { FieldInput } from '@/components/fields';
@@ -35,7 +35,9 @@ const useStyles = makeStyles((t) => ({
   skyRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 7 },
   skyText: { ...type.small, fontWeight: '400', color: t.ink2, flex: 1 },
   mapCard: { backgroundColor: t.card, borderRadius: radius.card, paddingHorizontal: 6, paddingVertical: 4 },
-  help: { ...type.sub, color: t.ink2, marginHorizontal: 4, marginBottom: 8 },
+  help: { ...type.small, fontWeight: '400', lineHeight: 17, color: t.ink2, marginHorizontal: 4, marginTop: 2, marginBottom: 7 },
+  shead: { position: 'absolute', top: 0, left: 0, right: 0, minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 20, backgroundColor: t.ground },
+  sheadText: { ...type.sub, color: t.ink2, flexShrink: 1 },
   presets: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
   preset: { width: '48.5%', minHeight: 56, borderRadius: radius.chip, backgroundColor: t.grey, paddingVertical: 8, paddingLeft: 14, paddingRight: 30, justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' },
   presetOn: { backgroundColor: t.card, borderColor: t.ink },
@@ -46,7 +48,7 @@ const useStyles = makeStyles((t) => ({
   arow: { minHeight: 64, flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingTop: 11, paddingBottom: 10, paddingHorizontal: 12 },
   sep: { height: 1, backgroundColor: t.hair, marginLeft: 44 },
   aHead: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
-  empty: { backgroundColor: t.card, borderRadius: radius.card, paddingVertical: 22, paddingHorizontal: 20, alignItems: 'center', gap: 4 },
+  empty: { backgroundColor: t.card, borderRadius: radius.card, paddingVertical: 28, paddingHorizontal: 20, alignItems: 'center', gap: 4 },
 }));
 
 export default function SurveyScreen() {
@@ -56,6 +58,7 @@ export default function SurveyScreen() {
   const { record: survey, update } = useRecord<LocalSurvey>(id);
   const s = useStyles();
   const { t } = useTheme();
+  const [folded, setFolded] = useState(false);
   const tz = project?.timeZone;
   const now = () => nowIso(tz);
 
@@ -99,7 +102,7 @@ export default function SurveyScreen() {
       .filter((f) => f.key !== 'finishedAt')
       .filter((f) => !NIGHT_ONLY_PATHS.has(f.path) || night || getPath(survey, f.path) !== undefined);
 
-  const renderGroup = (group: string) => {
+  const renderGroup = (group: string, after?: ReactNode) => {
     const list = groupFields(group);
     if (list.length === 0) return null;
     return (
@@ -107,6 +110,7 @@ export default function SurveyScreen() {
         {list.map((f) => (
           <FieldInput key={f.key} field={f} value={getPath(survey, f.path)} onChange={(v) => set(f.path, v)} nowIso={now} />
         ))}
+        {after}
       </Group>
     );
   };
@@ -130,7 +134,7 @@ export default function SurveyScreen() {
               accessibilityState={{ checked: on }}
               accessibilityLabel={p.label}
               onPress={() => update((r) => ({ ...r, [block]: { ...(r[block] ?? { at: now() }), ...p.weather } }))}
-              style={({ pressed }) => [s.preset, on && s.presetOn, pressed && { opacity: 0.85 }]}
+              style={({ pressed }) => [s.preset, on && s.presetOn, pressed && !on && { backgroundColor: t.greyPress }]}
             >
               <Text style={s.presetTitle}>{title}</Text>
               {rest.length > 0 && <Text style={s.presetSub}>{rest.join(' · ')}</Text>}
@@ -204,7 +208,15 @@ export default function SurveyScreen() {
   return (
     <View style={s.wrap}>
       <Stack.Screen options={{ title: 'Survey', headerRight: () => <SavedMark /> }} />
-      <ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={s.page}
+        keyboardShouldPersistTaps="handled"
+        scrollEventThrottle={32}
+        onScroll={(ev) => {
+          const past = ev.nativeEvent.contentOffset.y > 96;
+          if (past !== folded) setFolded(past);
+        }}
+      >
         <Group>
           <View style={s.head}>
             <View style={s.headTitle}>
@@ -236,7 +248,73 @@ export default function SurveyScreen() {
               </View>
             )}
           </View>
-          {transect && (
+        </Group>
+        {missing.length > 0 && (
+          <View style={{ marginTop: 8, marginHorizontal: 4 }}>
+            <Tag label={`incomplete: ${missing.join(', ')}`} dashed />
+          </View>
+        )}
+
+        <SectionTitle>{groupLabel('weather-start')}</SectionTitle>
+        {presetRow('weatherStart')}
+        {renderGroup(
+          'weather-start',
+          hits.length > 0 ? (
+            <>
+              {hits.map((h) => (
+                <View key={h.code}>
+                  <Hint
+                    icon="rain"
+                    actions={
+                      <View style={{ flexDirection: 'row' }}>
+                        <Button
+                          label="Yes, carry on"
+                          kind="white"
+                          size={48}
+                          onPress={() =>
+                            update((r) => ({
+                              ...r,
+                              protocolWarnings: [...(r.protocolWarnings ?? []), { code: h.code, message: h.message, acknowledgedAt: now() }],
+                            }))
+                          }
+                        />
+                      </View>
+                    }
+                  >
+                    {h.message}
+                  </Hint>
+                </View>
+              ))}
+            </>
+          ) : null,
+        )}
+
+        {finished && (
+          <>
+            <SectionTitle>{groupLabel('weather-end')}</SectionTitle>
+            {presetRow('weatherEnd')}
+            {renderGroup('weather-end')}
+          </>
+        )}
+
+        <SectionTitle>Animals ({animals.length})</SectionTitle>
+        <Group>
+          {animals.length > 0 ? (
+            <View style={s.list}>{animals.map(animalRow)}</View>
+          ) : (
+            <View style={s.empty}>
+              <View style={{ marginBottom: 6 }}>
+                <Icon name="snake" size={24} color={t.ink2} />
+              </View>
+              <T v="title">No animals yet</T>
+              <T v="sub" dim>
+                Tap Add animal when you find one.
+              </T>
+            </View>
+          )}
+        </Group>
+        {transect && (
+          <Group style={{ marginTop: 10 }}>
             <View style={s.mapCard}>
               <TransectMap
                 transect={transect}
@@ -254,72 +332,28 @@ export default function SurveyScreen() {
                 )}
               />
             </View>
-          )}
-        </Group>
-        {missing.length > 0 && (
-          <View style={{ marginTop: 8, marginHorizontal: 4 }}>
-            <Tag label={`incomplete: ${missing.join(', ')}`} dashed />
-          </View>
+          </Group>
         )}
-
-        <SectionTitle>{groupLabel('weather-start')}</SectionTitle>
-        {presetRow('weatherStart')}
-        {renderGroup('weather-start')}
-        {hits.map((h) => (
-          <View key={h.code} style={{ marginTop: 8 }}>
-            <Hint
-              actions={
-                <View style={{ flexDirection: 'row' }}>
-                  <Button
-                    label="Yes, carry on"
-                    kind="white"
-                    size={48}
-                    onPress={() =>
-                      update((r) => ({
-                        ...r,
-                        protocolWarnings: [...(r.protocolWarnings ?? []), { code: h.code, message: h.message, acknowledgedAt: now() }],
-                      }))
-                    }
-                  />
-                </View>
-              }
-            >
-              {h.message}
-            </Hint>
-          </View>
-        ))}
 
         {groupFields('herp').length > 0 && <SectionTitle>{groupLabel('herp')}</SectionTitle>}
         {renderGroup('herp')}
         {groupFields('extras').length > 0 && <SectionTitle>{groupLabel('extras')}</SectionTitle>}
         {renderGroup('extras')}
 
-        {finished && (
-          <>
-            <SectionTitle>{groupLabel('weather-end')}</SectionTitle>
-            {presetRow('weatherEnd')}
-            {renderGroup('weather-end')}
-          </>
-        )}
-
-        <SectionTitle>Animals ({animals.length})</SectionTitle>
-        <Group>
-          {animals.length > 0 ? (
-            <View style={s.list}>{animals.map(animalRow)}</View>
-          ) : (
-            <View style={s.empty}>
-              <Icon name="snake" size={24} color={t.ink2} />
-              <T v="title">No animals yet</T>
-              <T v="sub" dim>
-                Tap Add animal when you find one.
-              </T>
-            </View>
-          )}
-        </Group>
-
         <SectionTitle>{groupLabel('notes')}</SectionTitle>
         {renderGroup('notes')}
       </ScrollView>
+      {folded && (
+        <View style={s.shead} pointerEvents="none">
+          <Icon name={night ? 'moon' : 'sun'} size={16} color={t.ink} />
+          <Text style={s.sheadText} numberOfLines={1}>
+            <Text style={{ color: t.ink, fontWeight: '600' }}>
+              {survey.transectId} · {night ? 'Night survey' : 'Day survey'}
+            </Text>
+            {' '}· started {clockOf(survey.startedAt)}
+          </Text>
+        </View>
+      )}
 
       <BottomBar>
         {!finished ? (

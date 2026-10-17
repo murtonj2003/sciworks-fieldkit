@@ -240,7 +240,7 @@ export function StatusChip({ status }: { status: Status }) {
 }
 
 /** Amber hint: advises, never blocks. `line` = the quiet one-line flag variant. */
-export function Hint({ children, line, actions }: { children: ReactNode; line?: boolean; actions?: ReactNode }) {
+export function Hint({ children, line, actions, icon = 'warning' }: { children: ReactNode; line?: boolean; actions?: ReactNode; icon?: IconName }) {
   const { t } = useTheme();
   if (line) {
     return (
@@ -253,7 +253,7 @@ export function Hint({ children, line, actions }: { children: ReactNode; line?: 
   return (
     <View style={{ backgroundColor: t.nearFill, borderRadius: radius.card, paddingTop: 11, paddingBottom: 12, paddingHorizontal: 14, gap: 10 }}>
       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-        <Icon name="warning" size={20} color={t.nearInk} strokeWidth={2} />
+        <Icon name={icon} size={20} color={t.nearInk} strokeWidth={2} />
         <Text style={[type.sub, { color: t.nearInk, flex: 1 }]}>{children}</Text>
       </View>
       {actions}

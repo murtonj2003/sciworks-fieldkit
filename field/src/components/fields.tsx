@@ -39,7 +39,7 @@ export const useFieldStyles = makeStyles((t) => ({
     backgroundColor: t.card,
   },
   chipOn: { borderColor: t.ink },
-  chipText: { ...type.body, color: t.ink },
+  chipText: { ...type.body, fontWeight: '500', color: t.ink },
   chipTextOn: { fontWeight: '600' },
   box: {
     minHeight: 60,
@@ -127,7 +127,7 @@ export function Chips<T extends string | number>({
             }}
             style={({ pressed }) => [s.chip, onGround && !on && { backgroundColor: t.grey }, on && s.chipOn, pressed && { backgroundColor: onGround ? t.greyPress : t.secPress }]}
           >
-            {on && <Icon name="check" size={18} color={t.ink} strokeWidth={2.25} />}
+            {on && <Icon name="check" size={20} color={t.ink} strokeWidth={2.25} />}
             <Text style={[s.chipText, on && s.chipTextOn]}>{o.label}</Text>
           </Pressable>
         );
