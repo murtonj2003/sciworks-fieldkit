@@ -13,7 +13,7 @@ import { clockOf, nowIso } from '@/lib/time';
 import { newEncounter } from '@/model/factory';
 import { GROUPS, byGroup, effectiveFields, getPath, setPath, withDefaults } from '@/model/form';
 import { missingForHq, type LocalEncounter, type LocalSurvey } from '@/model/records';
-import { effortPersonHours, isNight, protocolHits, weatherPresets } from '@/model/survey';
+import { NIGHT_ONLY_PATHS, effortPersonHours, isNight, protocolHits, weatherPresets } from '@/model/survey';
 import { useField } from '@/state/field';
 
 const reviewWord = (status: string | undefined) =>
@@ -66,6 +66,7 @@ export default function SurveyScreen() {
   const renderGroup = (group: string) =>
     byGroup(fields, [group])
       .filter((f) => f.key !== 'finishedAt')
+      .filter((f) => !NIGHT_ONLY_PATHS.has(f.path) || isNight(survey) || getPath(survey, f.path) !== undefined)
       .map((f) => (
         <FieldInput key={f.key} field={f} value={getPath(survey, f.path)} onChange={(v) => set(f.path, v)} nowIso={now} />
       ));

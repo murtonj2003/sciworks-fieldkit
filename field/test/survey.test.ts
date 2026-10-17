@@ -24,3 +24,39 @@ describe('isNight', () => {
     expect(isNight({ startedAt: '2026-10-17T01:30:00-06:00', astro: undefined })).toBe(false);
   });
 });
+
+describe('F7: night extras and protocol warnings', () => {
+  const template = JSON.parse(
+    require('node:fs').readFileSync(new URL('../../demo-data/template.json', import.meta.url), 'utf8'),
+  ) as import('@sciworks/shared').Template;
+  const base = { startedAt: '2026-10-16T19:30:00-06:00', surveyorCount: 2, weatherStart: { at: '2026-10-16T19:30:00-06:00' } } as never;
+
+  it('a night survey gets sun and moon with no typing', async () => {
+    const { astroAtStart } = await import('@/model/survey');
+    const transects = JSON.parse(require('node:fs').readFileSync(new URL('../../demo-data/transects.geojson', import.meta.url), 'utf8'));
+    const a = astroAtStart('2026-10-16T19:30:00-06:00', transects.features[1]);
+    expect(a?.minutesAfterSunsetAtStart).toBeGreaterThan(60);
+    expect(a?.moonIlluminationPct).toBeGreaterThanOrEqual(0);
+    expect(isNight({ startedAt: '2026-10-16T19:30:00-06:00', astro: a })).toBe(true);
+  });
+
+  it('heavy rain and strong wind warn; calm, dry weather does not (warnings never block)', async () => {
+    const { protocolHits } = await import('@/model/survey');
+    const at = (w: object) => ({ ...(base as object), weatherStart: { at: 'x', ...w } }) as never;
+    expect(protocolHits(template.protocolRules, at({ rainNow: 'heavy', windBeaufort: 1 })).map((r) => r.code)).toEqual(['HEAVY_RAIN']);
+    expect(protocolHits(template.protocolRules, at({ rainNow: 'none', windBeaufort: 5 })).map((r) => r.code)).toEqual(['STRONG_WIND']);
+    expect(protocolHits(template.protocolRules, at({ rainNow: 'none', windBeaufort: 0 }))).toEqual([]);
+    expect(protocolHits(template.protocolRules, at({}))).toEqual([]); // not answered yet: no warning
+  });
+
+  it('effort is (finish − start) × surveyors, in person-hours', async () => {
+    const { effortPersonHours } = await import('@/model/survey');
+    expect(effortPersonHours(base, '2026-10-16T23:00:00-06:00')).toBe(7);
+  });
+
+  it('the night-only questions are moon and leaf litter', async () => {
+    const { NIGHT_ONLY_PATHS } = await import('@/model/survey');
+    const paths = template.fields.filter((f) => NIGHT_ONLY_PATHS.has(f.path)).map((f) => f.path);
+    expect(paths.sort()).toEqual(['herp.leafLitterMoisture', 'herp.moonVisible']);
+  });
+});

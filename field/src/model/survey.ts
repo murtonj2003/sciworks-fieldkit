@@ -30,6 +30,9 @@ export function astroAtStart(startedAt: string, transect: Transect | undefined):
 
 /** Night = between the sunset astroFor() picked (the last one before the start) and the sunrise after it.
  * astroFor's `sunrise` is the morning of that sunset's day, so step it forward past the sunset. */
+/** Herp add-on questions that only make sense at night (MOBILE-BRIEF F7). Shown by day only if already answered. */
+export const NIGHT_ONLY_PATHS = new Set(['herp.moonVisible', 'herp.leafLitterMoisture']);
+
 export function isNight(survey: Pick<LocalSurvey, 'startedAt' | 'astro'>): boolean {
   const a = survey.astro;
   if (!a?.sunset || !a.sunrise) return false;
