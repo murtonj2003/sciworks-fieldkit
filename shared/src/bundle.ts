@@ -6,6 +6,7 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
 import type { z } from 'zod';
 import {
+  basemapSchema,
   changeRequestDecisionSchema,
   changeRequestSchema,
   correctionRequestSchema,
@@ -26,6 +27,7 @@ import {
 } from './schemas';
 import {
   CONTRACT_VERSION,
+  type Basemap,
   type ChangeRequest,
   type ChangeRequestDecision,
   type Code,
@@ -68,6 +70,8 @@ export const HQ_PATHS = {
   transects: 'setup/transects.geojson',
   speciesPack: 'setup/species-pack.json',
   attribution: 'setup/attribution.md',
+  /** The pictures themselves sit at each Basemap's `file`, e.g. 'setup/basemaps/<id>.jpg'. */
+  basemaps: 'setup/basemaps.json',
   receipts: 'feedback/receipts.json',
   reviews: 'feedback/reviews.json',
   corrections: 'feedback/corrections.json',
@@ -87,6 +91,7 @@ const ARRAY_SCHEMAS: Record<string, z.ZodType> = {
   [HQ_PATHS.corrections]: correctionRequestSchema,
   [HQ_PATHS.taxonDecisions]: taxonDecisionSchema,
   [HQ_PATHS.changeRequestDecisions]: changeRequestDecisionSchema,
+  [HQ_PATHS.basemaps]: basemapSchema,
 };
 
 const OBJECT_SCHEMAS: Record<string, z.ZodType> = {
@@ -153,6 +158,11 @@ export function writeBundle(input: WriteBundleInput): Uint8Array {
     put(HQ_PATHS.corrections, p.corrections);
     put(HQ_PATHS.taxonDecisions, p.taxonDecisions);
     put(HQ_PATHS.changeRequestDecisions, p.changeRequestDecisions);
+    put(HQ_PATHS.basemaps, p.basemaps);
+    for (const b of p.basemaps ?? []) {
+      const bytes = p.basemapFiles?.[b.basemapId];
+      if (bytes) files[b.file] = { bytes };
+    }
   }
 
   const contents: ManifestEntry[] = Object.entries(files).map(([path, f]) => ({
@@ -353,6 +363,17 @@ export function readBundle(bytes: Uint8Array): ReadBundleResult {
   }
 
   const attributionFile = good[HQ_PATHS.attribution];
+  const basemaps = readArray<Basemap>(HQ_PATHS.basemaps);
+  const basemapFiles: Record<Code, Uint8Array> = {};
+  for (const b of basemaps ?? []) {
+    const file = good[b.file];
+    if (!file) continue; // already reported as missing or damaged
+    if (sha256Hex(file) !== b.sha256) {
+      problems.push({ path: b.file, message: 'Picture bytes do not match the basemap checksum. Skipped.' });
+      continue;
+    }
+    basemapFiles[b.basemapId] = file;
+  }
   return {
     ok: true,
     manifest,
@@ -368,6 +389,8 @@ export function readBundle(bytes: Uint8Array): ReadBundleResult {
       corrections: readArray<CorrectionRequest>(HQ_PATHS.corrections),
       taxonDecisions: readArray<TaxonDecision>(HQ_PATHS.taxonDecisions),
       changeRequestDecisions: readArray<ChangeRequestDecision>(HQ_PATHS.changeRequestDecisions),
+      basemaps,
+      basemapFiles: basemaps ? basemapFiles : undefined,
     }),
     problems,
     rejected,

@@ -13,6 +13,7 @@ import {
   parseTyped,
   sha256Hex,
   writeBundle,
+  type Basemap,
   type ChangeRequest,
   type CorrectionRequest,
   type Encounter,
@@ -40,6 +41,11 @@ export const template = readJson<Template>('template.json');
 export const transects = readJson<TransectCollection>('transects.geojson');
 export const speciesPack = readJson<SpeciesPack>('species-pack.json');
 export const attribution = readFileSync(join(DEMO, 'attribution.md'), 'utf8');
+// The satellite picture is made by demo-data/basemaps/make-basemap.py (needs rasterio); its output is committed.
+export const basemaps = readJson<Basemap[]>('basemaps/index.json');
+export const basemapFiles = Object.fromEntries(
+  basemaps.map((b) => [b.basemapId, new Uint8Array(readFileSync(join(DEMO, 'basemaps', `${b.basemapId}.jpg`)))]),
+);
 
 const t2 = transects.features.find((t) => t.properties.transectId === 'T-LS-02') as Transect;
 const taxonId = (name: string) => {
@@ -258,7 +264,7 @@ export function buildHqBundle(): Uint8Array {
     bundleType: 'hq', bundleId: IDS.hqBundle, createdAt: '2026-10-17T07:30:00-06:00',
     createdBy: { app: 'hq', appVersion: '0.1.0-fixture', personId: 'p-dm' },
     projectId: 'cr-herps', teamId: 'team-b', coreVersion: 1, overlayRev: 2,
-    parts: { project, template, overlay, transects, speciesPack, attribution, receipts, reviews, corrections, taxonDecisions: [], changeRequestDecisions: [] },
+    parts: { project, template, overlay, transects, speciesPack, attribution, receipts, reviews, corrections, taxonDecisions: [], changeRequestDecisions: [], basemaps, basemapFiles },
   });
 }
 

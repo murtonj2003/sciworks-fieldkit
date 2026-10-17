@@ -1,0 +1,26 @@
+[
+  {
+    "basemapId": "la-selva-s2-2021",
+    "name": "Satellite (Sentinel-2, 2021)",
+    "file": "setup/basemaps/la-selva-s2-2021.jpg",
+    "bytes": 131107,
+    "sha256": "2da42dc59cd75fa7207d167d3e2f8219a40e90b560e8e8da1d7640ccbeb9dda6",
+    "bounds": {
+      "latMin": 10.398,
+      "latMax": 10.44,
+      "lonMin": -84.03708333333333,
+      "lonMax": -83.975
+    },
+    "widthPx": 745,
+    "heightPx": 504,
+    "resolutionM": 10,
+    "transectIds": [
+      "T-LS-01",
+      "T-LS-02",
+      "T-LS-03"
+    ],
+    "source": "ESA WorldCover Sentinel-2 median L2A (RGBNIR) composite 2021, v2.0.0, tiles N10W085 + N10W084, bands B04/B03/B02, https://doi.org/10.71570/79k4-x482",
+    "licence": "CC BY 4.0",
+    "attribution": "Satellite: ESA WorldCover 2021 \u00b7 contains modified Copernicus Sentinel data (2021) \u00b7 CC BY 4.0"
+  }
+]

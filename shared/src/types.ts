@@ -260,6 +260,34 @@ export interface SpeciesPack {
   taxa: Taxon[];
 }
 
+/**
+ * A picture to draw under the transect lines, offline: a satellite image cut to the project area. It is a plain
+ * lat/lon grid (EPSG:4326), north up, so its four corners are just `bounds`. Sent HQ → phone in the HQ bundle.
+ * Added Sat 17 Oct 17:00 (additive: older apps ignore it).
+ */
+export interface Basemap {
+  basemapId: Code;
+  /** Shown in a layer switch, e.g. 'Satellite (Sentinel-2, 2021)'. */
+  name: string;
+  /** Path inside the bundle, e.g. 'setup/basemaps/la-selva-s2-2021.jpg'. */
+  file: string;
+  bytes: number;
+  sha256: string;
+  /** The picture's outer edges (not pixel centres). */
+  bounds: BBox;
+  widthPx: number;
+  heightPx: number;
+  /** Ground size of one pixel, roughly. */
+  resolutionM: number;
+  /** The transects it was cut for. */
+  transectIds?: Code[];
+  /** Where the pixels came from, precisely enough to remake the file. */
+  source: string;
+  licence: string;
+  /** **Show this on screen whenever the picture is visible** (licence condition). */
+  attribution: string;
+}
+
 // ---------- records, made on the phone (§5) ----------
 
 export interface Stamp {
@@ -651,4 +679,8 @@ export interface HqBundleParts {
   corrections?: CorrectionRequest[];
   taxonDecisions?: TaxonDecision[];
   changeRequestDecisions?: ChangeRequestDecision[];
+  /** Satellite pictures for the team's transects (optional). */
+  basemaps?: Basemap[];
+  /** Picture bytes by basemapId. Only checksum-verified files are returned on read. */
+  basemapFiles?: Record<Code, Uint8Array>;
 }

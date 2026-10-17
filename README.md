@@ -131,6 +131,9 @@ To rebuild the demo data and the sample bundles: `npm run demo-data -w shared &&
 - **Quoted source wording:** each value in the pack keeps a short quote from its source (under 100 characters) for
   citation only. Those quotes stay under their sources' own terms and are not relicensed by the pack's CC BY 4.0.
 - **Species photos** are linked, not copied (CC BY 4.0 and CC0, from GBIF), with credits in `attribution.md`.
+- **Satellite picture** (`demo-data/basemaps/`): ESA WorldCover 2021 Sentinel-2 composite, 10 m, **CC BY 4.0**.
+  It contains modified Copernicus Sentinel data (2021). It's remade with `demo-data/basemaps/make-basemap.py`, and
+  both apps show the credit whenever the picture is on screen.
 - **Dependencies:** all open-source under permissive licences (MIT, ISC, Apache-2.0, BSD and similar), checked
   17 Oct 2026. `lightningcss` (MPL-2.0) is only a build tool inside Expo and is not shipped in the app.
 - **Exports** follow Darwin Core (Event + Occurrence + MeasurementOrFact, with Humboldt survey-effort fields).
