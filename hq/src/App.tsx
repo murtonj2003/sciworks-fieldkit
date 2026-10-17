@@ -10,6 +10,7 @@ import { MapView } from './components/MapView'
 import { DEFAULT_FILTER, Queue, applyFilter, sortRows, type QueueFilter } from './components/Queue'
 import { DevicesPanel, ExportDialog, HqBundleDialog } from './components/Dialogs'
 import { AiPanel } from './components/AiPanel'
+import { FormDialog } from './components/FormDialog'
 import { runReview, scopeToReview } from './lib/ai/agent'
 import { getApiKey, getAutoReview } from './lib/ai/apiKey'
 import { loadDemoProject, loadSampleFieldBundle } from './lib/demo'
@@ -18,7 +19,7 @@ import { importBundleFile, summaryLine } from './lib/importBundle'
 import { setStatus } from './lib/review'
 import { dataManagerOf, loadSetup } from './lib/setup'
 
-type Dialog = 'none' | 'hq-bundle' | 'export' | 'devices' | 'ai'
+type Dialog = 'none' | 'hq-bundle' | 'export' | 'devices' | 'ai' | 'form'
 
 export default function App() {
   const setup = useLiveQuery(() => loadSetup(), [], undefined)
@@ -29,6 +30,20 @@ export default function App() {
   const quarantined = useLiveQuery(() => db.quarantine.toArray(), [], [])
   const aiNotes = useLiveQuery(() => db.aiNotes.toArray(), [], [])
   const lastRun = useLiveQuery(() => db.aiRuns.orderBy('startedAt').last(), [], undefined)
+  // Team requests waiting for a decision: species added in the field, and form requests.
+  const pendingRequests = useLiveQuery(
+    async () => {
+      const decidedTaxa = new Set((await db.taxonDecisions.toArray()).map((t) => t.provisionalTaxonId))
+      const decidedCrs = new Set((await db.changeRequestDecisions.toArray()).map((c) => c.changeRequestId))
+      const draft = (await db.setup.get('templateDraft'))?.value as { acceptedRequestIds?: string[] } | undefined
+      const inDraft = new Set(draft?.acceptedRequestIds ?? [])
+      const taxa = (await db.provisionalTaxa.toArray()).filter((p) => !decidedTaxa.has(p.provisionalTaxonId)).length
+      const crs = (await db.changeRequests.toArray()).filter((c) => !decidedCrs.has(c.changeRequestId) && !inDraft.has(c.changeRequestId)).length
+      return taxa + crs
+    },
+    [],
+    0,
+  )
 
   const [filter, setFilter] = useState<QueueFilter>(DEFAULT_FILTER)
   const [selectedKey, setSelectedKey] = useState<string>()
@@ -240,6 +255,9 @@ export default function App() {
           <button className="btn" onClick={() => setDialog('export')} disabled={!project}>
             Export Darwin Core
           </button>
+          <button className="btn" onClick={() => setDialog('form')} disabled={!project}>
+            Form &amp; requests{pendingRequests ? ` (${pendingRequests})` : ''}
+          </button>
           <button className="btn" onClick={() => setDialog('ai')} disabled={!project} title="AI reviewer: drafts only; you decide">
             {lastRun?.state === 'running' ? 'AI reviewing…' : 'AI review'}
           </button>
@@ -369,6 +387,7 @@ export default function App() {
       {dialog === 'hq-bundle' && project && <HqBundleDialog project={project} onClose={() => setDialog('none')} />}
       {dialog === 'export' && project && setup && <ExportDialog setup={setup} onClose={() => setDialog('none')} onSelect={(k) => (setSelectedKey(k), setDialog('none'))} />}
       {dialog === 'devices' && <DevicesPanel project={project} onClose={() => setDialog('none')} />}
+      {dialog === 'form' && <FormDialog project={project} template={setup?.template} me={me.personId} onClose={() => setDialog('none')} />}
       {dialog === 'ai' && (
         <AiPanel
           project={project}

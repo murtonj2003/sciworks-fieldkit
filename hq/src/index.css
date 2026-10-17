@@ -619,3 +619,13 @@ label.inline {
   gap: 0.4rem;
   max-width: none;
 }
+
+.modal-wide {
+  width: min(64rem, 94vw);
+}
+.row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}

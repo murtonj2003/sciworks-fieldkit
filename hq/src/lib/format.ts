@@ -84,8 +84,10 @@ export function recordSubtitle(row: RecordRow, project?: Project): string {
 
 /** Every field the template (and the team's overlay) defines for this record type, in screen order. */
 export function fieldsFor(recordType: 'survey' | 'encounter', template?: Template, overlay?: Overlay): FieldDef[] {
-  const fields = [...(template?.fields ?? []), ...(overlay?.addedFields ?? [])].filter((f) => f.recordType === recordType)
-  return fields.sort((a, b) => a.order - b.order)
+  const core = (template?.fields ?? []).filter((f) => f.recordType === recordType)
+  // A team field that has since joined the core form appears once (core wins), as on the phone.
+  const added = (overlay?.addedFields ?? []).filter((f) => f.recordType === recordType && !core.some((c) => c.key === f.key))
+  return [...core, ...added].sort((a, b) => a.order - b.order)
 }
 
 export function valueAt(data: AnyRecord, path: string): unknown {
