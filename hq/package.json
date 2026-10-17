@@ -1,0 +1,38 @@
+{
+  "name": "@sciworks/hq",
+  "private": true,
+  "version": "0.1.0",
+  "description": "HQ: the Data Manager's base-camp laptop app. Imports Field bundles, QA review, map, Darwin Core export.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "oxlint"
+  },
+  "dependencies": {
+    "@sciworks/shared": "*",
+    "dexie": "^4.4.6",
+    "dexie-react-hooks": "^4.4.0",
+    "fflate": "^0.8.3",
+    "maplibre-gl": "^6.14.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "uuid": "^14.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "fake-indexeddb": "^6.2.6",
+    "oxlint": "^1.81.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^5.0.5"
+  }
+}
