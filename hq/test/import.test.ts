@@ -137,7 +137,7 @@ describe('W1 · import a Field bundle (SHARED-CONTRACT §7.2)', () => {
       })
     const s1 = await importBundleFile(make('0199f0a2-1c00-7a00-8000-0000000000a1'), 'a.zip', d)
     expect(s1.heldAside).toBe(1)
-    expect(summaryLine(s1)).toContain('1 incomplete item held aside')
+    expect(summaryLine(s1)).toContain('1 incomplete item held until complete')
     await importBundleFile(make('0199f0a2-1c00-7a00-8000-0000000000a2'), 'b.zip', d)
     expect(await d.quarantine.count()).toBe(1)
     expect(await d.records.count()).toBe(0)

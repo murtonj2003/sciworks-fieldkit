@@ -253,9 +253,9 @@ export function summaryLine(s: ImportSummary): string {
   const parts = [`${s.newRecords} new`, `${s.updatedRecords} updated`, `${s.duplicates} duplicate${s.duplicates === 1 ? '' : 's'}`]
   if (s.olderRevs) parts.push(`${s.olderRevs} older version${s.olderRevs === 1 ? '' : 's'} kept as history`)
   if (s.newPhotos) parts.push(`${s.newPhotos} photo${s.newPhotos === 1 ? '' : 's'}`)
-  if (s.heldAside) parts.push(`${s.heldAside} incomplete item${s.heldAside === 1 ? '' : 's'} held aside`)
+  if (s.heldAside) parts.push(`${s.heldAside} incomplete item${s.heldAside === 1 ? '' : 's'} held until complete`)
   const bad = s.badFiles.length ? `, ${s.badFiles.length} bad file${s.badFiles.length === 1 ? '' : 's'}: ${s.badFiles.map((b) => b.path).join(', ')}` : ''
-  const edited = s.editedAfterReview ? ` ${s.editedAfterReview} changed after review: shown as Edited.` : ''
+  const edited = s.editedAfterReview ? ` ${s.editedAfterReview} changed after you reviewed ${s.editedAfterReview === 1 ? 'it' : 'them'}: shown as Edited.` : ''
   return `${parts.join(', ')}${bad}.${edited}`
 }
 

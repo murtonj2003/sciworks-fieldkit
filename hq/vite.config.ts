@@ -19,15 +19,18 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['icon-64.png', 'icon-192.png', 'icon-512.png'],
       manifest: {
-        name: 'Sciworks HQ',
-        short_name: 'HQ',
+        name: 'Fieldkit HQ',
+        short_name: 'Fieldkit HQ',
         description: 'Base-camp data manager: import field bundles, review, export Darwin Core.',
-        theme_color: '#1f2a24',
-        background_color: '#f4f2ec',
+        theme_color: '#FBFAFA',
+        background_color: '#FBFAFA',
         display: 'standalone',
-        icons: [{ src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+        icons: [
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,mjs,css,html,svg,png,zip,woff2}'],

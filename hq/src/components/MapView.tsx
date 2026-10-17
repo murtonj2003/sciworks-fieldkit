@@ -1,5 +1,7 @@
-// All teams' points over the transect lines. Plain background, no basemap tiles: safe with no internet.
-// Markers carry shape as well as colour (colour-blind safe): circle = on the line, triangle = near, diamond = far.
+// All teams' points over the transect lines. No basemap tiles (safe with no internet): a CSS grid sits behind a
+// transparent MapLibre canvas. Markers are the kit's own band marks (circle / triangle / diamond / hollow diamond),
+// a mint ring means approved, a black ring means selected, and a dashed grey diamond is a point as typed before
+// a fix (handoff §1.3).
 
 import { useEffect, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
@@ -7,116 +9,114 @@ import type { GeoJSONSource, MapLayerMouseEvent, StyleSpecification } from 'mapl
 import 'maplibre-gl/dist/maplibre-gl.css'
 // MapLibre 6 runs its worker from a separate file: serve it ourselves so it is precached for offline use.
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
+import type { Encounter, TransectCollection } from '@sciworks/shared'
+import type { RecordRow } from '../db'
+import { Icon, Mark, SYMBOLS } from '../kit/Icons'
+import { fmtNumber } from '../lib/format'
 
 maplibregl.setWorkerUrl(workerUrl)
-import type { Encounter, ReviewStatus, TransectCollection } from '@sciworks/shared'
-import type { RecordRow } from '../db'
 
-type Band = 'green' | 'amber' | 'red' | 'outside-bbox' | 'unknown'
-
-const BAND_FILL: Record<Band, string> = {
-  green: '#2f7d4f',
-  amber: '#c98a12',
-  red: '#b83a2e',
-  'outside-bbox': '#6b3fa0',
-  unknown: '#6f6f6f',
-}
-const STATUSES: ReviewStatus[] = ['received', 'flagged', 'edited', 'approved', 'rejected']
-
-/** Draws one marker icon: the shape says the band, the ring says the review status. */
-function drawIcon(band: Band, status: ReviewStatus, selected: boolean): ImageData {
-  const px = 2
-  const size = 30 * px
-  const c = document.createElement('canvas')
-  c.width = c.height = size
-  const g = c.getContext('2d')!
-  const mid = size / 2
-  const r = (selected ? 10 : 8) * px
-  g.beginPath()
-  if (band === 'green' || band === 'unknown') g.arc(mid, mid, r, 0, Math.PI * 2)
-  else if (band === 'amber') {
-    g.moveTo(mid, mid - r * 1.15)
-    g.lineTo(mid + r * 1.1, mid + r * 0.8)
-    g.lineTo(mid - r * 1.1, mid + r * 0.8)
-    g.closePath()
-  } else {
-    g.moveTo(mid, mid - r * 1.2)
-    g.lineTo(mid + r * 1.2, mid)
-    g.lineTo(mid, mid + r * 1.2)
-    g.lineTo(mid - r * 1.2, mid)
-    g.closePath()
-  }
-  g.fillStyle = status === 'rejected' ? '#bdbdbd' : BAND_FILL[band]
-  g.fill()
-  g.lineWidth = (status === 'approved' ? 3.5 : selected ? 3 : 1.5) * px
-  g.strokeStyle = status === 'approved' ? '#10251a' : selected ? '#111' : '#ffffff'
-  g.stroke()
-  g.fillStyle = '#fff'
-  g.font = `bold ${9 * px}px system-ui, sans-serif`
-  g.textAlign = 'center'
-  g.textBaseline = 'middle'
-  const glyph = status === 'approved' ? '✓' : status === 'rejected' ? '✕' : status === 'edited' ? '✎' : status === 'flagged' ? '!' : ''
-  if (glyph) g.fillText(glyph, mid, mid + px)
-  return g.getImageData(0, 0, size, size)
-}
+type Band = 'on' | 'near' | 'off' | 'outside'
+const BAND_OF: Record<string, Band> = { green: 'on', amber: 'near', red: 'off', 'outside-bbox': 'outside' }
 
 const STYLE: StyleSpecification = {
   version: 8,
   sources: {},
-  layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#eceee7' } }],
+  layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#000000', 'background-opacity': 0 } }],
 }
 
-const bandOf = (row: RecordRow): Band => (row.hq?.coord?.band as Band | undefined) ?? (row.hq?.transectMissing ? 'unknown' : 'unknown')
+const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+
+/** Rasterises one of the kit's band-mark symbols with the live token colours. */
+function markImage(symbol: string, color: string, glyph: string, hollow: string): Promise<HTMLImageElement> {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="40" height="40" style="color:${color};--fk-glyph:${glyph};--fk-hollow:${hollow}">${symbol}</svg>`
+  const img = new Image(40, 40)
+  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+  return img.decode().then(() => img)
+}
+
+/** A "nice" scale-bar length (m) that fits in about 100 px. */
+function scaleFor(map: maplibregl.Map): { metres: number; px: number } {
+  const lat = map.getCenter().lat
+  const mPerPx = (40075016.686 * Math.cos((lat * Math.PI) / 180)) / (512 * 2 ** map.getZoom())
+  const steps = [10, 20, 50, 100, 200, 250, 500, 1000, 2000, 5000, 10000]
+  const metres = [...steps].reverse().find((s) => s / mPerPx <= 110) ?? 10
+  return { metres, px: Math.round(metres / mPerPx) }
+}
 
 export interface MapViewProps {
   transects?: TransectCollection
   records: RecordRow[]
   selectedKey?: string
   onSelect: (key: string) => void
+  /** e.g. { team: 'Team B', line: 'Last handover Sat 17 Oct, 06:00' } for the selected record's team. */
+  counter?: { team: string; line: string; sub?: string }
 }
 
-export function MapView({ transects, records, selectedKey, onSelect }: MapViewProps) {
+export function MapView({ transects, records, selectedKey, onSelect, counter }: MapViewProps) {
   const el = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const [ready, setReady] = useState(false)
+  const [scale, setScale] = useState({ metres: 500, px: 100 })
   const fitted = useRef(false)
   const labels = useRef<maplibregl.Marker[]>([])
+  const notes = useRef<maplibregl.Marker[]>([])
   const onSelectRef = useRef(onSelect)
   onSelectRef.current = onSelect
 
   useEffect(() => {
     if (!el.current) return
     const map = new maplibregl.Map({ container: el.current, style: STYLE, center: [-84.02, 10.42], zoom: 13, attributionControl: false })
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
-    map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left')
     mapRef.current = map
-    map.on('load', () => {
-      for (const band of Object.keys(BAND_FILL) as Band[]) {
-        for (const status of STATUSES) {
-          map.addImage(`pt-${band}-${status}`, drawIcon(band, status, false), { pixelRatio: 2 })
-          map.addImage(`pt-${band}-${status}-sel`, drawIcon(band, status, true), { pixelRatio: 2 })
+    const onMove = () => setScale(scaleFor(map))
+    map.on('move', onMove)
+    map.on('load', async () => {
+      const card = css('--card') || '#fff'
+      const marks: [string, string, string][] = [
+        ['m-on', css('--on-mark'), css('--on-glyph')],
+        ['m-near', css('--near-mark'), css('--near-glyph')],
+        ['m-off', css('--off-mark'), css('--off-glyph')],
+        ['m-outside', css('--off-mark'), card],
+        ['m-typed', css('--ink-2'), card],
+      ]
+      for (const [name, color, glyph] of marks) {
+        try {
+          map.addImage(name, await markImage(SYMBOLS[name]!, color, glyph, card), { pixelRatio: 2 })
+        } catch {
+          /* a marker that can't draw still shows in the queue and detail */
         }
       }
       const empty = { type: 'FeatureCollection', features: [] } as GeoJSON.FeatureCollection
-      map.addSource('transects', { type: 'geojson', data: empty })
-      map.addSource('links', { type: 'geojson', data: empty })
-      map.addSource('originals', { type: 'geojson', data: empty })
-      map.addSource('points', { type: 'geojson', data: empty })
-      map.addLayer({ id: 'transect-casing', type: 'line', source: 'transects', paint: { 'line-color': '#ffffff', 'line-width': 7 }, layout: { 'line-cap': 'round', 'line-join': 'round' } })
+      for (const id of ['transects', 'links', 'originals', 'points']) map.addSource(id, { type: 'geojson', data: empty })
       map.addLayer({
         id: 'transect-line',
         type: 'line',
         source: 'transects',
-        paint: { 'line-color': '#34413a', 'line-width': ['case', ['get', 'active'], 4, 2.5] },
+        paint: { 'line-color': css('--transect'), 'line-width': ['case', ['get', 'active'], 4, 3] },
         layout: { 'line-cap': 'round', 'line-join': 'round' },
       })
-      map.addLayer({ id: 'links', type: 'line', source: 'links', paint: { 'line-color': '#7a4b2a', 'line-width': 1.5, 'line-dasharray': [2, 2] } })
-      map.addLayer({ id: 'originals', type: 'circle', source: 'originals', paint: { 'circle-radius': 6, 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': '#7a4b2a', 'circle-stroke-width': 2 } })
+      map.addLayer({ id: 'links', type: 'line', source: 'links', paint: { 'line-color': css('--ink-2'), 'line-width': 1.5, 'line-dasharray': [2.7, 2.7] } })
+      map.addLayer({ id: 'originals', type: 'symbol', source: 'originals', layout: { 'icon-image': 'm-typed', 'icon-allow-overlap': true, 'icon-ignore-placement': true } })
+      map.addLayer({
+        id: 'approved-ring',
+        type: 'circle',
+        source: 'points',
+        filter: ['==', ['get', 'approved'], true],
+        paint: { 'circle-radius': 12.5, 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': css('--on-mark'), 'circle-stroke-width': 1.75 },
+      })
       map.addLayer({
         id: 'points',
         type: 'symbol',
         source: 'points',
         layout: { 'icon-image': ['get', 'icon'], 'icon-allow-overlap': true, 'icon-ignore-placement': true, 'symbol-sort-key': ['get', 'sort'] },
+        paint: { 'icon-opacity': ['case', ['get', 'rejected'], 0.4, 1] },
+      })
+      map.addLayer({
+        id: 'selected-ring',
+        type: 'circle',
+        source: 'points',
+        filter: ['==', ['get', 'selected'], true],
+        paint: { 'circle-radius': 14, 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': css('--ink'), 'circle-stroke-width': 2 },
       })
       map.on('click', 'points', (e: MapLayerMouseEvent) => {
         const key = e.features?.[0]?.properties?.key
@@ -124,6 +124,7 @@ export function MapView({ transects, records, selectedKey, onSelect }: MapViewPr
       })
       map.on('mouseenter', 'points', () => (map.getCanvas().style.cursor = 'pointer'))
       map.on('mouseleave', 'points', () => (map.getCanvas().style.cursor = ''))
+      onMove()
       setReady(true)
     })
     const ro = new ResizeObserver(() => map.resize())
@@ -138,7 +139,7 @@ export function MapView({ transects, records, selectedKey, onSelect }: MapViewPr
   const selected = records.find((r) => r.key === selectedKey)
   const activeTransect = selected?.transectId
 
-  // Transect lines, with an HTML label at each start (no font tiles needed offline).
+  // Transect lines, each with its ID at its start (HTML labels: no font tiles needed offline).
   useEffect(() => {
     const map = mapRef.current
     if (!ready || !map) return
@@ -150,31 +151,31 @@ export function MapView({ transects, records, selectedKey, onSelect }: MapViewPr
     labels.current.forEach((m) => m.remove())
     labels.current = (transects?.features ?? []).map((f) => {
       const div = document.createElement('div')
-      div.className = 'map-label'
+      div.className = 'hq-m-lbl'
       div.textContent = f.properties.transectId
       const start = f.geometry.coordinates[0] as [number, number]
-      return new maplibregl.Marker({ element: div, anchor: 'right', offset: [-8, 0] }).setLngLat(start).addTo(map)
+      return new maplibregl.Marker({ element: div, anchor: 'right', offset: [-10, 0] }).setLngLat(start).addTo(map)
     })
     if (!fitted.current && transects?.features.length) {
       const b = new maplibregl.LngLatBounds()
       for (const f of transects.features) for (const c of f.geometry.coordinates) b.extend(c as [number, number])
-      map.fitBounds(b, { padding: 60, duration: 0 })
+      map.fitBounds(b, { padding: { top: 90, bottom: 110, left: 70, right: 70 }, duration: 0 })
       fitted.current = true
     }
   }, [ready, transects, activeTransect])
 
-  // Points: current accepted positions; and, where a "did you mean?" fix was accepted, the original typed point.
+  // Points, rings, and the point as typed before a "did you mean?" fix.
   useEffect(() => {
     const map = mapRef.current
     if (!ready || !map) return
     const enc = records.filter((r) => r.recordType === 'encounter')
     const points: GeoJSON.Feature[] = enc.map((r) => {
       const e = r.data as Encounter
-      const sel = r.key === selectedKey
+      const band = BAND_OF[r.hq?.coord?.band ?? e.location.check.band] ?? 'on'
       return {
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [e.location.lon, e.location.lat] },
-        properties: { key: r.key, icon: `pt-${bandOf(r)}-${r.status}${sel ? '-sel' : ''}`, sort: sel ? 10 : r.flagged ? 5 : 1 },
+        properties: { key: r.key, icon: `m-${band}`, sort: r.key === selectedKey ? 10 : r.flagged ? 5 : 1, approved: r.status === 'approved', rejected: r.status === 'rejected', selected: r.key === selectedKey },
       }
     })
     const originals: GeoJSON.Feature[] = []
@@ -189,6 +190,24 @@ export function MapView({ transects, records, selectedKey, onSelect }: MapViewPr
     ;(map.getSource('points') as GeoJSONSource).setData({ type: 'FeatureCollection', features: points })
     ;(map.getSource('originals') as GeoJSONSource).setData({ type: 'FeatureCollection', features: originals })
     ;(map.getSource('links') as GeoJSONSource).setData({ type: 'FeatureCollection', features: links })
+
+    // Plain-words notes beside the selected record's fix: "as typed · Off the line" and "fixed in field".
+    notes.current.forEach((m) => m.remove())
+    notes.current = []
+    const sel = enc.find((r) => r.key === selectedKey)
+    const se = sel?.data as Encounter | undefined
+    if (sel && se?.location.original) {
+      const c = se.location.check
+      const note = (html: string, at: [number, number]) => {
+        const div = document.createElement('div')
+        div.className = 'hq-m-note'
+        div.innerHTML = html
+        notes.current.push(new maplibregl.Marker({ element: div, anchor: 'left', offset: [16, 0] }).setLngLat(at).addTo(map))
+      }
+      note(`<b>as typed</b><span>Off the line · ${fmtNumber(c.offsetM, 0)} m off ${c.transectId}</span>`, [se.location.original.lon, se.location.original.lat])
+      const now = sel.hq?.coord
+      note(`<b>fixed in field</b><span>${now ? `${fmtNumber(now.offsetM, 1)} m from the line` : 'suggestion used'}</span>`, [se.location.lon, se.location.lat])
+    }
   }, [ready, records, selectedKey])
 
   // Bring the selected record into view (both ends of a fixed coordinate).
@@ -200,7 +219,7 @@ export function MapView({ transects, records, selectedKey, onSelect }: MapViewPr
       if (t) {
         const b = new maplibregl.LngLatBounds()
         for (const c of t.geometry.coordinates) b.extend(c as [number, number])
-        map.fitBounds(b, { padding: 80, duration: 400, maxZoom: 16 })
+        map.fitBounds(b, { padding: 100, duration: 400, maxZoom: 16 })
       }
       return
     }
@@ -211,18 +230,69 @@ export function MapView({ transects, records, selectedKey, onSelect }: MapViewPr
     if (pts.every((p) => bounds.contains(p))) return
     const b = new maplibregl.LngLatBounds()
     pts.forEach((p) => b.extend(p))
-    map.fitBounds(b, { padding: 100, duration: 400, maxZoom: 15 })
+    map.fitBounds(b, { padding: 120, duration: 400, maxZoom: 15 })
   }, [ready, selectedKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="map-wrap">
-      <div ref={el} className="map" />
-      <div className="map-legend" aria-label="Map key">
-        <span><b className="lg lg-green">●</b> on the line</span>
-        <span><b className="lg lg-amber">▲</b> near (check)</span>
-        <span><b className="lg lg-red">◆</b> far off</span>
-        <span><b className="lg lg-orig">○</b> typed before a fix</span>
-        <span>ring = approved ✓</span>
+    <div className="fk-card fk-map hq-map">
+      <div ref={el} className="hq-map__gl" />
+      {counter && (
+        <div className="fk-map__counter fk-group">
+          <h4 className="fk-gt">{counter.team}</h4>
+          <div className="fk-counter fk-counter--sm">
+            <p className="fk-counter__main">{counter.line}</p>
+            {counter.sub && (
+              <p className="fk-counter__sub">
+                <Icon name="clock" />
+                {counter.sub}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+      <div className="fk-scale" aria-label={`Scale: ${scale.metres} m`}>
+        <span>{scale.metres >= 1000 ? `${scale.metres / 1000} km` : `${scale.metres} m`}</span>
+        <i style={{ width: scale.px }} />
+      </div>
+      <div className="fk-zoom">
+        <button aria-label="Zoom in" onClick={() => mapRef.current?.zoomIn()}>
+          <Icon name="plus" />
+        </button>
+        <button aria-label="Zoom out" onClick={() => mapRef.current?.zoomOut()}>
+          <Icon name="minus" />
+        </button>
+      </div>
+      <div className="fk-legend" aria-label="Map key">
+        <span>
+          <Mark band="on" />
+          On the line
+        </span>
+        <span>
+          <Mark band="near" />
+          Near the line
+        </span>
+        <span>
+          <Mark band="off" />
+          Off the line
+        </span>
+        <span>
+          <Mark band="outside" />
+          Outside the project area
+        </span>
+        <span>
+          <Mark band="typed" />
+          Typed before a fix
+        </span>
+        <span>
+          <Mark band="ring" />
+          Green ring = approved
+        </span>
+        <span>
+          <svg className="fk-mark" viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="10" cy="10" r="8" fill="none" stroke="var(--ink)" strokeWidth="2" />
+          </svg>
+          Black ring = selected
+        </span>
       </div>
     </div>
   )

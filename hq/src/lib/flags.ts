@@ -8,11 +8,11 @@ const m = (n: number) => `${Math.round(n).toLocaleString('en-GB')} m`
 function coordFlagText(flag: CoordFlag, c: CoordCheck): string | undefined {
   switch (flag) {
     case 'OUTSIDE_PROJECT_BBOX':
-      return 'The point is outside the project area.'
+      return 'Outside the project area.'
     case 'OFF_TRANSECT_AMBER':
-      return `${m(c.offsetM)} from transect ${c.transectId}; allowed ${m(c.toleranceM)}. Worth a look.`
+      return `Near the line: ${m(c.offsetM)} from ${c.transectId} (allowed ${m(c.toleranceM)}). Worth a look.`
     case 'OFF_TRANSECT_RED':
-      return `${m(c.offsetM)} off transect ${c.transectId}; allowed ${m(c.toleranceM)}. Likely a typing error.`
+      return `Off the line: ${m(c.offsetM)} off ${c.transectId} (allowed ${m(c.toleranceM)}). Likely a typing error.`
     case 'CHAINAGE_MISMATCH':
       return 'Distance along the transect does not match the point.'
     case 'TYPED_DISTANCE_DISAGREES':

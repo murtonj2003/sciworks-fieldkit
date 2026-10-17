@@ -105,7 +105,7 @@ export function buildDwcArchive(input: DwcInput): DwcResult {
 
   for (const r of records) {
     if (r.voided) skipped.push({ key: r.key, why: 'voided on the phone' })
-    else if (r.status !== 'approved') skipped.push({ key: r.key, why: r.status === 'edited' ? 'changed since it was approved' : `not approved (${r.status})` })
+    else if (r.status !== 'approved') skipped.push({ key: r.key, why: r.status === 'edited' ? `not approved (edited, version ${r.rev})` : `not approved (${r.status})` })
   }
   // HQ asked the surveyor to fix something and they haven't answered (no reply, no newer rev): don't publish it yet.
   const waiting = new Set(
@@ -279,7 +279,6 @@ export function buildDwcArchive(input: DwcInput): DwcResult {
     occurrence: toCsv(OCC_COLS, occRows),
     mof: toCsv(MOF_COLS, mofRows),
   }
-  const stamp = input.createdAt.slice(0, 16).replace(/[-:]/g, '').replace('T', '-')
   const files: Record<string, Uint8Array> = {
     'Event.csv': strToU8(csv.event),
     'Occurrence.csv': strToU8(csv.occurrence),
@@ -292,7 +291,7 @@ export function buildDwcArchive(input: DwcInput): DwcResult {
   const zip = zipSync(Object.fromEntries(Object.entries(files).map(([k, v]) => [k, [v, { level: 6, mtime }]])))
   return {
     zip,
-    fileName: `DwC_${project.projectId}_${stamp}.zip`,
+    fileName: `dwca-${project.projectId}-${input.createdAt.slice(0, 10)}.zip`,
     events: eventRows.length,
     occurrences: occRows.length,
     measurements: mofRows.length,

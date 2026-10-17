@@ -1,8 +1,10 @@
 // The QA queue: every record from every team, filterable by team, status and flag.
 
-import type { Project, ReviewStatus } from '@sciworks/shared'
+import type { Encounter, Project, ReviewStatus } from '@sciworks/shared'
 import type { CorrectionRow, RecordRow } from '../db'
-import { STATUS_ICON, STATUS_WORD, recordSubtitle, recordTitle } from '../lib/format'
+import { Icon } from '../kit/Icons'
+import { StatusChip, Tag } from '../kit/ui'
+import { recordSubtitle, recordTitle } from '../lib/format'
 
 export type StatusFilter = 'to-review' | 'all' | ReviewStatus
 export interface QueueFilter {
@@ -55,96 +57,152 @@ interface QueueProps {
   held: number
   /** Records with an AI note waiting. */
   noteKeys: Set<string>
+  /** taxonIds the species pack marks as venomous. */
+  venomous: Set<string>
+  stats: { toReview: number; flagged: number; approved: number }
 }
 
-export function Queue({ project, rows, total, filter, onFilter, selectedKey, onSelect, drafts, provisionalNames, held, noteKeys }: QueueProps) {
+function Select<T extends string>({ label, value, def, onChange, options }: { label: string; value: T; def: T; onChange: (v: T) => void; options: [T, string][] }) {
+  return (
+    <label className={`hq-sel${value !== def ? ' is-set' : ''}`}>
+      <span className="hq-sel__k">{label}</span>
+      <select value={value} onChange={(e) => onChange(e.target.value as T)}>
+        {options.map(([v, l]) => (
+          <option key={v} value={v}>
+            {l}
+          </option>
+        ))}
+      </select>
+      <Icon name="chev-down" />
+    </label>
+  )
+}
+
+export function Queue(props: QueueProps) {
+  const { project, rows, total, filter, onFilter, selectedKey, onSelect, drafts, provisionalNames, held, noteKeys, venomous, stats } = props
   const draftKeys = new Set(drafts.filter((d) => d.state === 'draft').map((d) => d.recordKey))
   const teams = (project?.teams ?? []).filter((t) => t.transectIds.length)
   return (
-    <section className="queue" aria-label="QA queue">
-      <div className="queue-filters">
-        <label>
-          Team
-          <select value={filter.team} onChange={(e) => onFilter({ ...filter, team: e.target.value })}>
-            <option value="all">All teams</option>
-            {teams.map((t) => (
-              <option key={t.teamId} value={t.teamId}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Status
-          <select value={filter.status} onChange={(e) => onFilter({ ...filter, status: e.target.value as StatusFilter })}>
-            <option value="to-review">To review</option>
-            <option value="flagged">Flagged</option>
-            <option value="edited">Edited</option>
-            <option value="received">Not flagged</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="all">Everything</option>
-          </select>
-        </label>
-        <label>
-          Show
-          <select value={filter.flag} onChange={(e) => onFilter({ ...filter, flag: e.target.value as QueueFilter['flag'] })}>
-            <option value="any">Any</option>
-            <option value="flagged">With a warning</option>
-            <option value="ai-draft">With an AI draft</option>
-          </select>
-        </label>
-        <label>
-          Type
-          <select value={filter.type} onChange={(e) => onFilter({ ...filter, type: e.target.value as QueueFilter['type'] })}>
-            <option value="all">All</option>
-            <option value="encounter">Animals</option>
-            <option value="survey">Surveys</option>
-          </select>
-        </label>
+    <section className="fk-col" aria-label="QA queue">
+      <div className="fk-col-h">
+        <h3>QA queue</h3>
+        <span className="fk-stats">
+          <b>{stats.toReview}</b> to review · <b>{stats.flagged}</b> flagged · <b>{stats.approved}</b> approved
+        </span>
       </div>
-      <div className="queue-count">
-        {rows.length} of {total} records
-        {held > 0 && (
-          <span title="Saved on the phone before they were complete (for example, no location yet). Kept aside; they appear here once a complete version arrives.">
-            {' '}
-            · {held} incomplete held aside
-          </span>
-        )}
+      <div className="hq-filters" role="group" aria-label="Filters">
+        <Select label="Team" value={filter.team} def="all" onChange={(team) => onFilter({ ...filter, team })} options={[['all', 'All teams'], ...teams.map((t) => [t.teamId, t.name] as [string, string])]} />
+        <Select<StatusFilter>
+          label="Status"
+          value={filter.status}
+          def="to-review"
+          onChange={(status) => onFilter({ ...filter, status })}
+          options={[
+            ['to-review', 'To review'],
+            ['flagged', 'Flagged'],
+            ['edited', 'Edited'],
+            ['received', 'Received'],
+            ['approved', 'Approved'],
+            ['rejected', 'Rejected'],
+            ['all', 'Everything'],
+          ]}
+        />
+        <Select<QueueFilter['flag']>
+          label="Show"
+          value={filter.flag}
+          def="any"
+          onChange={(flag) => onFilter({ ...filter, flag })}
+          options={[
+            ['any', 'Any'],
+            ['flagged', 'With a warning'],
+            ['ai-draft', 'With an AI draft'],
+          ]}
+        />
+        <Select<QueueFilter['type']>
+          label="Type"
+          value={filter.type}
+          def="all"
+          onChange={(type) => onFilter({ ...filter, type })}
+          options={[
+            ['all', 'All'],
+            ['encounter', 'Animals'],
+            ['survey', 'Surveys'],
+          ]}
+        />
       </div>
-      <ol className="queue-list" role="listbox" aria-label="Records">
-        {rows.map((r) => (
-          <li
-            key={r.key}
-            role="option"
-            aria-selected={r.key === selectedKey}
-            className={`queue-row status-${r.status}${r.key === selectedKey ? ' is-selected' : ''}`}
-            onClick={() => onSelect(r.key)}
-          >
-            <span className="queue-status" title={STATUS_WORD[r.status]}>
-              <span aria-hidden>{STATUS_ICON[r.status]}</span> {STATUS_WORD[r.status]}
-            </span>
-            <span className="queue-title">{recordTitle(r, provisionalNames)}</span>
-            <span className="queue-sub">
-              {project?.teams.find((t) => t.teamId === r.teamId)?.name ?? r.teamId} · {recordSubtitle(r, project)}
-            </span>
-            <span className="queue-tags">
-              {r.flags.filter((f) => f.level === 'warn').length > 0 && (
-                <span className="tag tag-warn">⚠ {r.flags.filter((f) => f.level === 'warn').length} warning{r.flags.filter((f) => f.level === 'warn').length === 1 ? '' : 's'}</span>
-              )}
-              {r.flags.some((f) => f.code === 'FIXED_IN_FIELD') && <span className="tag tag-info">↺ fixed in field</span>}
-              {draftKeys.has(r.key) && <span className="tag tag-ai">AI draft</span>}
-              {noteKeys.has(r.key) && <span className="tag tag-ai">AI note</span>}
-              {r.rev > 1 && <span className="tag">rev {r.rev}</span>}
-            </span>
-          </li>
-        ))}
-        {rows.length === 0 && <li className="queue-empty">Nothing here. Change the filters, or import a Field bundle.</li>}
-      </ol>
-      <div className="queue-keys">
-        <kbd>↑</kbd>
-        <kbd>↓</kbd> move · <kbd>A</kbd> approve · <kbd>R</kbd> reject · <kbd>C</kbd> correction
+      <p className="hq-count">
+        <b>
+          {rows.length} of {total} records
+        </b>
+        {held > 0 && ` · ${held} incomplete, held until complete`}
+      </p>
+      <div className="fk-group fk-queue">
+        <div className="fk-list" role="listbox" aria-label="Records">
+          {rows.map((r) => {
+            const warnings = r.flags.filter((f) => f.level === 'warn').length
+            const e = r.recordType === 'encounter' ? (r.data as Encounter) : undefined
+            const venom = !!e?.taxon.taxonId && venomous.has(e.taxon.taxonId)
+            const fixed = r.flags.some((f) => f.code === 'FIXED_IN_FIELD')
+            const hasTags = venom || warnings > 0 || fixed || draftKeys.has(r.key) || noteKeys.has(r.key) || r.rev > 1
+            return (
+              <button
+                key={r.key}
+                role="option"
+                aria-selected={r.key === selectedKey}
+                className={`fk-qrow${r.key === selectedKey ? ' is-selected' : ''}`}
+                onClick={() => onSelect(r.key)}
+              >
+                <span className="fk-qrow__top">
+                  <span className={`fk-qrow__title${e && !e.taxon.unidentified ? ' fk-sp' : ''}`}>{recordTitle(r, provisionalNames)}</span>
+                  <StatusChip status={r.status} />
+                </span>
+                <span className="fk-qrow__sub">
+                  {project?.teams.find((t) => t.teamId === r.teamId)?.name ?? r.teamId} · {recordSubtitle(r, project)}
+                </span>
+                {hasTags && (
+                  <span className="fk-qrow__tags">
+                    {venom && <Tag kind="venom">VENOMOUS</Tag>}
+                    {warnings > 0 && (
+                      <Tag icon="warning">
+                        {warnings} warning{warnings === 1 ? '' : 's'}
+                      </Tag>
+                    )}
+                    {fixed && <Tag icon="crosshair">fixed in field</Tag>}
+                    {draftKeys.has(r.key) && <Tag kind="draft">AI draft</Tag>}
+                    {noteKeys.has(r.key) && <Tag kind="draft">AI note</Tag>}
+                    {r.rev > 1 && <Tag>v{r.rev}</Tag>}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+          {rows.length === 0 && (
+            <div className="fk-empty hq-qempty">
+              <b>Nothing here.</b>Change the filters, or import a Field bundle.
+            </div>
+          )}
+        </div>
       </div>
+      <p className="fk-keys hq-keys">
+        <span>
+          <span className="fk-kbd" aria-label="Up">
+            <Icon name="up" />
+          </span>{' '}
+          <span className="fk-kbd" aria-label="Down" style={{ transform: 'rotate(180deg)' }}>
+            <Icon name="up" />
+          </span>{' '}
+          move
+        </span>
+        <span>
+          <span className="fk-kbd">A</span>approve
+        </span>
+        <span>
+          <span className="fk-kbd">R</span>reject
+        </span>
+        <span>
+          <span className="fk-kbd">C</span>correction
+        </span>
+      </p>
     </section>
   )
 }

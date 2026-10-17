@@ -4,6 +4,7 @@
 import { useMemo, useState } from 'react'
 import { checkCoordinate, type Encounter, type FieldDef, type Location, type Overlay, type Template } from '@sciworks/shared'
 import type { RecordRow } from '../db'
+import { Icon } from '../kit/Icons'
 import { fieldsFor, fmtValue } from '../lib/format'
 import { createCorrection, getPath } from '../lib/review'
 import { loadSetup, transectById } from '../lib/setup'
@@ -79,69 +80,79 @@ export function CorrectionForm({ row, template, overlay, me, onDone }: Props) {
   }
 
   return (
-    <form className="panel correction-form" onSubmit={submit}>
-      <h3>Send a correction to the surveyor</h3>
-      <label>
-        Field
-        <select value={path} onChange={(e) => (setPath(e.target.value), setText(''))}>
-          {fields.map((f) => (
-            <option key={f.key} value={f.path}>
-              {f.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <p className="muted small">Now: {fmtValue(current, field)}</p>
-      {field?.type === 'location' ? (
-        <div className="row">
-          <label>
-            Latitude
-            <input value={lat} onChange={(e) => setLat(e.target.value)} inputMode="decimal" />
-          </label>
-          <label>
-            Longitude
-            <input value={lon} onChange={(e) => setLon(e.target.value)} inputMode="decimal" />
-          </label>
-        </div>
-      ) : field?.type === 'choice' ? (
+    <section className="fk-group" aria-label="Send a correction to the surveyor">
+      <h3 className="fk-gt" style={{ margin: '6px 8px 8px', color: 'var(--ink)', fontWeight: 600, fontSize: 15 }}>
+        Send a correction to the surveyor
+      </h3>
+      <form className="fk-card hq-form" onSubmit={submit}>
         <label>
-          Proposed
-          <select value={text} onChange={(e) => setText(e.target.value)}>
-            <option value="">Choose…</option>
-            {field.choices?.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.label}
+          Field
+          <select className="hq-input" value={path} onChange={(e) => (setPath(e.target.value), setText(''))}>
+            {fields.map((f) => (
+              <option key={f.key} value={f.path}>
+                {f.label}
               </option>
             ))}
           </select>
         </label>
-      ) : field?.type === 'boolean' ? (
+        <p className="fk-help">Now: {fmtValue(current, field)}</p>
+        {field?.type === 'location' ? (
+          <div className="hq-row">
+            <label>
+              Latitude
+              <input className="hq-input" value={lat} onChange={(e) => setLat(e.target.value)} inputMode="decimal" />
+            </label>
+            <label>
+              Longitude
+              <input className="hq-input" value={lon} onChange={(e) => setLon(e.target.value)} inputMode="decimal" />
+            </label>
+          </div>
+        ) : field?.type === 'choice' ? (
+          <label>
+            Proposed
+            <select className="hq-input" value={text} onChange={(e) => setText(e.target.value)}>
+              <option value="">Choose…</option>
+              {field.choices?.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : field?.type === 'boolean' ? (
+          <label>
+            Proposed
+            <select className="hq-input" value={text} onChange={(e) => setText(e.target.value)}>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </label>
+        ) : (
+          <label>
+            Proposed {field?.unit ? `(${field.unit})` : ''}
+            <input className="hq-input" value={text} onChange={(e) => setText(e.target.value)} autoFocus inputMode={field?.type === 'text' ? 'text' : 'decimal'} />
+          </label>
+        )}
         <label>
-          Proposed
-          <select value={text} onChange={(e) => setText(e.target.value)}>
-            <option value="true">Yes</option>
-            <option value="false">No</option>
-          </select>
+          Why (the surveyor reads this)
+          <textarea className="hq-input" value={reason} onChange={(e) => setReason(e.target.value)} rows={2} />
         </label>
-      ) : (
-        <label>
-          Proposed {field?.unit ? `(${field.unit})` : ''}
-          <input value={text} onChange={(e) => setText(e.target.value)} autoFocus />
-        </label>
-      )}
-      <label>
-        Why
-        <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} />
-      </label>
-      {error && <p className="error">{error}</p>}
-      <div className="detail-actions">
-        <button className="btn btn-approve" type="submit">
-          Approve and queue for the phone
-        </button>
-        <button className="btn btn-quiet" type="button" onClick={onDone}>
-          Cancel
-        </button>
-      </div>
-    </form>
+        {error && (
+          <p className="fk-error">
+            <Icon name="warning" />
+            {error}
+          </p>
+        )}
+        <div className="hq-form__acts">
+          <button className="fk-btn fk-btn--primary fk-btn--36" type="submit">
+            Approve and send
+          </button>
+          <button className="fk-btn fk-btn--grey fk-btn--36" type="button" onClick={onDone}>
+            Cancel
+          </button>
+        </div>
+        <p className="fk-help">Goes to the surveyor in the next bundle. Nothing changes until they accept.</p>
+      </form>
+    </section>
   )
 }

@@ -91,7 +91,7 @@ describe('W4 · Darwin Core export', () => {
     await d.records.update(one.key, { status: 'edited', rev: one.rev + 1 })
     const r = await dwc(d)
     expect(r.occurrences).toBe(2)
-    expect(r.skipped.find((s) => s.key === one.key)?.why).toBe('changed since it was approved')
+    expect(r.skipped.find((s) => s.key === one.key)?.why).toBe(`not approved (edited, version ${one.rev + 1})`)
   })
 
   it('a record with a correction waiting on the surveyor is held back until they answer', async () => {

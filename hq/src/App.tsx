@@ -1,26 +1,48 @@
-// HQ: ONE main screen. Queue on the left, map in the middle, record detail on the right.
-// Plain components for now: the Impeccable design pass (Sunday morning) owns the look.
+// Fieldkit HQ (wireframe H1): ONE main screen. The QA queue on the left, the map in the middle (widest), the record
+// on the right. Form control and "Check a list of points" replace the three columns when chosen from the top bar.
+// Look: the Fieldkit kit (./kit/fieldkit.css), Option E · Clean.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { CONTRACT_VERSION } from '@sciworks/shared'
 import { db, type ImportSummary } from './db'
-import { Detail } from './components/Detail'
-import { MapView } from './components/MapView'
-import { DEFAULT_FILTER, Queue, applyFilter, sortRows, type QueueFilter } from './components/Queue'
-import { DevicesPanel, ExportDialog, HqBundleDialog } from './components/Dialogs'
 import { AiPanel } from './components/AiPanel'
-import { FormDialog } from './components/FormDialog'
-import { PointsDialog } from './components/PointsDialog'
+import { Detail } from './components/Detail'
+import { DevicesPanel, ExportDialog, HqBundleDialog } from './components/Dialogs'
+import { FormScreen } from './components/FormScreen'
+import { MapView } from './components/MapView'
+import { PointsScreen } from './components/PointsScreen'
+import { DEFAULT_FILTER, Queue, applyFilter, sortRows, type QueueFilter } from './components/Queue'
+import { Icon, Sprite } from './kit/Icons'
 import { runReview, scopeToReview } from './lib/ai/agent'
 import { getApiKey, getAutoReview } from './lib/ai/apiKey'
 import { loadDemoProject, loadSampleFieldBundle } from './lib/demo'
 import { download, makeBackup } from './lib/files'
 import { importBundleFile, summaryLine } from './lib/importBundle'
 import { setStatus } from './lib/review'
-import { dataManagerOf, loadSetup } from './lib/setup'
+import { dataManagerOf, loadSetup, teamName } from './lib/setup'
+import { shortTime } from './lib/time'
 
-type Dialog = 'none' | 'hq-bundle' | 'export' | 'devices' | 'ai' | 'form' | 'points'
+type Dialog = 'none' | 'hq-bundle' | 'export' | 'devices' | 'ai'
+type View = 'review' | 'form' | 'points'
+
+const failed = (fileName: string, error: string): ImportSummary => ({
+  fileName,
+  ok: false,
+  error,
+  alreadyHadFile: false,
+  newRecords: 0,
+  updatedRecords: 0,
+  duplicates: 0,
+  olderRevs: 0,
+  editedAfterReview: 0,
+  newPhotos: 0,
+  newProvisionalTaxa: 0,
+  newChangeRequests: 0,
+  newCorrectionResponses: 0,
+  heldAside: 0,
+  badFiles: [],
+})
 
 export default function App() {
   const setup = useLiveQuery(() => loadSetup(), [], undefined)
@@ -30,6 +52,7 @@ export default function App() {
   const provisional = useLiveQuery(() => db.provisionalTaxa.toArray(), [], [])
   const quarantined = useLiveQuery(() => db.quarantine.toArray(), [], [])
   const aiNotes = useLiveQuery(() => db.aiNotes.toArray(), [], [])
+  const devices = useLiveQuery(() => db.devices.toArray(), [], [])
   const lastRun = useLiveQuery(() => db.aiRuns.orderBy('startedAt').last(), [], undefined)
   // Team requests waiting for a decision: species added in the field, and form requests.
   const pendingRequests = useLiveQuery(
@@ -46,6 +69,7 @@ export default function App() {
     0,
   )
 
+  const [view, setView] = useState<View>('review')
   const [filter, setFilter] = useState<QueueFilter>(DEFAULT_FILTER)
   const [selectedKey, setSelectedKey] = useState<string>()
   const [correctionOpen, setCorrectionOpen] = useState(false)
@@ -57,10 +81,12 @@ export default function App() {
   const menuRef = useRef<HTMLDetailsElement>(null)
   const [keyVersion, setKeyVersion] = useState(0)
   const [aiMessage, setAiMessage] = useState('')
+  const [aiStripHidden, setAiStripHidden] = useState(false)
 
   const project = setup?.project
   const me = dataManagerOf(project)
   const provisionalNames = useMemo(() => new Map(provisional.map((p) => [p.provisionalTaxonId, p.data.proposedName])), [provisional])
+  const venomous = useMemo(() => new Set((setup?.speciesPack?.taxa ?? []).filter((t) => t.dangerous).map((t) => t.taxonId)), [setup?.speciesPack])
   const visible = useMemo(() => sortRows(applyFilter(records, filter, corrections)), [records, filter, corrections])
   const selected = records.find((r) => r.key === selectedKey)
   // Incomplete records not yet received in a complete version.
@@ -80,6 +106,7 @@ export default function App() {
     const scope = await scopeToReview(keys)
     if (!scope.keys.length) return
     setAiMessage('')
+    setAiStripHidden(false)
     const out = await runReview(scope, { apiKey: getApiKey() })
     if (!out.ok) setAiMessage(out.message)
   }, [])
@@ -89,7 +116,8 @@ export default function App() {
       const keys = summaries.flatMap((s) => (s.ok && s.kind === 'field' ? (s.changedKeys ?? []) : []))
       if (!keys.length || !getAutoReview()) return
       if (!getApiKey()) {
-        setAiMessage('AI review is off: add an Anthropic API key in AI review to have new records checked automatically.')
+        setAiStripHidden(false)
+        setAiMessage('The AI reviewer is off: add an Anthropic API key in AI reviewer to have new records checked automatically.')
         return
       }
       void review(keys)
@@ -97,26 +125,31 @@ export default function App() {
     [review],
   )
 
-  const runImport = useCallback(async (files: File[]) => {
-    setBusy(true)
-    const out: ImportSummary[] = []
-    for (const f of files) {
-      try {
-        out.push(await importBundleFile(new Uint8Array(await f.arrayBuffer()), f.name))
-      } catch (err) {
-        out.push({ fileName: f.name, ok: false, error: (err as Error).message, alreadyHadFile: false, newRecords: 0, updatedRecords: 0, duplicates: 0, olderRevs: 0, editedAfterReview: 0, newPhotos: 0, newProvisionalTaxa: 0, newChangeRequests: 0, newCorrectionResponses: 0, heldAside: 0, badFiles: [] })
+  const runImport = useCallback(
+    async (files: File[]) => {
+      setBusy(true)
+      const out: ImportSummary[] = []
+      for (const f of files) {
+        try {
+          out.push(await importBundleFile(new Uint8Array(await f.arrayBuffer()), f.name))
+        } catch (err) {
+          out.push(failed(f.name, (err as Error).message))
+        }
       }
-    }
-    setImports((prev) => [...out, ...prev].slice(0, 6))
-    setBusy(false)
-    afterImport(out)
-  }, [afterImport])
+      setImports((prev) => [...out, ...prev].slice(0, 6))
+      setBusy(false)
+      setView('review')
+      afterImport(out)
+    },
+    [afterImport],
+  )
 
   const runOne = async (fn: () => Promise<ImportSummary>) => {
     setBusy(true)
     try {
       const s = await fn()
       setImports((prev) => [s, ...prev].slice(0, 6))
+      setView('review')
       afterImport([s])
     } finally {
       setBusy(false)
@@ -200,7 +233,7 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement
       if (t.closest('input, textarea, select, [contenteditable]') || e.metaKey || e.ctrlKey || e.altKey) return
-      if (dialog !== 'none') return
+      if (dialog !== 'none' || view !== 'review') return
       const k = e.key.toLowerCase()
       if (k === 'arrowdown' || k === 'j') (e.preventDefault(), selectOffset(1))
       else if (k === 'arrowup' || k === 'k') (e.preventDefault(), selectOffset(-1))
@@ -211,7 +244,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [selectOffset, decide, selected, dialog])
+  }, [selectOffset, decide, selected, dialog, view])
 
   // Close the More menu when clicking anywhere else.
   useEffect(() => {
@@ -222,7 +255,7 @@ export default function App() {
     return () => window.removeEventListener('mousedown', close)
   }, [])
 
-  const counts = useMemo(() => {
+  const stats = useMemo(() => {
     const c = { toReview: 0, flagged: 0, approved: 0 }
     for (const r of records) {
       if (r.voided) continue
@@ -233,124 +266,158 @@ export default function App() {
     return c
   }, [records])
 
+  // The selected record's team, for the map's corner: when its phones last handed over.
+  const counter = useMemo(() => {
+    const teamId = selected?.teamId ?? records[0]?.teamId
+    const devs = devices.filter((d) => d.teamId === teamId)
+    if (!teamId || !devs.length) return undefined
+    const last = devs.map((d) => d.lastBundleAt).sort().pop()!
+    return {
+      team: teamName(project, teamId),
+      line: `Last handover ${shortTime(last)}`,
+      sub: `${devs.length} phone${devs.length === 1 ? '' : 's'} · ${devs.reduce((n, d) => n + d.bundles, 0)} bundle${devs.reduce((n, d) => n + d.bundles, 0) === 1 ? '' : 's'}`,
+    }
+  }, [selected?.teamId, records, devices, project])
+
+  const latest = imports[0]
+  const showAi = !aiStripHidden && (aiMessage || lastRun)
+  const strips = !!project && view === 'review' && (!!latest || !!showAi)
+  const menuItem = (icon: Parameters<typeof Icon>[0]['name'], label: string, onClick: () => void, disabled = false) => (
+    <button className="fk-row" onClick={onClick} disabled={disabled}>
+      <Icon name={icon} />
+      {label}
+    </button>
+  )
+
   return (
-    <div className="app">
-      <header className="topbar">
-        <div className="brand">
-          <strong>HQ</strong>
-          <span className="muted">{project ? project.name : 'No project loaded'}</span>
-        </div>
-        <div className="topbar-stats" aria-live="polite">
-          <span>{counts.toReview} to review</span>
-          <span>⚑ {counts.flagged} flagged</span>
-          <span>✓ {counts.approved} approved</span>
-        </div>
-        <nav className="topbar-actions">
-          <input ref={fileInput} type="file" accept=".zip,application/zip" multiple hidden onChange={(e) => (runImport([...(e.target.files ?? [])]), (e.target.value = ''))} />
-          <button className="btn btn-primary" onClick={() => fileInput.current?.click()} disabled={busy}>
-            Import bundle
+    <div className={`fk-hq hq-app${strips ? '' : ' hq-noimport'}`}>
+      <Sprite />
+      <header className="fk-top">
+        <button className="fk-brand hq-home" onClick={() => setView('review')}>
+          Fieldkit HQ
+        </button>
+        <span className="fk-proj">
+          <Icon name="folder" />
+          {project ? project.name : 'No project loaded'}
+        </span>
+        <span className="fk-spacer" />
+        {view !== 'review' && project && (
+          <button className="fk-btn fk-btn--grey fk-btn--36" onClick={() => setView('review')}>
+            <Icon name="tray" />
+            QA queue
           </button>
-          <button className="btn" onClick={() => setDialog('hq-bundle')} disabled={!project}>
-            Make HQ bundle
-          </button>
-          <button className="btn" onClick={() => setDialog('export')} disabled={!project}>
-            Export Darwin Core
-          </button>
-          <button className="btn" onClick={() => setDialog('form')} disabled={!project}>
-            Form &amp; requests{pendingRequests ? ` (${pendingRequests})` : ''}
-          </button>
-          <button className="btn" onClick={() => setDialog('ai')} disabled={!project} title="AI reviewer: drafts only; you decide">
-            {lastRun?.state === 'running' ? 'AI reviewing…' : 'AI review'}
-          </button>
-          <button className="btn" onClick={() => setDialog('devices')}>
-            Devices
-          </button>
-          <details className="menu" ref={menuRef} onClick={(e) => (e.target as HTMLElement).tagName === 'BUTTON' && menuRef.current?.removeAttribute('open')}>
-            <summary className="btn btn-quiet">More</summary>
-            <div className="menu-body">
-              <button className="btn btn-quiet" onClick={() => runOne(loadDemoProject)} disabled={busy}>
-                Load demo project
-              </button>
-              <button className="btn btn-quiet" onClick={() => runOne(loadSampleFieldBundle)} disabled={busy || !project}>
-                Import sample Field bundle
-              </button>
-              <button className="btn btn-quiet" onClick={() => setDialog('points')} disabled={!project}>
-                Check a list of points
-              </button>
-              <button
-                className="btn btn-quiet"
-                onClick={async () => {
-                  const b = await makeBackup()
-                  download(b.bytes, b.fileName)
-                }}
-              >
-                Export HQ backup
-              </button>
-              <p className="muted small">Contract {CONTRACT_VERSION}</p>
-            </div>
-          </details>
-        </nav>
+        )}
+        <button className={`fk-btn fk-btn--grey fk-btn--36${view === 'form' ? ' pg-cur' : ''}`} aria-current={view === 'form' ? 'page' : undefined} onClick={() => setView(view === 'form' ? 'review' : 'form')} disabled={!project}>
+          <Icon name="survey" />
+          Form
+          {pendingRequests > 0 && <span className="hq-count-badge" aria-label={`${pendingRequests} team requests waiting`}>{pendingRequests}</span>}
+        </button>
+        <button className="fk-btn fk-btn--grey fk-btn--36" onClick={() => setDialog('ai')} disabled={!project}>
+          <Icon name="reviewer" />
+          {lastRun?.state === 'running' ? 'AI reviewing…' : 'AI reviewer'}
+        </button>
+        <button className="fk-btn fk-btn--grey fk-btn--36" onClick={() => setDialog('hq-bundle')} disabled={!project}>
+          Make bundle for a team
+        </button>
+        <button className="fk-btn fk-btn--grey fk-btn--36 fk-btn--stack" onClick={() => setDialog('export')} disabled={!project}>
+          Export Darwin Core
+          <small>approved records only</small>
+        </button>
+        <button className="fk-btn fk-btn--grey fk-btn--36 fk-btn--icon" aria-label="Devices" title="Devices" onClick={() => setDialog('devices')}>
+          <Icon name="phone" />
+        </button>
+        <details className="hq-menu" ref={menuRef} onClick={(e) => (e.target as HTMLElement).closest('button') && menuRef.current?.removeAttribute('open')}>
+          <summary className="fk-btn fk-btn--grey fk-btn--36 fk-btn--icon" aria-label="More" title="More">
+            <Icon name="more" />
+          </summary>
+          <div className="hq-menu__body fk-list">
+            {menuItem('crosshair', 'Check a list of points', () => setView('points'), !project)}
+            {menuItem('bundle', 'Import sample Field bundle', () => runOne(loadSampleFieldBundle), busy || !project)}
+            {menuItem('folder', 'Load demo project', () => runOne(loadDemoProject), busy)}
+            {menuItem('download', 'Export HQ backup', async () => {
+              const b = await makeBackup()
+              download(b.bytes, b.fileName)
+            })}
+            <p className="hq-menu__foot">Shared contract {CONTRACT_VERSION}</p>
+          </div>
+        </details>
+        <input ref={fileInput} type="file" accept=".zip,application/zip" multiple hidden onChange={(e) => (runImport([...(e.target.files ?? [])]), (e.target.value = ''))} />
+        <button className="fk-btn fk-btn--primary fk-btn--36" onClick={() => fileInput.current?.click()} disabled={busy}>
+          <Icon name="bundle" />
+          Import bundle
+        </button>
       </header>
 
-      {imports.length > 0 && (
-        <div className="imports" role="status">
-          {imports.slice(0, 3).map((s, i) => (
-            <div key={i} className={`import ${s.ok ? '' : 'import-bad'}`}>
-              <b>{s.fileName}</b>: {summaryLine(s)}
-              {s.badFiles.length > 0 && (
-                <ul className="plain small">
-                  {s.badFiles.map((b) => (
-                    <li key={b.path}>
-                      ⚠ <code>{b.path}</code>: {b.message}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))}
-          <button className="btn btn-quiet small" onClick={() => setImports([])}>
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {(aiMessage || lastRun) && (
-        <div className="imports" role="status">
-          {lastRun?.state === 'running' ? (
-            <span>
-              <span className="tag tag-ai">AI</span> Reviewing {lastRun.scopeKeys.length} records… {lastRun.steps[lastRun.steps.length - 1]?.text ?? 'starting'}
-            </span>
-          ) : aiMessage ? (
-            <span>
-              <span className="tag tag-ai">AI</span> {aiMessage}
-            </span>
-          ) : lastRun ? (
-            <span>
-              <span className="tag tag-ai">AI</span>{' '}
-              {lastRun.state === 'done'
-                ? `Review finished: ${lastRun.draftIds.length} draft correction${lastRun.draftIds.length === 1 ? '' : 's'} and ${lastRun.noteIds.length} note${lastRun.noteIds.length === 1 ? '' : 's'} waiting for you.`
-                : lastRun.state === 'stopped'
-                  ? 'Review stopped.'
-                  : `Review failed: ${lastRun.error ?? ''}`}{' '}
-              <button className="link" onClick={() => setDialog('ai')}>
-                Open AI review
+      {strips && (
+        <div className="hq-strips">
+          {latest && (
+            <div className={`fk-import${latest.ok ? '' : ' is-bad'}`} role="status">
+              <Icon name={latest.ok ? 'bundle' : 'warning'} />
+              <span className="fk-import__text">
+                <b>{latest.fileName}</b>: {summaryLine(latest)}
+                {latest.badFiles.length > 0 && (
+                  <ul>
+                    {latest.badFiles.map((b) => (
+                      <li key={b.path}>
+                        <b>{b.path}</b>: {b.message}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </span>
+              <button className="fk-btn fk-btn--secondary fk-btn--36" onClick={() => setImports([])}>
+                Dismiss
               </button>
-            </span>
-          ) : null}
+            </div>
+          )}
+          {showAi && (
+            <div className="fk-import" role="status">
+              <Icon name="reviewer" />
+              <span className="fk-import__text">
+                <b>AI reviewer</b>:{' '}
+                {lastRun?.state === 'running' && !aiMessage
+                  ? `reviewing ${lastRun.scopeKeys.length} records… ${lastRun.steps[lastRun.steps.length - 1]?.text ?? 'starting'}`
+                  : aiMessage
+                    ? aiMessage
+                    : lastRun?.state === 'done'
+                      ? `finished. ${lastRun.draftIds.length} draft correction${lastRun.draftIds.length === 1 ? '' : 's'} and ${lastRun.noteIds.length} note${lastRun.noteIds.length === 1 ? '' : 's'} waiting for you.`
+                      : lastRun?.state === 'stopped'
+                        ? 'stopped.'
+                        : `the review failed. ${lastRun?.error ?? ''}`}
+              </span>
+              <button className="fk-btn fk-btn--secondary fk-btn--36" onClick={() => setDialog('ai')}>
+                Open
+              </button>
+              <button className="fk-btn fk-btn--secondary fk-btn--36" onClick={() => setAiStripHidden(true)}>
+                Dismiss
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {!project ? (
-        <main className="empty-state">
-          <h1>Set up HQ</h1>
-          <p>Load the project set-up first: the form, the transects and the species pack.</p>
-          <button className="btn btn-primary" onClick={() => runOne(loadDemoProject)} disabled={busy}>
-            Load demo project (Costa Rica, La Selva)
-          </button>
-          <p className="muted small">Illustrative demo data, not for field ID.</p>
+        <main className="hq-setup">
+          <div className="fk-group">
+            <div className="fk-card hq-setup__card">
+              <span className="fk-tile">
+                <Icon name="folder" />
+              </span>
+              <h2>Set up HQ</h2>
+              <p>Load the project set-up first: the form, the transects and the species pack.</p>
+              <button className="fk-btn fk-btn--primary fk-btn--48" onClick={() => runOne(loadDemoProject)} disabled={busy}>
+                Load demo project (Costa Rica, La Selva)
+              </button>
+              <p className="fk-small">Illustrative demo data, not for field ID.</p>
+            </div>
+          </div>
         </main>
+      ) : view === 'form' ? (
+        <FormScreen project={project} template={setup?.template} me={me.personId} />
+      ) : view === 'points' ? (
+        <PointsScreen project={project} />
       ) : (
-        <main className="workspace">
+        <main className="fk-cols">
           <Queue
             project={project}
             rows={visible}
@@ -358,13 +425,23 @@ export default function App() {
             filter={filter}
             onFilter={setFilter}
             selectedKey={selectedKey}
-            onSelect={(k) => (setSelectedKey(k), setCorrectionOpen(false))}
+            onSelect={(k) => (pick(k), setCorrectionOpen(false))}
             drafts={corrections}
             provisionalNames={provisionalNames}
             held={held}
             noteKeys={new Set(aiNotes.filter((x) => !x.dismissed).map((x) => x.recordKey))}
+            venomous={venomous}
+            stats={stats}
           />
-          <MapView transects={setup?.transects} records={records.filter((r) => !r.voided)} selectedKey={selectedKey} onSelect={(k) => (setSelectedKey(k), setCorrectionOpen(false))} />
+          <section className="fk-col" aria-label="Map">
+            <div className="fk-col-h">
+              <h3>Map</h3>
+              <span>All teams · no basemap</span>
+            </div>
+            <div className="fk-group" style={{ flex: 1, minHeight: 0 }}>
+              <MapView transects={setup?.transects} records={records.filter((r) => !r.voided)} selectedKey={selectedKey} onSelect={(k) => (pick(k), setCorrectionOpen(false))} counter={counter} />
+            </div>
+          </section>
           <Detail
             row={selected}
             project={project}
@@ -372,6 +449,7 @@ export default function App() {
             overlay={overlayFor(selected?.teamId)}
             corrections={corrections}
             provisionalNames={provisionalNames}
+            speciesPack={setup?.speciesPack}
             me={me.personId}
             onApprove={() => decide('approved')}
             onReject={() => decide('rejected')}
@@ -384,20 +462,26 @@ export default function App() {
       )}
 
       {dragging && (
-        <div className="dropzone" aria-hidden>
-          Drop Field bundles to import. Re-sends are safe: nothing is duplicated.
+        <div className="hq-drop" aria-hidden>
+          <div className="fk-group">
+            <div className="fk-card">
+              <span className="fk-tile fk-tile--dark">
+                <Icon name="bundle" />
+              </span>
+              <b>Drop Field bundles to import</b>
+              <p>Re-sends are safe: nothing is duplicated.</p>
+            </div>
+          </div>
         </div>
       )}
       {dialog === 'hq-bundle' && project && <HqBundleDialog project={project} onClose={() => setDialog('none')} />}
-      {dialog === 'export' && project && setup && <ExportDialog setup={setup} onClose={() => setDialog('none')} onSelect={(k) => (setSelectedKey(k), setDialog('none'))} />}
+      {dialog === 'export' && project && setup && <ExportDialog setup={setup} onClose={() => setDialog('none')} onSelect={(k) => (pick(k), setView('review'), setDialog('none'))} />}
       {dialog === 'devices' && <DevicesPanel project={project} onClose={() => setDialog('none')} />}
-      {dialog === 'points' && project && <PointsDialog project={project} onClose={() => setDialog('none')} />}
-      {dialog === 'form' && <FormDialog project={project} template={setup?.template} me={me.personId} onClose={() => setDialog('none')} />}
       {dialog === 'ai' && (
         <AiPanel
           project={project}
           onClose={() => setDialog('none')}
-          onSelect={(k) => (pick(k), setDialog('none'))}
+          onSelect={(k) => (pick(k), setView('review'), setDialog('none'))}
           onReviewAll={() => void review()}
           keyVersion={keyVersion}
           onKeyChanged={() => setKeyVersion((v) => v + 1)}
