@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "Sci-works Field",
+    "slug": "sciworks-field",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "sciworksfield",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "org.sciworks.field",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "org.sciworks.field",
+      "adaptiveIcon": {
+        "backgroundColor": "#1B2A22",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#1B2A22",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ],
+      "expo-sqlite",
+      "expo-asset",
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Sci-works Field uses the camera to photograph animals for the record.",
+          "photosPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Sci-works Field can read the phone's GPS to fill in where an animal was found."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
