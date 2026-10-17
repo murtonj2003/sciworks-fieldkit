@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { Chips, FieldInput, FieldLabel, Hint, NumberInput, useFieldStyles } from '@/components/fields';
-import { Icon } from '@/components/Icon';
+import { BandMarker, Icon } from '@/components/Icon';
 import { LocationEntry } from '@/components/LocationEntry';
 import type { IconName } from '@/components/sprite';
 import { BottomBar, Button, Group, Pair, Row, SectionTitle, T, Tag } from '@/components/ui';
@@ -89,10 +89,12 @@ export default function EncounterScreen() {
       case 'taxon':
         return (
           <View style={fs.gap}>
-            <Row>
-              <T v="head" italic={!!e.taxon.scientificName} dim={!e.taxon.scientificName}>
+            <Row style={{ gap: 4 }}>
+              <Text style={fs.label}>{f.label}</Text>
+              <Text style={[st.spName, !e.taxon.scientificName && st.spUnset]}>
                 {e.taxon.scientificName ?? (e.taxon.unidentified ? 'Unidentified (photo for later)' : 'Not chosen yet')}
-              </T>
+              </Text>
+              {!e.taxon.scientificName && f.help ? <Text style={[fs.help, { marginHorizontal: 0 }]}>{f.help}</Text> : null}
               {taxon?.commonName && (
                 <T v="sub" dim>
                   {taxon.commonName} · {taxon.family}
@@ -106,10 +108,10 @@ export default function EncounterScreen() {
               )}
             </Row>
             <Pair>
-              <Button label="Pick species" kind="white" size={56} icon="search" style={{ flex: 1 }} onPress={() => router.push({ pathname: '/species/[id]', params: { id } })} />
-              <Button label="Scale key" kind="white" size={56} icon="key" style={{ flex: 1 }} onPress={() => router.push({ pathname: '/key/[id]', params: { id } })} />
+              <Button label="Pick species" kind="white" size={56} icon="search" style={{ flex: 1, paddingHorizontal: 12 }} onPress={() => router.push({ pathname: '/species/[id]', params: { id } })} />
+              <Button label="Scale key" kind="white" size={56} icon="key" style={{ flex: 1, paddingHorizontal: 12 }} onPress={() => router.push({ pathname: '/key/[id]', params: { id } })} />
             </Pair>
-            <Text style={[fs.help, { marginTop: 4 }]}>How it was identified</Text>
+            <Text style={[fs.label, { marginTop: 4, marginHorizontal: 4 }]}>ID basis</Text>
             <Chips
               options={ID_BASIS.map((b) => ({ code: b.code, label: b.label }))}
               value={e.taxon.idBasis === 'scale-key' ? undefined : e.taxon.idBasis}
@@ -160,16 +162,14 @@ export default function EncounterScreen() {
 
   const renderField = (f: EffectiveField) => {
     const sp = special(f);
+    if (f.type === 'taxon') return <View key={f.key}>{sp}</View>;
     return <FieldInput key={f.key} field={f} value={getPath(e, f.path)} onChange={(v) => set(f.path, v)} nowIso={now} special={sp} />;
   };
 
+  // Comp P4 has no icons on Animal / Measurements; P6 gives Location and Scale counts theirs.
   const SECTION_ICON: Record<string, IconName> = {
-    animal: 'snake',
-    measurements: 'ruler',
     location: 'map-pin',
     scales: 'key',
-    extras: 'sliders',
-    notes: 'pencil',
   };
   const SECTION_LABEL: Record<string, string> = { location: 'Location' }; // DESIGN-HANDOFF §1.2: "Where" → "Location"
 
@@ -245,13 +245,23 @@ export default function EncounterScreen() {
         </View>
       )}
       <ScrollView contentContainerStyle={st.page} keyboardShouldPersistTaps="handled">
-        <View style={st.metaRow}>
-          <T v="sub" dim>
-            Seen {clockOf(e.observedAt)} · form version {e.coreVersion}
+        <View style={st.info}>
+          <Icon name="clock" size={16} color={t.ink2} />
+          <Text style={st.infoText}>
+            seen {clockOf(e.observedAt)} · form v{e.coreVersion}
             {e.overlayRev ? ` + team change ${e.overlayRev}` : ''}
-          </T>
-          {missing.length > 0 && <Tag label={`incomplete: ${missing.join(', ')}`} dashed />}
+          </Text>
         </View>
+        {missing.length > 0 && (
+          <View style={st.todo}>
+            <View style={{ marginTop: 1 }}>
+              <BandMarker band="none" size={18} />
+            </View>
+            <Text style={st.todoText}>
+              <Text style={{ fontWeight: '600' }}>Still to fill in for HQ:</Text> {missing.join(', ')}
+            </Text>
+          </View>
+        )}
         {['animal', 'measurements', 'location', 'scales', 'extras', 'notes'].map(section)}
         {e.status === 'void' && <T dim>This record is voided. It is kept, and HQ will see it as voided.</T>}
       </ScrollView>
@@ -273,10 +283,15 @@ export default function EncounterScreen() {
 const useStyles = makeStyles((t) => ({
   wrap: { flex: 1, backgroundColor: t.ground },
   page: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32 },
-  metaRow: { gap: 6, marginHorizontal: 4 },
+  info: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2, marginHorizontal: 4, marginBottom: 8 },
+  infoText: { ...type.sub, color: t.ink2, flex: 1 },
+  todo: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingTop: 10, paddingHorizontal: 14, paddingBottom: 11, borderRadius: radius.card, borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.ink2 },
+  todoText: { ...type.sub, color: t.ink, flex: 1 },
+  spName: { fontSize: 22, fontWeight: '700', fontStyle: 'italic', letterSpacing: -0.2, lineHeight: 26, color: t.ink },
+  spUnset: { fontStyle: 'normal', fontWeight: '600', color: t.ink2 },
   thumbs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   thumb: { width: 96, height: 96, borderRadius: radius.card, backgroundColor: t.card },
-  saved: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingRight: 4 },
+  saved: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingRight: 12 },
   savedText: { ...type.sub, color: t.ink2 },
   venom: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: t.offTint, paddingVertical: 10, paddingHorizontal: 16 },
   venomText: { ...type.sub, color: t.offTintInk, flex: 1, fontWeight: '600' },

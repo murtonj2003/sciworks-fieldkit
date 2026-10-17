@@ -79,7 +79,7 @@ export function FieldLabel({ field, extra }: { field: EffectiveField; extra?: Re
   return (
     <View style={s.labelRow}>
       <Text style={s.label}>{field.label}</Text>
-      {field.origin === 'team' ? <Tag label="Team field" icon="users" /> : null}
+      {field.origin === 'team' ? <Tag label="team field" icon="users" /> : null}
       {extra}
     </View>
   );
@@ -100,6 +100,7 @@ export function Chips<T extends string | number>({
   multi,
   onGround,
   grid,
+  grid2,
 }: {
   options: { code: T; label: string }[];
   value: T | T[] | undefined;
@@ -107,6 +108,8 @@ export function Chips<T extends string | number>({
   multi?: boolean;
   /** Equal-width chips on one line, so a trait's options line up (kit `.k-grid2/3`); long words wrap inside. */
   grid?: boolean;
+  /** Two equal columns (kit `.pg-grid2`), e.g. the four Sex choices. */
+  grid2?: boolean;
   /** Chips sitting straight on the screen ground (not in a grey group) are grey; selected turns white + ring. */
   onGround?: boolean;
 }) {
@@ -131,6 +134,7 @@ export function Chips<T extends string | number>({
             style={({ pressed }) => [
               s.chip,
               grid && { flex: 1, minWidth: 0, paddingHorizontal: 8 },
+              grid2 && { flexBasis: '47%', flexGrow: 1, paddingHorizontal: 10 },
               onGround && !on && { backgroundColor: t.grey },
               on && s.chipOn,
               pressed && { backgroundColor: onGround ? t.greyPress : t.secPress },
@@ -347,7 +351,8 @@ export function FieldInput({
           code: field.valueType === 'number' ? Number(c.code) : c.code,
           label: c.label,
         }));
-        body = <Chips options={options} value={value as string | number | undefined} onChange={onChange} />;
+        // Four choices on an animal sit in two even columns, as in comp P4 (Sex, Scale used).
+        body = <Chips grid2={field.recordType === 'encounter' && options.length === 4} options={options} value={value as string | number | undefined} onChange={onChange} />;
         break;
       }
       case 'multi-choice':
