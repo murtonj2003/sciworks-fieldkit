@@ -44,7 +44,8 @@ const useStyles = makeStyles((t) => ({
   line: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 4 },
   iconBtn: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   page: { paddingHorizontal: 16, paddingBottom: 24, gap: 10 },
-  sticky: { backgroundColor: t.ground, paddingBottom: 0 },
+  sticky: { backgroundColor: t.ground, paddingBottom: 6 },
+  h2: { marginHorizontal: 4, marginTop: 12 },
   list: { backgroundColor: t.card, borderRadius: radius.card, overflow: 'hidden' },
   row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingHorizontal: 12 },
   sep: { height: 1, backgroundColor: t.hair, marginLeft: 54 },
@@ -68,6 +69,7 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const [profileChosen, setProfileChosen] = useState(launch.profileChosen);
   const [received, setReceived] = useState<ReceiveResult | null>(null);
+  const [showChanges, setShowChanges] = useState(false);
   const [busy, setBusy] = useState(false);
   const [recovered] = useState(() => {
     if (bootInfo.shown) return 0;
@@ -206,6 +208,15 @@ export default function Home() {
           </View>
         ) : null}
         {project && person && <UploadStrip counts={counts} />}
+        {project && person && (
+          <Button
+            label={field.counter.recordsNotWithHq + field.counter.photosNotWithHq > 0 ? 'Send to HQ' : 'Hand over to HQ'}
+            kind="white"
+            icon="send"
+            size={56}
+            onPress={() => router.push('/handover')}
+          />
+        )}
 
         {recovered > 0 && (
           <Group>
@@ -232,23 +243,38 @@ export default function Home() {
 
         {received && (
           <Group>
-            <Row style={{ gap: 6 }}>
-              <T v="title">{received.ok ? 'What changed' : 'Not loaded'}</T>
-              {received.error && <T v="sub">{received.error}</T>}
-              {received.changes.map((c) => (
-                <View key={c} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-                  <Icon name="check" size={16} color={t.onMark} strokeWidth={2.25} />
-                  <T v="sub" style={{ flex: 1 }}>
-                    {c}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: showChanges }}
+              onPress={() => setShowChanges((v) => !v)}
+              style={({ pressed }) => [s.list, s.row, pressed && { backgroundColor: t.secPress }]}
+            >
+              <View style={[s.tile, received.ok && { backgroundColor: t.onFill }]}>
+                <Icon name={received.ok ? 'check' : 'warning'} size={18} color={received.ok ? t.onInk : t.ink} strokeWidth={2.25} />
+              </View>
+              <Text style={s.rowTitle}>
+                {received.ok ? `Project loaded · ${received.changes.length} ${received.changes.length === 1 ? 'change' : 'changes'}` : 'Not loaded'}
+              </Text>
+              <Icon name={showChanges ? 'up' : 'chev-down'} size={16} color={t.ink2} strokeWidth={2.25} />
+            </Pressable>
+            {(showChanges || !received.ok) && (
+              <Row style={{ gap: 6 }}>
+                {received.error && <T v="sub">{received.error}</T>}
+                {received.changes.map((c) => (
+                  <View key={c} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+                    <Icon name="check" size={16} color={t.onMark} strokeWidth={2.25} />
+                    <T v="sub" style={{ flex: 1 }}>
+                      {c}
+                    </T>
+                  </View>
+                ))}
+                {received.warnings.map((w) => (
+                  <T key={w} v="sub" color={t.nearInk}>
+                    {w}
                   </T>
-                </View>
-              ))}
-              {received.warnings.map((w) => (
-                <T key={w} v="sub" color={t.nearInk}>
-                  {w}
-                </T>
-              ))}
-            </Row>
+                ))}
+              </Row>
+            )}
           </Group>
         )}
 
@@ -304,7 +330,7 @@ export default function Home() {
 
         {person && teamTransects.length > 0 && (
           <>
-            <GroupTitle>Transects</GroupTitle>
+            <T v="head" style={s.h2}>Transects</T>
             <Group style={{ gap: 6 }}>
               {teamTransects.map((f) => {
                 const id = f.properties.transectId;
@@ -345,7 +371,7 @@ export default function Home() {
 
         {person && (surveys.length > 0 || recentAnimals.length > 0) && (
           <>
-            <GroupTitle>Recent</GroupTitle>
+            <T v="head" style={s.h2}>Recent</T>
             <Group style={{ gap: 6 }}>
               {surveys.length > 0 && (
                 <View style={s.list}>

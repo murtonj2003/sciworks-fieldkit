@@ -110,7 +110,13 @@ export default function Notebook() {
                   <View key={o.taxonId}>
                     {i > 0 && <View style={[s.sep, { marginLeft: 88 }]} />}
                     <View style={s.row}>
-                      <SpeciesPhoto taxon={o} size={56} />
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Field notebook: ${o.scientificName}`}
+                        onPress={() => router.push({ pathname: '/notebook/[taxonId]', params: { taxonId: o.taxonId, ...(forId ? { for: forId } : {}) } })}
+                        style={({ pressed }) => [{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 }, pressed && { opacity: 0.7 }]}
+                      >
+                      <SpeciesPhoto taxon={o} size={64} />
                       <View style={{ flex: 1, gap: 2 }}>
                         <Text style={s.rowName}>{o.scientificName}</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -120,6 +126,7 @@ export default function Notebook() {
                           {o.dangerous && <Tag label="VENOMOUS" venomous />}
                         </View>
                       </View>
+                      </Pressable>
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={`Compare with ${o.scientificName}`}
@@ -138,13 +145,14 @@ export default function Notebook() {
         )}
 
         <T v="small" dim style={{ marginTop: 14, marginHorizontal: 4, fontWeight: '400' }}>
-          {pack.disclaimer.split('.')[0]}. Every value is sourced{hosts.length ? `: ${hosts.join(', ')}` : ''}.
+          Illustrative demo pack, not for field ID. Sourced from {hosts.length ? hosts.join(', ') : 'the pack'}; many ranges come from outside Costa
+          Rica.
         </T>
       </ScrollView>
       {forId && (
         <BottomBar>
           <Button
-            size={64}
+            size={56}
             label={
               <>
                 Choose <Text style={{ fontStyle: 'italic' }}>{taxon.scientificName}</Text>

@@ -40,7 +40,7 @@ const useStyles = makeStyles((t) => ({
   guide: { height: 36, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: t.group, alignItems: 'center', justifyContent: 'center' },
   guideText: { ...type.small, fontWeight: '600', color: t.ink },
   line: { flexDirection: 'row', alignItems: 'baseline', gap: 12 },
-  name: { ...type.body, fontStyle: 'italic', color: t.ink, flexShrink: 1 },
+  name: { ...type.body, fontStyle: 'italic', fontWeight: '600', color: t.ink, flexShrink: 1 },
   fam: { ...type.sub, color: t.ink2, marginLeft: 'auto' },
   note: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   noteText: { ...type.sub, color: t.ink2 },
@@ -133,16 +133,14 @@ export default function SpeciesPicker() {
           <View style={s.line}>
             {nameWithMatch(item)}
           </View>
-          {item.taxon.family ? <Text style={s.fam2}>{item.taxon.family}</Text> : null}
+          <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+            {item.taxon.family ? <Text style={s.fam2}>{item.taxon.family}</Text> : null}
+            {item.taxon.dangerous && <Tag label="VENOMOUS" venomous />}
+          </View>
           {close && (
             <View style={s.note}>
               <Icon name="spell" size={16} color={t.ink2} />
               <Text style={s.noteText}>Close match for “{q.trim()}”</Text>
-            </View>
-          )}
-          {item.taxon.dangerous && (
-            <View style={{ marginTop: 2, alignSelf: 'flex-start' }}>
-              <Tag label="VENOMOUS" venomous />
             </View>
           )}
           </View>
@@ -247,7 +245,7 @@ export default function SpeciesPicker() {
 
         {!!q.trim() && rows.length > 0 && pack && lookAlikes(rows[0]!.taxon, pack).length > 0 && (
           <>
-            <GroupTitle>Not sure? Compare look-alikes</GroupTitle>
+            <GroupTitle>Not sure? Compare look-alikes of {rows[0]!.taxon.scientificName}</GroupTitle>
             <Group>
               <View style={s.list}>
                 {lookAlikes(rows[0]!.taxon, pack).map((o, i) => (
@@ -259,15 +257,13 @@ export default function SpeciesPicker() {
                       onPress={() => router.push({ pathname: '/compare', params: { a: rows[0]!.taxon.taxonId, b: o.taxonId, for: id } })}
                       style={({ pressed }) => [s.prow, pressed && { backgroundColor: t.secPress }]}
                     >
-                      <SpeciesPhoto taxon={o} size={48} />
+                      <SpeciesPhoto taxon={o} size={64} />
                       <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={s.name}>{o.scientificName}</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-                          <Text style={s.name}>{o.scientificName}</Text>
+                          {o.family ? <Text style={s.fam2}>{o.family}</Text> : null}
                           {o.dangerous && <Tag label="VENOMOUS" venomous />}
                         </View>
-                        <Text style={s.fam2}>
-                          Compare with <Text style={{ fontStyle: 'italic' }}>{rows[0]!.taxon.scientificName}</Text>
-                        </Text>
                       </View>
                       <Icon name="chev" size={18} color={t.ink2} />
                     </Pressable>

@@ -22,6 +22,7 @@ const useStyles = makeStyles((t) => ({
   cell: { ...type.sub, color: t.ink, fontVariant: ['tabular-nums'] },
   differ: { alignSelf: 'flex-start', backgroundColor: t.onFill, borderRadius: radius.tag, paddingHorizontal: 6, paddingVertical: 1, overflow: 'hidden' },
   differText: { ...type.sub, fontWeight: '600', color: t.onInk, fontVariant: ['tabular-nums'] },
+  divider: { width: 1, alignSelf: 'stretch', backgroundColor: t.hair },
   legend: { ...type.small, fontWeight: '400', color: t.ink2, marginTop: 10, marginHorizontal: 4 },
 }));
 
@@ -66,12 +67,17 @@ export default function Compare() {
               <Text style={s.rowLabel}>{r.label}</Text>
               <View style={s.cols}>
                 <View style={s.col}>{cell(r.a, r.differ)}</View>
+                <View style={s.divider} />
                 <View style={s.col}>{cell(r.b, r.differ)}</View>
               </View>
             </View>
           ))}
         </View>
-        <Text style={s.legend}>Marked in green: the counts don't overlap, so this tells them apart.</Text>
+        <Text style={s.legend}>
+          {rows.some((r) => r.differ)
+            ? "Marked in green: these don't overlap, so they tell the two apart."
+            : 'These counts overlap. Check another trait, or use the Scale key.'}
+        </Text>
       </ScrollView>
       {forId && (
         <BottomBar>

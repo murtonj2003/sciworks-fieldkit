@@ -29,7 +29,8 @@ export function NavPill({
   const insets = useSafeAreaInsets();
   // The pill is ink on day, and the lifted grey on night, so it never disappears into the ground.
   const fill = t.name === 'night' ? '#3A3A3C' : t.pri;
-  const fg = '#FFFFFF';
+  const night = t.name === 'night';
+  const fg = night ? t.ink : '#FFFFFF';
   const item = (key: 'survey' | 'profile', icon: IconName, label: string, onPress: () => void) => (
     <Pressable
       accessibilityRole="tab"
@@ -69,8 +70,8 @@ export function NavPill({
           onPress={onAdd}
           style={({ pressed }) => ({ flex: 1.2, alignItems: 'center', justifyContent: 'center', gap: 3, transform: [{ scale: pressed ? 0.96 : 1 }] })}
         >
-          <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="plus" size={26} color="#1D1E1F" strokeWidth={2.25} />
+          <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: night ? t.pri : '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="plus" size={26} color={night ? t.onPri : '#1D1E1F'} strokeWidth={2.25} />
           </View>
           <Text style={[type.small, { fontSize: 12, fontWeight: '600', color: fg }]}>{addLabel}</Text>
         </Pressable>

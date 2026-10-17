@@ -95,7 +95,7 @@ export function compareRows(a: Taxon, b: Taxon): { label: string; a: string; b: 
     if (!la && !lb) continue;
     const differ = COUNT_LABEL[k]
       ? !!pooledRange(a, k) && !!pooledRange(b, k) && !overlap(pooledRange(a, k), pooledRange(b, k))
-      : !!la && !!lb && la.text !== lb.text;
+      : !!la && !!lb && !la.text.split(' or ').some((v) => lb.text.split(' or ').includes(v));
     rows.push({ label: (COUNT_LABEL[k] ?? CAT_LABEL[k])!, a: la?.text ?? 'no data', b: lb?.text ?? 'no data', differ });
   }
   // Sizes only side by side when they measure the same thing (an SVL is never set against a total length).

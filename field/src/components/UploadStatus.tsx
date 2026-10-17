@@ -21,9 +21,9 @@ export function TierTag({ tier }: { tier: UploadTier }) {
   return (
     <View
       accessibilityLabel={tier === 'phone' ? 'Only on this phone' : tier === 'sent' ? 'Sent, waiting for HQ' : 'Confirmed by HQ'}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 3, minHeight: 22, paddingHorizontal: 7, borderRadius: radius.tag, backgroundColor: c.bg }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 3, minHeight: 24, paddingHorizontal: 8, borderRadius: radius.tag, backgroundColor: c.bg }}
     >
-      <Text style={[type.small, { fontSize: 12, fontWeight: '600', color: c.fg }]}>{TIER_WORD[tier]}</Text>
+      <Text style={[type.small, { fontWeight: '600', color: c.fg }]}>{TIER_WORD[tier]}</Text>
       {tier === 'hq' && <Icon name="check" size={12} color={c.fg} strokeWidth={2.5} />}
     </View>
   );
@@ -33,7 +33,6 @@ export function TierTag({ tier }: { tier: UploadTier }) {
 export function UploadStrip({ counts }: { counts: Record<UploadTier, number> }) {
   const { t } = useTheme();
   const total = counts.phone + counts.sent + counts.hq;
-  if (total === 0) return null;
   const parts: { tier: UploadTier; n: number; word: string }[] = [
     { tier: 'phone', n: counts.phone, word: 'on phone' },
     { tier: 'sent', n: counts.sent, word: 'sent' },
@@ -52,6 +51,7 @@ export function UploadStrip({ counts }: { counts: Record<UploadTier, number> }) 
         ))}
       </View>
       <View style={{ flexDirection: 'row', height: 4, borderRadius: 2, overflow: 'hidden', gap: 2 }}>
+        {total === 0 && <View style={{ flex: 1, backgroundColor: t.track }} />}
         {parts
           .filter((p) => p.n > 0)
           .map((p) => (

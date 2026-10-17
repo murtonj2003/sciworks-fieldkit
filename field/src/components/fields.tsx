@@ -148,7 +148,7 @@ export function Chips<T extends string | number>({
               s.chip,
               grid && { flex: 1, minWidth: 0, paddingHorizontal: 8 },
               grid2 && { flexBasis: '47%', flexGrow: 1, paddingHorizontal: 10 },
-              rail && { minHeight: 44, paddingHorizontal: 14, borderRadius: 12 },
+              rail && { minHeight: 48, paddingHorizontal: 14, borderRadius: radius.chip },
               onGround && !on && { backgroundColor: t.grey },
               on && s.chipOn,
               pressed && { backgroundColor: onGround ? t.greyPress : t.secPress },
@@ -396,6 +396,17 @@ export function FieldInput({
       default:
         body = <Text style={s.help}>({field.type} field)</Text>;
     }
+  }
+  // Compact choices (Survey): the short label and its rail on one line, so each field takes one line.
+  if (compact && (field.type === 'choice' || field.type === 'multi-choice' || field.type === 'boolean')) {
+    return (
+      <View style={[s.field, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}>
+        <Text style={[s.label, { width: 76, marginHorizontal: 4 }]} numberOfLines={2}>
+          {field.label.replace(/\s*\((start|finish|end)\)\s*$/i, '')}
+        </Text>
+        <View style={{ flex: 1, minWidth: 0 }}>{body}</View>
+      </View>
+    );
   }
   return (
     <View style={s.field}>

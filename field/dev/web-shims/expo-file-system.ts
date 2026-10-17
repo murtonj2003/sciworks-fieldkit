@@ -22,6 +22,12 @@ export class Directory {
   create() {
     dirs.add(this.uri);
   }
+  get size(): number {
+    const prefix = `${this.uri}/`;
+    let n = 0;
+    for (const [k, v] of store) if (k.startsWith(prefix)) n += v.length;
+    return n;
+  }
   list(): (File | Directory)[] {
     const prefix = `${this.uri}/`;
     return [...store.keys()].filter((k) => k.startsWith(prefix) && !k.slice(prefix.length).includes('/')).map((k) => new File(k));
@@ -68,6 +74,9 @@ export class File {
 }
 
 export const Paths = {
+  // DEV ONLY sample numbers for the browser preview (a phone reports its own).
+  totalDiskSpace: 128e9,
+  availableDiskSpace: 80e9,
   get document() {
     return new Directory('mem://document');
   },

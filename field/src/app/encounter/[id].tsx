@@ -48,21 +48,25 @@ const filled = (v: unknown) => v !== undefined && v !== null && v !== '' && !(Ar
 /** A small progress ring with "n/m" inside: mint when complete, amber when started, grey when empty. */
 function Ring({ done, total }: { done: number; total: number }) {
   const { t } = useTheme();
-  const r = 17;
+  const r = 22;
   const c = 2 * Math.PI * r;
   const frac = total > 0 ? Math.min(1, done / total) : 0;
-  const color = frac >= 1 ? t.onMark : frac > 0 ? t.nearMark : t.hair;
+  // Mint only when the section is complete (Mint Means Good); started = ink; empty = the track grey.
+  const color = frac >= 1 ? t.onMark : t.ink;
   return (
-    <View style={{ width: 42, height: 42, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={`${done} of ${total}`}>
-      <Svg width={42} height={42} viewBox="0 0 42 42" style={{ position: 'absolute' }}>
-        <Circle cx={21} cy={21} r={r} stroke={t.hair} strokeWidth={4} fill="none" />
+    <View style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={`${done} of ${total}`}>
+      <Svg width={52} height={52} viewBox="0 0 52 52" style={{ position: 'absolute' }}>
+        <Circle cx={26} cy={26} r={r} stroke={t.track} strokeWidth={4} fill="none" />
         {frac > 0 && (
-          <Circle cx={21} cy={21} r={r} stroke={color} strokeWidth={4} fill="none" strokeDasharray={`${c * frac} ${c}`} strokeLinecap="round" transform="rotate(-90 21 21)" />
+          <Circle cx={26} cy={26} r={r} stroke={color} strokeWidth={4} fill="none" strokeDasharray={`${c * frac} ${c}`} strokeLinecap="round" transform="rotate(-90 26 26)" />
         )}
       </Svg>
-      <Text style={[type.small, { fontSize: 12, fontWeight: '700', color: frac > 0 ? t.ink : t.ink2, fontVariant: ['tabular-nums'] }]}>
-        {done}/{total}
-      </Text>
+      {/* A one-step section (Location) shows no count while empty, as in the comp. */}
+      {!(total === 1 && done === 0) && (
+        <Text style={[type.sub, { fontWeight: '700', color: frac > 0 ? t.ink : t.ink2, fontVariant: ['tabular-nums'] }]}>
+          {done}/{total}
+        </Text>
+      )}
     </View>
   );
 }
@@ -327,9 +331,9 @@ export default function EncounterScreen() {
           {firstPhoto ? (
             <Image source={{ uri: photoUri(firstPhoto.path) }} style={st.tilePhoto} contentFit="cover" />
           ) : key === 'location' && transect ? (
-            <TransectThumb transect={transect} size={64} width={128} point={locPoint} />
+            <TransectThumb transect={transect} size={72} width={150} point={locPoint} />
           ) : (
-            <Icon name={sec.icon} size={30} color={t.ink} strokeWidth={1.75} />
+            <Icon name={sec.icon} size={44} color={t.ink} strokeWidth={1.5} />
           )}
         </View>
         <Text style={st.tileName}>{sec.label}</Text>
@@ -384,7 +388,7 @@ export default function EncounterScreen() {
           <View style={st.bar}>
             {shown.map((x) => {
               const p = progressOf(x.key);
-              return <View key={x.key} style={[st.seg, { backgroundColor: p.done >= p.total ? t.onMark : p.done > 0 ? t.nearMark : t.hair }]} />;
+              return <View key={x.key} style={[st.seg, { backgroundColor: p.done >= p.total ? t.onMark : t.track }]} />;
             })}
           </View>
         </View>
@@ -424,8 +428,8 @@ const useStyles = makeStyles((t) => ({
   closeText: { ...type.small, fontWeight: '600', color: t.ink },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 },
   tile: { width: '48.5%', minHeight: 150, backgroundColor: t.card, borderRadius: radius.card, padding: 12, alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  tileArt: { height: 64, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
-  tilePhoto: { width: '100%', height: 64, borderRadius: 8, backgroundColor: t.tile },
+  tileArt: { height: 72, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
+  tilePhoto: { width: '100%', height: 72, borderRadius: 8, backgroundColor: t.tile },
   tileName: { ...type.label, color: t.ink },
   spName: { fontSize: 22, fontWeight: '700', fontStyle: 'italic', letterSpacing: -0.2, lineHeight: 26, color: t.ink },
   spUnset: { fontStyle: 'normal', fontWeight: '600', color: t.ink2 },
