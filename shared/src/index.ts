@@ -8,3 +8,5 @@ export * from './checks/coordinates';
 export * from './checks/ranges';
 export * from './checks/astro';
 export * from './checks/key';
+export * from './checks/names';
+export * from './checks/pointset';
