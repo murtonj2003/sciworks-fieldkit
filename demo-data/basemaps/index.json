@@ -21,6 +21,6 @@
     ],
     "source": "ESA WorldCover Sentinel-2 median L2A (RGBNIR) composite 2021, v2.0.0, tiles N10W085 + N10W084, bands B04/B03/B02, https://doi.org/10.71570/79k4-x482",
     "licence": "CC BY 4.0",
-    "attribution": "Satellite: ESA WorldCover 2021 \u00b7 contains modified Copernicus Sentinel data (2021) \u00b7 CC BY 4.0"
+    "attribution": "Satellite: \u00a9 ESA WorldCover 2021 \u00b7 contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium \u00b7 CC BY 4.0"
   }
 ]

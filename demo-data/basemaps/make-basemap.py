@@ -51,7 +51,7 @@ index = [{
     "source": "ESA WorldCover Sentinel-2 median L2A (RGBNIR) composite 2021, v2.0.0, tiles " + " + ".join(TILES)
               + ", bands B04/B03/B02, https://doi.org/10.71570/79k4-x482",
     "licence": "CC BY 4.0",
-    "attribution": "Satellite: ESA WorldCover 2021 · contains modified Copernicus Sentinel data (2021) · CC BY 4.0",
+    "attribution": "Satellite: © ESA WorldCover 2021 · contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium · CC BY 4.0",
 }]
 json.dump(index, open(os.path.join(HERE, "index.json"), "w"), indent=2)
 print(json.dumps(index[0]["bounds"]), img.size, len(data), "bytes")

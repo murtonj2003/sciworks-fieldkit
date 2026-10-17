@@ -132,6 +132,14 @@
       ],
       "referencePhotos": [
         {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/608285508/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6130399731",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Rachel Lee Harper",
+          "source": "https://www.gbif.org/occurrence/6130399731",
+          "note": "added Sat 17 Oct 20:55: a clearer view than the earlier photos (GBIF media licence checked)"
+        },
+        {
           "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/606461298/original.jpg",
           "occurrence": "https://www.gbif.org/occurrence/6129950746",
           "licence": "http://creativecommons.org/licenses/by/4.0/",
@@ -499,13 +507,6 @@
         "SVL"
       ],
       "referencePhotos": [
-        {
-          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/607058769/original.jpg",
-          "occurrence": "https://www.gbif.org/occurrence/6130198778",
-          "licence": "http://creativecommons.org/licenses/by/4.0/",
-          "rightsHolder": "Mark Valen",
-          "source": "https://www.gbif.org/occurrence/6130198778"
-        },
         {
           "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/608536869/original.jpg",
           "occurrence": "https://www.gbif.org/occurrence/6130229368",

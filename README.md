@@ -125,14 +125,18 @@ To rebuild the demo data and the sample bundles: `npm run demo-data -w shared &&
 ## Data, credits and licences
 
 - **Code:** MIT (see `LICENSE`).
+- **App icon and design renders:** made by the team with OpenArt (AI image generation) during the hackathon.
 - **Demo species pack:** an *illustrative demo pack, not for field ID*. It was built from cited open sources
   under CC BY 4.0; see `demo-data/attribution.md`. Every value keeps its source, licence and the source's
   own wording. The transects are synthetic demo lines, not real trails.
 - **Quoted source wording:** each value in the pack keeps a short quote from its source (under 100 characters) for
   citation only. Those quotes stay under their sources' own terms and are not relicensed by the pack's CC BY 4.0.
-- **Species photos** are linked, not copied (CC BY 4.0 and CC0, from GBIF), with credits in `attribution.md`.
+- **Species photos:** one small copy per species (18 of 19) in `demo-data/species-photos/`. They're CC BY 4.0 or CC0
+  only, each licence confirmed against GBIF's own record, and each credited in `index.json` and `attribution.md`.
+  They're remade with `demo-data/species-photos/make-species-photos.py`.
 - **Satellite picture** (`demo-data/basemaps/`): ESA WorldCover 2021 Sentinel-2 composite, 10 m, **CC BY 4.0**.
-  It contains modified Copernicus Sentinel data (2021). It's remade with `demo-data/basemaps/make-basemap.py`, and
+  © ESA WorldCover 2021; contains modified Copernicus Sentinel data (2021) processed by the ESA WorldCover
+  consortium. It's remade with `demo-data/basemaps/make-basemap.py`, and
   both apps show the credit whenever the picture is on screen.
 - **Dependencies:** all open-source under permissive licences (MIT, ISC, Apache-2.0, BSD and similar), checked
   17 Oct 2026. `lightningcss` (MPL-2.0) is only a build tool inside Expo and is not shipped in the app.

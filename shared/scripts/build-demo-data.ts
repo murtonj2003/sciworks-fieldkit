@@ -261,7 +261,8 @@ export const speciesPack: SpeciesPack = {
   packId: 'cr-la-selva-snakes-demo',
   version: 1,
   status: 'draft',
-  disclaimer: 'Illustrative demo pack, not for field ID. ' + draft.disclaimer,
+  // The draft's own wording already says it's not for field ID, so don't say it twice.
+  disclaimer: draft.disclaimer.replace(/^DEMO ONLY: not for identifying snakes in the field\. /, 'Illustrative demo pack, not for field ID. '),
   site: draft.site,
   taxa: draft.species.map(convert),
 };

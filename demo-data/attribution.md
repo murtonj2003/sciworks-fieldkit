@@ -10,6 +10,7 @@ quoted source wording kept with each value carries its own licence, noted beside
 
 ## *Bothrops asper*
 - Data: https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper (Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.)
+- Photo: Rachel Lee Harper, http://creativecommons.org/licenses/by/4.0/, https://www.gbif.org/occurrence/6130399731
 - Photo: Mark Valen, http://creativecommons.org/licenses/by/4.0/, https://www.gbif.org/occurrence/6129950746
 - Photo: Daten Schutz, http://creativecommons.org/publicdomain/zero/1.0/, https://www.gbif.org/occurrence/6130013369
 
@@ -43,7 +44,6 @@ quoted source wording kept with each value carries its own licence, noted beside
 
 ## *Boa imperator*
 - Data: https://en.wikipedia.org/w/index.php?oldid=1370679677 (Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.; cites Lotte & Lotte 1996, Litteratura Serpentium 16(3): 78-81)
-- Photo: Mark Valen, http://creativecommons.org/licenses/by/4.0/, https://www.gbif.org/occurrence/6130198778
 - Photo: Rachel Lee Harper, http://creativecommons.org/licenses/by/4.0/, https://www.gbif.org/occurrence/6130229368
 
 ## *Pliocercus euryzonus*

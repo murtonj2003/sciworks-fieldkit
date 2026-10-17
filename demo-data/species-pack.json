@@ -2,7 +2,7 @@
   "packId": "cr-la-selva-snakes-demo",
   "version": 1,
   "status": "draft",
-  "disclaimer": "Illustrative demo pack, not for field ID. DEMO ONLY: not for identifying snakes in the field. Every value is sourced, but many ranges come from outside Costa Rica, and a few have only Tier 3 provenance (Wikipedia). Several venomous species are included.",
+  "disclaimer": "Illustrative demo pack, not for field ID. Every value is sourced, but many ranges come from outside Costa Rica, and a few have only Tier 3 provenance (Wikipedia). Several venomous species are included.",
   "site": {
     "name": "La Selva Biological Station area, Caribbean lowlands, Heredia, Costa Rica",
     "bbox": {
@@ -113,6 +113,12 @@
         }
       ],
       "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/608285508/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Rachel Lee Harper",
+          "source": "https://www.gbif.org/occurrence/6130399731"
+        },
         {
           "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/606461298/original.jpg",
           "licence": "http://creativecommons.org/licenses/by/4.0/",
@@ -349,12 +355,6 @@
         }
       ],
       "photos": [
-        {
-          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/607058769/original.jpg",
-          "licence": "http://creativecommons.org/licenses/by/4.0/",
-          "rightsHolder": "Mark Valen",
-          "source": "https://www.gbif.org/occurrence/6130198778"
-        },
         {
           "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/608536869/original.jpg",
           "licence": "http://creativecommons.org/licenses/by/4.0/",
