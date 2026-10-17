@@ -24,6 +24,7 @@ const X0 = 14;
 const X1 = 282;
 const LINE_Y = 66;
 const TOP_Y = 16;
+const BREAK_Y = 41;
 
 const thousands = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 const dist = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
@@ -50,7 +51,8 @@ export function TransectStrip({
 }) {
   const { t } = useTheme();
   // SVG text uses the phone's system face; the browser preview needs it named (else it falls back to serif).
-  const tf = Platform.OS === 'web' ? { fontFamily: 'system-ui, -apple-system, Helvetica, Arial, sans-serif' } : {};
+  // Tabular figures on every number (on the phone). The browser preview only needs the system face named.
+  const tf = Platform.OS === 'web' ? { fontFamily: 'system-ui, -apple-system, Helvetica, Arial, sans-serif' } : { fontFeatureSettings: "'tnum'" };
   const yMaxM = toleranceM * amberMultiplier * 1.4; // further off than this is drawn at the top edge, with its real distance
   const x = (c: number) => X0 + (Math.min(Math.max(c, 0), lengthM) / Math.max(lengthM, 1)) * (X1 - X0);
   const y = (o: number) => LINE_Y - (Math.min(o, yMaxM) / yMaxM) * (LINE_Y - TOP_Y);
@@ -64,7 +66,7 @@ export function TransectStrip({
 
   return (
     <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} accessibilityLabel={`Transect ${transectId}, 0 to ${thousands(lengthM)} m${typed ? `. The typed point is ${dist(typed.offsetM)} off the line.` : ''}`}>
-      <Rect x={X0} y={allowTop} width={X1 - X0} height={LINE_Y - allowTop} fill={t.onFill} fillOpacity={0.62} />
+      <Rect x={X0} y={allowTop} width={X1 - X0} height={LINE_Y - allowTop} fill={t.onFill} fillOpacity={t.name === 'night' ? 1 : 0.62} />
       <SvgText x={X0 + 11} y={allowTop - 4} fontSize={12} fontWeight="500" fill={t.onInk} {...tf}>
         allowed {Math.round(toleranceM)} m
       </SvgText>
@@ -82,25 +84,49 @@ export function TransectStrip({
       </SvgText>
 
       {typed && (
-        <G opacity={anyFixMoved ? 0.45 : 1}>
-          <Line x1={x(typed.chainageM)} y1={y(typed.offsetM) + 8} x2={x(typed.chainageM)} y2={LINE_Y - 4} stroke={t.offMark} strokeWidth={1.5} strokeDasharray="3 3" />
-          <MarkShape band={anyFixMoved ? 'typed' : (typed.band ?? 'red')} x={x(typed.chainageM) - 8} y={y(typed.offsetM) - 8} size={16} />
+        <G>
+          <Line
+            x1={x(typed.chainageM)}
+            y1={y(typed.offsetM) + 8}
+            x2={x(typed.chainageM)}
+            y2={LINE_Y - 4}
+            stroke={anyFixMoved ? t.ink2 : t.offMark}
+            strokeWidth={1.5}
+            strokeDasharray="3 3"
+          />
           {typedFar && (
-            <Path
-              d={`M${x(typed.chainageM) + 17} ${TOP_Y + 6}V${TOP_Y - 4}M${x(typed.chainageM) + 13} ${TOP_Y}l4-4 4 4`}
-              fill="none"
-              stroke={t.ink}
-              strokeWidth={1.6}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            <G>
+              {/* scale break: the connector is not to scale when the point is far off */}
+              <Line x1={x(typed.chainageM) - 6} y1={BREAK_Y + 2} x2={x(typed.chainageM) + 6} y2={BREAK_Y - 3} stroke={t.card} strokeWidth={4} />
+              <Line x1={x(typed.chainageM) - 6} y1={BREAK_Y + 0.5} x2={x(typed.chainageM) + 6} y2={BREAK_Y - 4.5} stroke={t.ink2} strokeWidth={1.25} />
+              <Line x1={x(typed.chainageM) - 6} y1={BREAK_Y + 4} x2={x(typed.chainageM) + 6} y2={BREAK_Y - 1} stroke={t.ink2} strokeWidth={1.25} />
+            </G>
           )}
-          <SvgText x={x(typed.chainageM) + (typedFar ? 25 : 12)} y={y(typed.offsetM) + 4} fontSize={12} fontWeight="600" fill={t.ink} {...tf}>
-            {dist(typed.offsetM)} off
-          </SvgText>
-          <SvgText x={x(typed.chainageM) + (typedFar ? 92 : 70)} y={y(typed.offsetM) + 4} fontSize={12} fill={t.ink2} {...tf}>
-            as typed
-          </SvgText>
+          <MarkShape band={anyFixMoved ? 'typed' : (typed.band ?? 'red')} x={x(typed.chainageM) - 8} y={y(typed.offsetM) - 8} size={16} />
+          {anyFixMoved ? (
+            <SvgText x={x(typed.chainageM) + 14} y={y(typed.offsetM) + 4} fontSize={12} fill={t.ink2} {...tf}>
+              as typed
+            </SvgText>
+          ) : (
+            <>
+              {typedFar && (
+                <Path
+                  d={`M${x(typed.chainageM) + 17} ${TOP_Y + 6}V${TOP_Y - 4}M${x(typed.chainageM) + 13} ${TOP_Y}l4-4 4 4`}
+                  fill="none"
+                  stroke={t.ink}
+                  strokeWidth={1.6}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              )}
+              <SvgText x={x(typed.chainageM) + (typedFar ? 25 : 12)} y={y(typed.offsetM) + 4} fontSize={12} fontWeight="600" fill={t.ink} {...tf}>
+                {dist(typed.offsetM)} off
+              </SvgText>
+              <SvgText x={x(typed.chainageM) + (typedFar ? 92 : 70)} y={y(typed.offsetM) + 4} fontSize={12} fill={t.ink2} {...tf}>
+                as typed
+              </SvgText>
+            </>
+          )}
         </G>
       )}
 
@@ -116,11 +142,16 @@ export function TransectStrip({
               {used ? '' : String(sugIndex(p))}
             </SvgText>
             {used && <Path d={`M${cx - 3.6} ${cy + 0.2}l2.4 2.4 4.8-5`} fill="none" stroke={glyph} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />}
-            {fixes.length === 1 && (
-              <SvgText x={cx + 13} y={cy - 6} fontSize={12} fill={t.ink2} {...tf}>
-                {used ? `${p.offsetM.toFixed(1)} m` : 'suggestion'}
-              </SvgText>
-            )}
+            {fixes.length === 1 &&
+              (used ? (
+                <SvgText x={cx + 13} y={cy - 6} fontSize={12} fontWeight="600" fill={t.ink} {...tf}>
+                  {thousands(p.chainageM)} m along
+                </SvgText>
+              ) : (
+                <SvgText x={cx + 13} y={cy - 6} fontSize={12} fill={t.ink2} {...tf}>
+                  suggestion
+                </SvgText>
+              ))}
           </G>
         );
       })}

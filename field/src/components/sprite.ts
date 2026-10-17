@@ -10,7 +10,9 @@ export const ICONS = {
   "cross": "<path d=\"M6.5 6.5l11 11M17.5 6.5l-11 11\"/>",
   "clear": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M9.2 9.2l5.6 5.6M14.8 9.2l-5.6 5.6\"/>",
   "plus": "<path d=\"M12 5v14M5 12h14\"/>",
+  "minus": "<path d=\"M5 12h14\"/>",
   "arrow": "<path d=\"M4.5 12h15M13.5 6l6 6-6 6\"/>",
+  "up": "<path d=\"M12 19V6M6.5 11.5L12 6l5.5 5.5\"/>",
   "flag": "<path d=\"M5.5 21V4M5.5 4.5h11l-2.5 4 2.5 4h-11\"/>",
   "pencil": "<path d=\"M4.5 19.5l1-4.2L16 4.8l3.2 3.2L8.7 18.5zM13.8 7l3.2 3.2\"/>",
   "tray": "<path d=\"M4 13.5l2.5-8h11l2.5 8V18a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM4 13.5h4.5l1.2 2h4.6l1.2-2H20\"/>",
@@ -24,6 +26,8 @@ export const ICONS = {
   "send": "<path d=\"M20.5 3.5L10 14M20.5 3.5L14 20.5l-4-6.5-6.5-4z\"/>",
   "upload": "<path d=\"M12 15V4M7 9l5-5 5 5M5 20h14\"/>",
   "download": "<path d=\"M12 4v11M7 10l5 5 5-5M5 20h14\"/>",
+  "updown": "<path d=\"M8 19V5M4.5 8.5L8 5l3.5 3.5M16 5v14M12.5 15.5L16 19l3.5-3.5\"/>",
+  "sliders": "<path d=\"M4 7h9M17 7h3M4 17h3M11 17h9\"/><circle cx=\"15\" cy=\"7\" r=\"2\"/><circle cx=\"9\" cy=\"17\" r=\"2\"/>",
   "lock": "<rect x=\"5\" y=\"10.5\" width=\"14\" height=\"10\" rx=\"2\"/><path d=\"M8 10.5V8a4 4 0 0 1 8 0v2.5\"/>",
   "warning": "<path d=\"M10.7 4.3a1.5 1.5 0 0 1 2.6 0l7.6 13.2a1.5 1.5 0 0 1-1.3 2.2H4.4a1.5 1.5 0 0 1-1.3-2.2z\"/><path d=\"M12 9.5v4.2M12 16.8h.01\"/>",
   "info": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 11v5.5M12 7.8h.01\"/>",
@@ -39,16 +43,21 @@ export const ICONS = {
   "reviewer": "<path d=\"M6.5 3.5h7.5l4 4v13h-11.5zM14 3.5v4h4M9.5 14l2 2 3.5-4\"/>",
   "undo": "<path d=\"M9 7.5L4.5 12 9 16.5M5 12h9.5a5 5 0 0 1 0 10H12\"/>",
   "retake": "<path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4.5v3.7h-3.7\"/>",
+  "external": "<path d=\"M14 4.5h5.5V10M19.5 4.5L11 13M17.5 14v4.5a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-11a1 1 0 0 1 1-1H10\"/>",
   "user": "<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4.5 20.5c1.4-3.6 4.2-5.5 7.5-5.5s6.1 1.9 7.5 5.5\"/>",
   "users": "<circle cx=\"9\" cy=\"8.5\" r=\"3.5\"/><path d=\"M2.5 19.5c1-3 3.4-4.8 6.5-4.8s5.5 1.8 6.5 4.8M15.5 5.2a3.5 3.5 0 0 1 0 6.6M18 14.9c1.6.7 2.8 2.3 3.5 4.6\"/>",
+  "folder": "<path d=\"M3.5 7A1.5 1.5 0 0 1 5 5.5h4l2 2h8A1.5 1.5 0 0 1 20.5 9v8.5A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z\"/>",
+  "spell": "<path d=\"M3.5 17L7.5 6l4 11M5 13.2h5M14 14.5l2.5 2.5L21 11\"/>",
   "phone": "<rect x=\"7\" y=\"3\" width=\"10\" height=\"18\" rx=\"2.5\"/><path d=\"M11 18h2\"/>",
+  "eye": "<path d=\"M2.8 12S6 6 12 6s9.2 6 9.2 6-3.2 6-9.2 6-9.2-6-9.2-6z\"/><circle cx=\"12\" cy=\"12\" r=\"2.8\"/>",
+  "eye-off": "<path d=\"M2.8 12S6 6 12 6s9.2 6 9.2 6-3.2 6-9.2 6-9.2-6-9.2-6z\"/><circle cx=\"12\" cy=\"12\" r=\"2.8\"/><path d=\"M4.5 4.5l15 15\"/>",
   "clock": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5V12l3 2\"/>",
   "thermo": "<path d=\"M10 14.5V5a2 2 0 0 1 4 0v9.5a3.5 3.5 0 1 1-4 0zM12 9v7\"/>",
   "cloud": "<path d=\"M7.5 18.5a4 4 0 0 1-.6-8A5.5 5.5 0 0 1 17.6 9a4.3 4.3 0 0 1-.6 9.5z\"/>",
   "rain": "<path d=\"M7.5 14.5a3.8 3.8 0 0 1-.5-7.6A5.2 5.2 0 0 1 17.1 6a4 4 0 0 1-.6 8.5zM8.5 17.5l-1 2.5M12.5 17.5l-1 2.5M16.5 17.5l-1 2.5\"/>",
   "tree": "<path d=\"M12 21v-4.5M12 3.5l-5.5 7h3l-3.5 6h12l-3.5-6h3z\"/>",
-  "plane": "<path fill=\"currentColor\" stroke=\"none\" d=\"M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z\"/>",
-  "sliders": "<path d=\"M4 7h9M17 7h3M4 17h3M11 17h9\"/><circle cx=\"15\" cy=\"7\" r=\"2\"/><circle cx=\"9\" cy=\"17\" r=\"2\"/>"
+  "more": "<circle cx=\"6\" cy=\"12\" r=\"1.4\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12\" cy=\"12\" r=\"1.4\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"18\" cy=\"12\" r=\"1.4\" fill=\"currentColor\" stroke=\"none\"/>",
+  "plane": "<path fill=\"currentColor\" stroke=\"none\" d=\"M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z\"/>"
 } as const;
 
 export type IconName = keyof typeof ICONS;

@@ -259,6 +259,7 @@ export default function EncounterScreen() {
         <Button
           label="Done"
           kind={choicePending ? 'grey' : 'primary'}
+          size={choicePending ? 56 : 64}
           onPress={() => {
             sealNow();
             router.back();

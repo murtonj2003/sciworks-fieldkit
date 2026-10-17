@@ -13,7 +13,7 @@ import {
   type Project,
   type Transect,
 } from '@sciworks/shared';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 
 import { getMeta, setMeta } from '@/db/meta';
@@ -24,7 +24,7 @@ import { radius, type } from '@/theme/theme';
 import { NumberInput, TextBox, useFieldStyles } from './fields';
 import { BAND_WORD, BandMarker, Icon, type Band } from './Icon';
 import { TransectStrip, type StripPoint } from './TransectStrip';
-import { Button, Group, Hint, Pair, Row, T } from './ui';
+import { Button, Group, Hint, Pair, T } from './ui';
 
 export type { LocationChange } from '@/model/location';
 
@@ -98,12 +98,12 @@ const plainExplain = (explain: string) => explain.replace(/\s*\([^)]*→[^)]*\)\
 
 const useStyles = makeStyles((t) => ({
   seg: { flexDirection: 'row', height: 56, padding: 4, borderRadius: radius.group, backgroundColor: t.segTrack },
-  segBtn: { flex: 1, minWidth: 0, height: 48, borderRadius: radius.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 0 },
+  segBtn: { flexGrow: 1, height: 48, borderRadius: radius.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
   segOn: {
     backgroundColor: t.segThumb,
     ...(t.name === 'day' ? { shadowColor: '#1D1E1F', shadowOpacity: 0.12, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 2 } : {}),
   },
-  segText: { ...type.sub, fontSize: 14, letterSpacing: -0.2, fontWeight: '500', color: t.ink2 },
+  segText: { ...type.sub, fontWeight: '500', color: t.ink2 },
   segTextOn: { color: t.ink, fontWeight: '600' },
   gt: { ...type.small, color: t.ink2, marginHorizontal: 4, marginBottom: 6 },
   coordBox: {
@@ -120,7 +120,10 @@ const useStyles = makeStyles((t) => ({
   },
   coordFocus: { borderColor: t.ink },
   coordPrefix: { ...type.input, color: t.ink2 },
-  coordInput: { ...type.input, color: t.ink, flex: 1, minWidth: 0, minHeight: 56, paddingVertical: 0, ...WEB_NO_OUTLINE },
+  coordInput: { ...type.input, color: t.ink, minWidth: 0, minHeight: 56, paddingVertical: 0, paddingHorizontal: 0, ...WEB_NO_OUTLINE },
+  coordInputText: { ...type.input, color: t.ink },
+  coordHidden: { color: 'transparent' },
+  fixedOverlay: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, justifyContent: 'center', zIndex: 1 },
   help: { ...type.small, fontWeight: '400', color: t.ink2, marginTop: 6, marginHorizontal: 4 },
   block: { borderRadius: radius.card, paddingTop: 12, paddingBottom: 13, paddingHorizontal: 14, flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   blockTitle: { ...type.headBold },
@@ -149,7 +152,7 @@ const useStyles = makeStyles((t) => ({
   optWhat: { ...type.sub, color: t.ink, paddingTop: 4 },
   optEff: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
   optEffText: { ...type.small, fontWeight: '400', color: t.ink2, flex: 1 },
-  done: { flexDirection: 'row', gap: 12, paddingTop: 12, paddingHorizontal: 14, paddingBottom: 4 },
+  done: { flexDirection: 'row', gap: 12, paddingTop: 6, paddingHorizontal: 8, paddingBottom: 6, alignItems: 'flex-start' },
   doneTitle: { ...type.title, color: t.ink },
   doneText: { ...type.sub, color: t.ink2 },
 }));
@@ -186,6 +189,7 @@ export function LocationEntry({
   const [overriding, setOverriding] = useState(false);
   const [reason, setReason] = useState('');
   const [focus, setFocus] = useState(false);
+  const inputRef = useRef<TextInput>(null);
 
   const parsed = useMemo(() => (raw.trim() ? parseTyped(raw, format) : null), [raw, format]);
   const typedPoint = parsed && !('error' in parsed) ? parsed : null;
@@ -205,6 +209,18 @@ export function LocationEntry({
   const byHq = !!decision?.reason?.startsWith('HQ correction');
   const usedSuggestion =
     moved && decision?.kind === 'accepted-suggestion' && !byHq ? check?.suggestions.find((sg) => sg.kind === decision.suggestionKind) : undefined;
+
+  // After "Use this" the box shows the fixed value with the moved digits in mint (P6b). The input keeps the
+  // typed text underneath (typed.raw is what was typed); tapping it brings the typed text back for editing.
+  const fixedView = (() => {
+    if (!usedSuggestion || focus) return null;
+    const d = diffTokens(raw, usedSuggestion.raw);
+    if (!d) return null;
+    const oldTok = d.before + d.old + d.after;
+    const at = raw.indexOf(oldTok);
+    if (at < 0) return null;
+    return { lead: raw.slice(0, at) + d.before, neu: d.neu, trail: d.after + raw.slice(at + oldTok.length), plain: raw.slice(0, at) + d.before + d.neu + d.after + raw.slice(at + oldTok.length) };
+  })();
 
   const emit = (nextRaw: string, nextFormat: CoordFormat, nextAccuracy: number | undefined) =>
     onChange(onEntryChange(location, nextRaw, nextFormat, nextAccuracy, ctx, retaking));
@@ -233,7 +249,7 @@ export function LocationEntry({
   // The band block shows where the point is now: the used fix if any, else the typed reading.
   const blockBand: Band | null = movedNow ? movedNow.band : check ? check.band : null;
   const blockWords = movedNow
-    ? { word: BAND_WORD[movedNow.band], detail: `${movedNow.offsetM.toFixed(1)} m from ${transect.properties.transectId} · ${thousands(movedNow.chainageM)} m along` }
+    ? { word: BAND_WORD[movedNow.band], detail: `${movedNow.offsetM.toFixed(1)} m from ${transect.properties.transectId}` }
     : check
       ? bandWords(check, transect.properties.transectId)
       : null;
@@ -295,8 +311,19 @@ export function LocationEntry({
       <Group style={{ marginTop: 10 }}>
         <View style={[s.coordBox, focus && s.coordFocus]}>
           {prefix && <Text style={s.coordPrefix}>{prefix}</Text>}
+          <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
+          {fixedView && (
+              <Pressable style={s.fixedOverlay} onPress={() => inputRef.current?.focus()} accessibilityRole="text" accessibilityLabel={`Used: ${fixedView.plain}`}>
+              <Text style={[s.coordInputText]} numberOfLines={1}>
+                {fixedView.lead}
+                <Text style={s.add}>{fixedView.neu}</Text>
+                {fixedView.trail}
+              </Text>
+            </Pressable>
+          )}
           <TextInput
-            style={s.coordInput}
+            ref={inputRef}
+            style={[s.coordInput, fixedView && s.coordHidden]}
             value={raw}
             accessibilityLabel="Coordinate"
             autoCapitalize="characters"
@@ -311,6 +338,7 @@ export function LocationEntry({
               emit(x, format, accuracy);
             }}
           />
+          </View>
           <View style={{ width: 36, height: 48, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="keypad" size={20} color={t.ink2} />
           </View>
@@ -349,14 +377,14 @@ export function LocationEntry({
         )}
       </Group>
 
-      {/* After a choice the card folds to one line, with Undo (design P6b). */}
+      {/* After a choice the card folds to one line on the grey group, with Undo (design P6b). */}
       {decision && (
         <Group style={{ marginTop: 10 }}>
-          <Row pad={false}>
-            <View style={s.done}>
-              <BandMarker band={movedNow ? movedNow.band : (check?.band ?? 'none')} size={24} />
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={s.doneTitle}>
+          <View style={s.done}>
+            <BandMarker band={movedNow ? movedNow.band : (check?.band ?? 'none')} size={24} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <Text style={[s.doneTitle, { flex: 1 }]}>
                   {decision.kind === 'accepted-suggestion'
                     ? byHq
                       ? 'Correction from HQ used'
@@ -365,22 +393,17 @@ export function LocationEntry({
                       ? 'Re-taken from the GPS.'
                       : 'Kept as typed.'}
                 </Text>
-                {usedSuggestion && change(usedSuggestion, true)}
-                {moved && movedNow && (
-                  <Text style={s.doneText}>
-                    Now {movedNow.offsetM.toFixed(1)} m from {transect.properties.transectId}, {thousands(movedNow.chainageM)} m along.
-                    {moved.typed ? ` What you typed is kept on the record.` : ''}
-                  </Text>
-                )}
-                {decision.kind === 'override' && decision.reason ? <Text style={s.doneText}>Reason: {decision.reason}</Text> : null}
-                {!byHq && (
-                  <View style={{ flexDirection: 'row', marginLeft: -8 }}>
-                    <Button kind="link" label="Undo" icon="undo" onPress={undo} />
-                  </View>
-                )}
+                {!byHq && <Button kind="white" size={48} icon="undo" label="Undo" onPress={undo} />}
               </View>
+              {moved && movedNow && (
+                <Text style={s.doneText}>
+                  Now {movedNow.offsetM.toFixed(1)} m from {transect.properties.transectId}, {thousands(movedNow.chainageM)} m along.
+                  {moved.typed ? ' What you typed is kept on the record.' : ''}
+                </Text>
+              )}
+              {decision.kind === 'override' && decision.reason ? <Text style={s.doneText}>Reason: {decision.reason}</Text> : null}
             </View>
-          </Row>
+          </View>
         </Group>
       )}
 
