@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Chips, FieldInput } from '@/components/fields';
+import { TransectMap } from '@/components/TransectMap';
 import { Button, Card, H2, P, colors } from '@/components/ui';
 import { latestReview } from '@/db/feedback';
 import { listRecords, saveDraftNow, seal } from '@/db/records';
@@ -21,7 +22,7 @@ const reviewWord = (status: string | undefined) =>
 export default function SurveyScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const field = useField();
-  const { project, template, overlay, person } = field;
+  const { project, template, overlay, person, transects } = field;
   const { record: survey, update } = useRecord<LocalSurvey>(id);
   const tz = project?.timeZone;
   const now = () => nowIso(tz);
@@ -35,6 +36,7 @@ export default function SurveyScreen() {
     .sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
 
   if (!survey || !project || !template || !person) return <P>Survey not found.</P>;
+  const transect = transects?.features.find((f) => f.properties.transectId === survey.transectId);
   const finished = !!survey.finishedAt;
   const set = (path: string, value: unknown) => update((r) => setPath(r, path, value));
   const hits = protocolHits(template.protocolRules, survey).filter(
@@ -108,6 +110,21 @@ export default function SurveyScreen() {
           )}
           {missing.length > 0 && <P dim>Still to fill in for HQ: {missing.join(', ')}</P>}
         </Card>
+        {transect && (
+          <TransectMap
+            transect={transect}
+            points={animals.flatMap((a, i) =>
+              a.location
+                ? [{
+                    lat: a.location.lat,
+                    lon: a.location.lon,
+                    band: a.location.check.decision?.kind === 'accepted-suggestion' ? ('green' as const) : a.location.check.band,
+                    label: String(i + 1),
+                  }]
+                : [],
+            )}
+          />
+        )}
 
         <H2>{groupLabel('weather-start')}</H2>
         {presetRow('weatherStart')}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Chips, FieldLabel } from '@/components/fields';
+import { TransectMap } from '@/components/TransectMap';
 import { Button, P } from '@/components/ui';
 import { saveDraftNow, seal } from '@/db/records';
 import { effectiveFields, withDefaults } from '@/model/form';
@@ -46,6 +47,9 @@ export default function NewSurvey() {
           value={transectId}
           onChange={(v) => setTransectId(v as string | undefined)}
         />
+        {transectId && teamTransects.find((f) => f.properties.transectId === transectId) && (
+          <TransectMap transect={teamTransects.find((f) => f.properties.transectId === transectId)!} />
+        )}
         {transectId && (
           <P dim>
             {teamTransects.find((f) => f.properties.transectId === transectId)?.properties.name} ·{' '}
