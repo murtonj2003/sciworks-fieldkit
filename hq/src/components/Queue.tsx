@@ -53,9 +53,11 @@ interface QueueProps {
   provisionalNames: Map<string, string>
   /** Records seen only in an incomplete state so far (kept aside, not in the queue). */
   held: number
+  /** Records with an AI note waiting. */
+  noteKeys: Set<string>
 }
 
-export function Queue({ project, rows, total, filter, onFilter, selectedKey, onSelect, drafts, provisionalNames, held }: QueueProps) {
+export function Queue({ project, rows, total, filter, onFilter, selectedKey, onSelect, drafts, provisionalNames, held, noteKeys }: QueueProps) {
   const draftKeys = new Set(drafts.filter((d) => d.state === 'draft').map((d) => d.recordKey))
   const teams = (project?.teams ?? []).filter((t) => t.transectIds.length)
   return (
@@ -132,6 +134,7 @@ export function Queue({ project, rows, total, filter, onFilter, selectedKey, onS
               )}
               {r.flags.some((f) => f.code === 'FIXED_IN_FIELD') && <span className="tag tag-info">↺ fixed in field</span>}
               {draftKeys.has(r.key) && <span className="tag tag-ai">AI draft</span>}
+              {noteKeys.has(r.key) && <span className="tag tag-ai">AI note</span>}
               {r.rev > 1 && <span className="tag">rev {r.rev}</span>}
             </span>
           </li>

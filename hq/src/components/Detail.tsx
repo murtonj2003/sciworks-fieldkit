@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { FORMAT_LABELS, type Encounter, type FieldDef, type Overlay, type Project, type Survey, type Template } from '@sciworks/shared'
-import { db, type CorrectionRow, type RecordRow } from '../db'
+import { db, type AiNoteRow, type CorrectionRow, type RecordRow } from '../db'
 import { GROUP_LABEL, STATUS_ICON, STATUS_WORD, fieldsFor, fmtLatLon, fmtNumber, fmtValue, recordTitle, valueAt } from '../lib/format'
 import { approveDraft, diffRecords, discardDraft } from '../lib/review'
 import { personName, teamName } from '../lib/setup'
@@ -24,6 +24,7 @@ interface DetailProps {
   onReopen: () => void
   correctionOpen: boolean
   setCorrectionOpen: (v: boolean) => void
+  aiNotes: AiNoteRow[]
 }
 
 const BAND_WORD = { green: 'On the line', amber: 'Near the line, check', red: 'Far off the line', 'outside-bbox': 'Outside the project area' } as const
@@ -84,6 +85,22 @@ export function Detail(props: DetailProps) {
       )}
 
       <Flags row={row} />
+      {props.aiNotes.length > 0 && (
+        <div className="panel">
+          <h3>AI notes</h3>
+          {props.aiNotes.map((n) => (
+            <div key={n.id} className="correction correction-draft">
+              <p>
+                <span className="tag tag-ai">AI note</span> <span className="muted small">a suggestion, {shortTime(n.at)}</span>
+              </p>
+              <p>{n.text}</p>
+              <button className="btn btn-quiet small" onClick={() => db.aiNotes.update(n.id!, { dismissed: true })}>
+                Dismiss
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
       {row.status === 'edited' && <EditedDiff row={row} />}
       {row.recordType === 'encounter' && <CoordinateTrail row={row} project={project} />}
       <Fields row={row} template={template} overlay={overlay} project={project} />

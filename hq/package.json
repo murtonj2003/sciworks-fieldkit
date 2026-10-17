@@ -14,6 +14,7 @@
     "lint": "oxlint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0",
     "@sciworks/shared": "*",
     "dexie": "^4.4.6",
     "dexie-react-hooks": "^4.4.0",
@@ -21,7 +22,8 @@
     "maplibre-gl": "^6.14.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "uuid": "^14.0.3"
+    "uuid": "^14.0.3",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

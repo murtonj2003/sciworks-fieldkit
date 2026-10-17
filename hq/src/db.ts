@@ -59,6 +59,8 @@ export interface ImportSummary {
   newCorrectionResponses: number
   /** Items that failed the import checks (e.g. an animal saved before its location): kept aside, never dropped. */
   heldAside: number
+  /** Records whose current version changed in this import (what the AI reviewer looks at next). */
+  changedKeys?: string[]
   overlayAdopted?: number
   badFiles: { path: string; message: string }[]
   setupApplied?: string[]
@@ -220,6 +222,34 @@ export interface QuarantineRow {
   value: unknown
 }
 
+/** One AI review run. The AI only reads and drafts; this is its log, kept for the Data Manager to audit. */
+export interface AiRunRow {
+  runId: string
+  startedAt: string
+  finishedAt?: string
+  state: 'running' | 'done' | 'failed' | 'stopped'
+  model: string
+  /** Which records it was asked to look at. */
+  scopeKeys: string[]
+  scopeLabel: string
+  steps: { at: string; kind: 'tool' | 'text' | 'info' | 'error'; text: string }[]
+  summary?: string
+  draftIds: string[]
+  noteIds: number[]
+  error?: string
+  usage?: { inputTokens: number; outputTokens: number }
+}
+
+/** A flag the AI raised on a record, in plain words. Shown as a suggestion; never changes the record or its status. */
+export interface AiNoteRow {
+  id?: number
+  runId: string
+  recordKey: string
+  text: string
+  at: string
+  dismissed?: boolean
+}
+
 export class HqDb extends Dexie {
   bundles!: EntityTable<RawBundleRow, 'sha256'>
   records!: EntityTable<RecordRow, 'key'>
@@ -238,6 +268,8 @@ export class HqDb extends Dexie {
   setup!: EntityTable<KvRow, 'key'>
   settings!: EntityTable<KvRow, 'key'>
   quarantine!: EntityTable<QuarantineRow, 'seq'>
+  aiRuns!: EntityTable<AiRunRow, 'runId'>
+  aiNotes!: EntityTable<AiNoteRow, 'id'>
 
   constructor(name = 'sciworks-hq') {
     super(name)
@@ -262,6 +294,10 @@ export class HqDb extends Dexie {
     })
     this.version(2).stores({
       quarantine: '++seq, &itemKey, bundleSha, recordKey',
+    })
+    this.version(3).stores({
+      aiRuns: 'runId, startedAt, state',
+      aiNotes: '++id, runId, recordKey',
     })
   }
 }

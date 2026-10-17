@@ -9,13 +9,16 @@ import { Detail } from './components/Detail'
 import { MapView } from './components/MapView'
 import { DEFAULT_FILTER, Queue, applyFilter, sortRows, type QueueFilter } from './components/Queue'
 import { DevicesPanel, ExportDialog, HqBundleDialog } from './components/Dialogs'
+import { AiPanel } from './components/AiPanel'
+import { runReview, scopeToReview } from './lib/ai/agent'
+import { getApiKey, getAutoReview } from './lib/ai/apiKey'
 import { loadDemoProject, loadSampleFieldBundle } from './lib/demo'
 import { download, makeBackup } from './lib/files'
 import { importBundleFile, summaryLine } from './lib/importBundle'
 import { setStatus } from './lib/review'
 import { dataManagerOf, loadSetup } from './lib/setup'
 
-type Dialog = 'none' | 'hq-bundle' | 'export' | 'devices'
+type Dialog = 'none' | 'hq-bundle' | 'export' | 'devices' | 'ai'
 
 export default function App() {
   const setup = useLiveQuery(() => loadSetup(), [], undefined)
@@ -24,6 +27,8 @@ export default function App() {
   const overlays = useLiveQuery(() => db.overlays.toArray(), [], [])
   const provisional = useLiveQuery(() => db.provisionalTaxa.toArray(), [], [])
   const quarantined = useLiveQuery(() => db.quarantine.toArray(), [], [])
+  const aiNotes = useLiveQuery(() => db.aiNotes.toArray(), [], [])
+  const lastRun = useLiveQuery(() => db.aiRuns.orderBy('startedAt').last(), [], undefined)
 
   const [filter, setFilter] = useState<QueueFilter>(DEFAULT_FILTER)
   const [selectedKey, setSelectedKey] = useState<string>()
@@ -34,6 +39,8 @@ export default function App() {
   const [dragging, setDragging] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
   const menuRef = useRef<HTMLDetailsElement>(null)
+  const [keyVersion, setKeyVersion] = useState(0)
+  const [aiMessage, setAiMessage] = useState('')
 
   const project = setup?.project
   const me = dataManagerOf(project)
@@ -52,6 +59,28 @@ export default function App() {
     navigator.storage?.persist?.().catch(() => undefined)
   }, [])
 
+  /** The AI reviewer. It only drafts; failures (no key, no internet) are said plainly and nothing else stops. */
+  const review = useCallback(async (keys?: string[]) => {
+    const scope = await scopeToReview(keys)
+    if (!scope.keys.length) return
+    setAiMessage('')
+    const out = await runReview(scope, { apiKey: getApiKey() })
+    if (!out.ok) setAiMessage(out.message)
+  }, [])
+
+  const afterImport = useCallback(
+    (summaries: ImportSummary[]) => {
+      const keys = summaries.flatMap((s) => (s.ok && s.kind === 'field' ? (s.changedKeys ?? []) : []))
+      if (!keys.length || !getAutoReview()) return
+      if (!getApiKey()) {
+        setAiMessage('AI review is off: add an Anthropic API key in AI review to have new records checked automatically.')
+        return
+      }
+      void review(keys)
+    },
+    [review],
+  )
+
   const runImport = useCallback(async (files: File[]) => {
     setBusy(true)
     const out: ImportSummary[] = []
@@ -64,13 +93,15 @@ export default function App() {
     }
     setImports((prev) => [...out, ...prev].slice(0, 6))
     setBusy(false)
-  }, [])
+    afterImport(out)
+  }, [afterImport])
 
   const runOne = async (fn: () => Promise<ImportSummary>) => {
     setBusy(true)
     try {
       const s = await fn()
       setImports((prev) => [s, ...prev].slice(0, 6))
+      afterImport([s])
     } finally {
       setBusy(false)
     }
@@ -209,6 +240,9 @@ export default function App() {
           <button className="btn" onClick={() => setDialog('export')} disabled={!project}>
             Export Darwin Core
           </button>
+          <button className="btn" onClick={() => setDialog('ai')} disabled={!project} title="AI reviewer: drafts only; you decide">
+            {lastRun?.state === 'running' ? 'AI reviewing…' : 'AI review'}
+          </button>
           <button className="btn" onClick={() => setDialog('devices')}>
             Devices
           </button>
@@ -258,6 +292,32 @@ export default function App() {
         </div>
       )}
 
+      {(aiMessage || lastRun) && (
+        <div className="imports" role="status">
+          {lastRun?.state === 'running' ? (
+            <span>
+              <span className="tag tag-ai">AI</span> Reviewing {lastRun.scopeKeys.length} records… {lastRun.steps[lastRun.steps.length - 1]?.text ?? 'starting'}
+            </span>
+          ) : aiMessage ? (
+            <span>
+              <span className="tag tag-ai">AI</span> {aiMessage}
+            </span>
+          ) : lastRun ? (
+            <span>
+              <span className="tag tag-ai">AI</span>{' '}
+              {lastRun.state === 'done'
+                ? `Review finished: ${lastRun.draftIds.length} draft correction${lastRun.draftIds.length === 1 ? '' : 's'} and ${lastRun.noteIds.length} note${lastRun.noteIds.length === 1 ? '' : 's'} waiting for you.`
+                : lastRun.state === 'stopped'
+                  ? 'Review stopped.'
+                  : `Review failed: ${lastRun.error ?? ''}`}{' '}
+              <button className="link" onClick={() => setDialog('ai')}>
+                Open AI review
+              </button>
+            </span>
+          ) : null}
+        </div>
+      )}
+
       {!project ? (
         <main className="empty-state">
           <h1>Set up HQ</h1>
@@ -280,6 +340,7 @@ export default function App() {
             drafts={corrections}
             provisionalNames={provisionalNames}
             held={held}
+            noteKeys={new Set(aiNotes.filter((x) => !x.dismissed).map((x) => x.recordKey))}
           />
           <MapView transects={setup?.transects} records={records.filter((r) => !r.voided)} selectedKey={selectedKey} onSelect={(k) => (setSelectedKey(k), setCorrectionOpen(false))} />
           <Detail
@@ -295,6 +356,7 @@ export default function App() {
             onReopen={() => decide('received')}
             correctionOpen={correctionOpen}
             setCorrectionOpen={setCorrectionOpen}
+            aiNotes={aiNotes.filter((x) => x.recordKey === selected?.key && !x.dismissed)}
           />
         </main>
       )}
@@ -307,6 +369,16 @@ export default function App() {
       {dialog === 'hq-bundle' && project && <HqBundleDialog project={project} onClose={() => setDialog('none')} />}
       {dialog === 'export' && project && setup && <ExportDialog setup={setup} onClose={() => setDialog('none')} onSelect={(k) => (setSelectedKey(k), setDialog('none'))} />}
       {dialog === 'devices' && <DevicesPanel project={project} onClose={() => setDialog('none')} />}
+      {dialog === 'ai' && (
+        <AiPanel
+          project={project}
+          onClose={() => setDialog('none')}
+          onSelect={(k) => (pick(k), setDialog('none'))}
+          onReviewAll={() => void review()}
+          keyVersion={keyVersion}
+          onKeyChanged={() => setKeyVersion((v) => v + 1)}
+        />
+      )}
     </div>
   )
 }

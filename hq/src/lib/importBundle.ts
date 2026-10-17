@@ -239,6 +239,7 @@ export async function importBundleFile(bytes: Uint8Array, fileName: string, d: H
     }
 
     if (scope.recordKeys.size) await recheck(d, setup, scope)
+    summary.changedKeys = [...scope.recordKeys]
 
     summary.alreadyHadFile = await keepRaw(d, sha, fileName, bytes, { ...rawExtra, summary })
     return summary

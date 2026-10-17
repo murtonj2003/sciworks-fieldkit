@@ -611,3 +611,11 @@ textarea {
   border-bottom: 1px solid var(--line);
   font-size: 0.9em;
 }
+
+.modal label.inline,
+label.inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: none;
+}
