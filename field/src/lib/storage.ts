@@ -1,7 +1,7 @@
 // How full the phone is (Jack, Sat 19:00; design pick S1): the phone's own total and free space, what
 // Fieldkit itself holds (its documents folder: database, photos, bundles, satellite pictures), and a rough
 // "room for N more survey days" at the rate this phone has used so far. Fieldkit never deletes anything itself.
-import { Paths } from 'expo-file-system';
+import { Directory, Paths } from 'expo-file-system';
 
 import { all } from '@/db/db';
 
@@ -22,16 +22,19 @@ export function phoneStorage(): PhoneStorage | null {
   let total = 0;
   let free = 0;
   let app = 0;
+  let perDayBase = 0;
   try {
     total = Paths.totalDiskSpace;
     free = Paths.availableDiskSpace;
     app = Paths.document.size ?? 0;
+    // The per-day rate counts what a survey day adds: the database and photos (not satellite pictures or bundles).
+    perDayBase = (new Directory(Paths.document, 'photos').size ?? 0) + (new Directory(Paths.document, 'SQLite').size ?? 0);
   } catch {
     return null;
   }
   if (!total || total <= 0) return null;
   const days = all<{ d: string }>("SELECT DISTINCT json_extract(json, '$.date') AS d FROM record_revs WHERE record_type = 'survey'").length;
-  const perDay = days > 0 ? Math.max(app / days, 1_000_000) : DEFAULT_DAY_BYTES;
+  const perDay = days > 0 ? Math.max(perDayBase / days, 1_000_000) : DEFAULT_DAY_BYTES;
   const used = Math.max(0, total - free);
   return { total, free, app, other: Math.max(0, used - app), usedPct: Math.round((used / total) * 100), daysOfRoom: Math.floor(free / perDay) };
 }
