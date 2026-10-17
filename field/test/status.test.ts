@@ -70,7 +70,7 @@ describe('Field notebook (real pack data only)', () => {
   it('shows the pack’s own ranges and marks counts that do not overlap', () => {
     const lines = traitLines(byName('Leptodeira ornata'));
     expect(lines.find((l) => l.label === 'Midbody scale rows')?.text).toBe('19–23');
-    expect(lines.find((l) => l.label === 'Ventrals')?.text).toBe('170–193 (males) · 169–194 (females)');
+    expect(lines.find((l) => l.label === 'Ventrals')?.text).toBe('170–193 (males)\n169–194 (females)');
     const rows = compareRows(byName('Leptodeira ornata'), byName('Bothrops asper'));
     const mid = rows.find((x) => x.label === 'Midbody scale rows')!;
     expect(mid.a).toBe('19–23');

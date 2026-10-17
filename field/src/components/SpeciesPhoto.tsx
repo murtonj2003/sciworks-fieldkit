@@ -10,6 +10,9 @@ import { useTheme } from '@/theme/ThemeProvider';
 
 import { Icon } from './Icon';
 
+/** iNaturalist open data keeps smaller copies beside the original: use them (a list row needs ~200 px, not 4,000). */
+const sized = (url: string, size: number) => url.replace(/\/original\.(jpe?g|png)$/i, size <= 96 ? '/small.$1' : '/medium.$1');
+
 export function SpeciesPhoto({ taxon, size = 64, round = true, width }: { taxon: Taxon; size?: number; round?: boolean; width?: number | `${number}%` }) {
   const { t } = useTheme();
   const [failed, setFailed] = useState(false);
@@ -25,7 +28,7 @@ export function SpeciesPhoto({ taxon, size = 64, round = true, width }: { taxon:
   return (
     <View style={box}>
       <Image
-        source={{ uri: p.url }}
+        source={{ uri: sized(p.url, size) }}
         style={{ width: '100%', height: '100%' }}
         contentFit="cover"
         cachePolicy="disk"

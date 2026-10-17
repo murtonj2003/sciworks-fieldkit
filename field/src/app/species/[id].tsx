@@ -261,8 +261,13 @@ export default function SpeciesPicker() {
                     >
                       <SpeciesPhoto taxon={o} size={48} />
                       <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={s.name}>{o.scientificName}</Text>
-                        <Text style={s.fam2}>Compare with {rows[0]!.taxon.scientificName}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                          <Text style={s.name}>{o.scientificName}</Text>
+                          {o.dangerous && <Tag label="VENOMOUS" venomous />}
+                        </View>
+                        <Text style={s.fam2}>
+                          Compare with <Text style={{ fontStyle: 'italic' }}>{rows[0]!.taxon.scientificName}</Text>
+                        </Text>
                       </View>
                       <Icon name="chev" size={18} color={t.ink2} />
                     </Pressable>

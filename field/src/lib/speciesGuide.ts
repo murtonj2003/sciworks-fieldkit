@@ -28,14 +28,14 @@ const span = (r?: { min?: number; max?: number }) =>
 
 const SEX_WORD: Record<TraitRange['sex'], string> = { pooled: '', male: 'males', female: 'females' };
 
-/** One line per trait in the pack: "Ventrals 170–193 (males) · 169–194 (females)". */
+/** One entry per trait in the pack; per-sex ranges on their own lines: "170–193 (males)\n169–194 (females)". */
 export function traitLines(t: Taxon): { label: string; text: string }[] {
   const out: { label: string; text: string }[] = [];
   const by = new Map<TraitKey, TraitRange[]>();
   for (const tr of t.traits) by.set(tr.trait, [...(by.get(tr.trait) ?? []), tr]);
   for (const [key, list] of by) {
     if (COUNT_LABEL[key]) {
-      const text = list.map((tr) => `${span(tr.range)}${tr.sex !== 'pooled' ? ` (${SEX_WORD[tr.sex]})` : ''}`).join(' · ');
+      const text = list.map((tr) => `${span(tr.range)}${tr.sex !== 'pooled' ? ` (${SEX_WORD[tr.sex]})` : ''}`).join('\n');
       out.push({ label: COUNT_LABEL[key]!, text });
     } else if (CAT_LABEL[key]) {
       out.push({ label: CAT_LABEL[key]!, text: [...new Set(list.flatMap((tr) => tr.values ?? []))].join(' or ') });
@@ -98,8 +98,15 @@ export function compareRows(a: Taxon, b: Taxon): { label: string; a: string; b: 
       : !!la && !!lb && la.text !== lb.text;
     rows.push({ label: (COUNT_LABEL[k] ?? CAT_LABEL[k])!, a: la?.text ?? 'no data', b: lb?.text ?? 'no data', differ });
   }
-  const sa = sizeLines(a).find((x) => x.label === 'Total length') ?? sizeLines(a)[0];
-  const sb = sizeLines(b).find((x) => x.label === sa?.label) ?? sizeLines(b)[0];
-  if (sa || sb) rows.push({ label: sa?.label ?? sb!.label, a: sa?.text ?? 'no data', b: sb?.text ?? 'no data', differ: false });
+  // Sizes only side by side when they measure the same thing (an SVL is never set against a total length).
+  const labels = [...new Set([...sizeLines(a), ...sizeLines(b)].map((x) => x.label))];
+  for (const label of labels) {
+    rows.push({
+      label,
+      a: sizeLines(a).find((x) => x.label === label)?.text ?? 'no data',
+      b: sizeLines(b).find((x) => x.label === label)?.text ?? 'no data',
+      differ: false,
+    });
+  }
   return rows;
 }
