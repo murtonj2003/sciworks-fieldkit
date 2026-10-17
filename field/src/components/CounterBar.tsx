@@ -13,7 +13,8 @@ import { Group } from './ui';
 
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
-export function CounterBar({ onPress }: { onPress?: () => void }) {
+/** `totals` = the "… on this phone" totals after the handover time (Home); Hand over to HQ shows them in its Back up row instead. */
+export function CounterBar({ onPress, totals = true }: { onPress?: () => void; totals?: boolean }) {
   const { counter } = useField();
   const { t } = useTheme();
   const safe = counter.recordsNotWithHq === 0 && counter.photosNotWithHq === 0;
@@ -42,8 +43,10 @@ export function CounterBar({ onPress }: { onPress?: () => void }) {
           <Icon name={safe ? 'check' : 'up'} size={14} color={safe ? t.onFill : t.nearInk} strokeWidth={2.5} />
         </View>
         <Text style={[type.sub, { color: sub, flex: 1 }]}>
-          {counter.lastHandoverAt ? `Last handover ${daysAgo(counter.lastHandoverAt)}` : 'No handover yet'} · {counter.totalRecords} {plural(counter.totalRecords, 'record', 'records')} and{' '}
-          {counter.totalPhotos} {plural(counter.totalPhotos, 'photo', 'photos')} on this phone
+          {counter.lastHandoverAt ? `Last handover ${daysAgo(counter.lastHandoverAt)}` : 'No handover yet'}
+          {totals
+            ? ` · ${counter.totalRecords} ${plural(counter.totalRecords, 'record', 'records')} and ${counter.totalPhotos} ${plural(counter.totalPhotos, 'photo', 'photos')} on this phone`
+            : ''}
         </Text>
       </View>
     </View>

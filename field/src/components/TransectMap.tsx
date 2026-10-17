@@ -12,7 +12,7 @@ import { getMeta, setMeta } from '@/db/meta';
 import { makeFrame, type LonLat } from '@/lib/mapFrame';
 import { useField } from '@/state/field';
 import { makeStyles, useTheme } from '@/theme/ThemeProvider';
-import { radius, type } from '@/theme/theme';
+import { day, radius, type } from '@/theme/theme';
 
 import { MarkShape, type Band } from './Icon';
 
@@ -23,7 +23,8 @@ export interface MapPoint extends LonLat {
   suggestion?: number;
 }
 
-const W = 340;
+/** Drawing width before the first layout; then the map draws at its real width, so the picture fills it. */
+const W0 = 340;
 const PAD = 26;
 /** Over imagery the marks and words sit on a white outline in fixed day ink, whatever the theme. */
 const HALO = '#FFFFFF';
@@ -82,6 +83,7 @@ export function TransectMap({
   fit = [],
   links = [],
   height = 190,
+  showSwitch = true,
 }: {
   transect: Transect;
   points?: MapPoint[];
@@ -90,18 +92,21 @@ export function TransectMap({
   /** Dashed connectors, e.g. from where a point was typed to the fix that was used. */
   links?: { from: LonLat; to: LonLat }[];
   height?: number;
+  /** The Satellite / Plain switch. The choice is kept on the phone, so a map without it follows the others. */
+  showSwitch?: boolean;
 }) {
   const { t } = useTheme();
   const s = useStyles();
   const { basemaps } = useField();
   const [layer, setLayer] = useMapLayer();
   const H = height;
+  const [W, setW] = useState(W0);
   const tf = Platform.OS === 'web' ? { fontFamily: 'system-ui, -apple-system, Helvetica, Arial, sans-serif' } : { fontFeatureSettings: "'tnum'" };
   const line = transect.geometry.coordinates as [number, number][];
   const basemap = basemapFor(basemaps, transect.properties.transectId, line);
   const href = useMemo(() => (basemap ? hrefOf(basemap) : null), [basemap]);
   const sat = !!basemap && !!href && layer === 'satellite';
-  const frame = useMemo(() => makeFrame(line, W, H, PAD, fit, sat ? basemap!.bounds : undefined), [line, H, fit, sat, basemap]);
+  const frame = useMemo(() => makeFrame(line, W, H, PAD, fit, sat ? basemap!.bounds : undefined), [line, W, H, fit, sat, basemap]);
   if (line.length < 2) return null;
 
   const pts = line.map(([lo, la]) => frame.px(lo, la));
@@ -112,6 +117,8 @@ export function TransectMap({
   const ink = sat ? ON_IMG : t.ink;
   const ink2 = sat ? ON_IMG : t.ink2;
   const img = basemap ? frame.rect(basemap.bounds) : null;
+  // At night the white outlines and the picture are toned down so they don't glare on a dark screen.
+  const haloOpacity = t.name === 'night' ? 0.7 : 0.9;
 
   /** Words on the map; over imagery they get a white outline first so they read on forest and road alike. */
   const label = (x: number, y: number, text: string, opts: { weight?: '600' | '700'; color?: string; anchor?: 'start' | 'middle' | 'end' } = {}) => (
@@ -129,27 +136,27 @@ export function TransectMap({
 
   return (
     <View>
-      <View style={s.clip}>
+      <View style={s.clip} onLayout={(e) => setW(Math.max(200, Math.round(e.nativeEvent.layout.width)))}>
         <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} accessibilityLabel={`Map of transect ${transect.properties.transectId}${sat ? ', on a satellite picture' : ''}`}>
           {sat && img && (
             <>
               <Rect x={0} y={0} width={W} height={H} fill={t.tile} />
-              <SvgImage href={href!} x={img.x} y={img.y} width={img.width} height={img.height} preserveAspectRatio="none" opacity={t.name === 'night' ? 0.85 : 1} />
+              <SvgImage href={href!} x={img.x} y={img.y} width={img.width} height={img.height} preserveAspectRatio="none" opacity={t.name === 'night' ? 0.75 : 1} />
             </>
           )}
-          {sat && <Polyline points={pts.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke={HALO} strokeOpacity={0.9} strokeWidth={7} strokeLinejoin="round" strokeLinecap="round" />}
+          {sat && <Polyline points={pts.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke={HALO} strokeOpacity={haloOpacity} strokeWidth={7} strokeLinejoin="round" strokeLinecap="round" />}
           <Polyline points={pts.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke={sat ? ON_IMG : t.transect} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
           {links.map((l, i) => {
             const a = frame.px(l.from.lon, l.from.lat);
             const b = frame.px(l.to.lon, l.to.lat);
             return (
               <G key={`l${i}`}>
-                {sat && <Line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={HALO} strokeOpacity={0.9} strokeWidth={5} strokeLinecap="round" />}
+                {sat && <Line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={HALO} strokeOpacity={haloOpacity} strokeWidth={5} strokeLinecap="round" />}
                 <Line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={ink2} strokeWidth={2} strokeDasharray="4 4" strokeLinecap="round" />
               </G>
             );
           })}
-          {sat && <Circle cx={start.x} cy={start.y} r={9} fill={HALO} />}
+          {sat && <Circle cx={start.x} cy={start.y} r={9} fill={HALO} fillOpacity={haloOpacity} />}
           <Circle cx={start.x} cy={start.y} r={7} fill={ink} />
           {label(start.x + 11, start.y + 4, 'Start')}
           <Circle cx={end.x} cy={end.y} r={7} fill={sat ? HALO : t.card} stroke={ink} strokeWidth={2.5} />
@@ -160,44 +167,46 @@ export function TransectMap({
             if (!inside) return null; // a far-off point would squash the map; the strip and the list still show it
             return (
               <G key={i}>
-                {sat && <Circle cx={q.x} cy={q.y} r={10.5} fill={HALO} fillOpacity={0.92} />}
+                {sat && <Circle cx={q.x} cy={q.y} r={10.5} fill={HALO} fillOpacity={haloOpacity} />}
                 {p.suggestion !== undefined ? (
                   <>
-                    <Circle cx={q.x} cy={q.y} r={8} fill={sat ? HALO : t.card} stroke={t.onMark} strokeWidth={2} strokeDasharray="3 2.5" />
+                    <Circle cx={q.x} cy={q.y} r={8} fill={sat ? HALO : t.card} stroke={sat ? day.onMark : t.onMark} strokeWidth={2} strokeDasharray="3 2.5" />
                     <SvgText x={q.x} y={q.y + 4} fontSize={11} fontWeight="700" fill={ink} textAnchor="middle" {...tf}>
                       {String(p.suggestion)}
                     </SvgText>
                   </>
                 ) : (
-                  <MarkShape band={p.band ?? 'none'} x={q.x - 8} y={q.y - 8} size={16} />
+                  <MarkShape band={p.band ?? 'none'} x={q.x - 8} y={q.y - 8} size={16} tokens={sat ? day : undefined} />
                 )}
                 {p.label ? label(q.x + 13, q.y + 4, p.label, { weight: '700' }) : null}
               </G>
             );
           })}
           <G>
-            {sat && <Line x1={W - PAD} y1={18} x2={W - PAD} y2={40} stroke={HALO} strokeWidth={5} strokeLinecap="round" />}
+            {sat && <Line x1={W - PAD} y1={18} x2={W - PAD} y2={40} stroke={HALO} strokeOpacity={haloOpacity} strokeWidth={5} strokeLinecap="round" />}
             <Line x1={W - PAD} y1={18} x2={W - PAD} y2={40} stroke={ink2} strokeWidth={2} />
             {label(W - PAD, 14, 'N', { weight: '700', color: ink2, anchor: 'middle' })}
           </G>
           {/* Scale bar bottom-right: the lines run SW → NE, so Start sits bottom-left and would collide. */}
-          {sat && <Line x1={W - 12 - barPx} y1={H - 10} x2={W - 12} y2={H - 10} stroke={HALO} strokeWidth={5} strokeLinecap="round" />}
+          {sat && <Line x1={W - 12 - barPx} y1={H - 10} x2={W - 12} y2={H - 10} stroke={HALO} strokeOpacity={haloOpacity} strokeWidth={5} strokeLinecap="round" />}
           <Line x1={W - 12 - barPx} y1={H - 10} x2={W - 12} y2={H - 10} stroke={ink2} strokeWidth={2} />
           {label(W - 12 - barPx - 6, H - 6, bar >= 1000 ? `${bar / 1000} km` : `${bar} m`, { color: ink2, anchor: 'end' })}
         </Svg>
       </View>
-      {basemap && href && (
+      {basemap && href && (showSwitch || sat) && (
         <View style={s.foot}>
-          <View style={s.seg} accessibilityRole="radiogroup" accessibilityLabel="Map background">
-            {(['satellite', 'plain'] as const).map((l) => {
-              const on = layer === l;
-              return (
-                <Pressable key={l} accessibilityRole="radio" accessibilityState={{ checked: on }} onPress={() => setLayer(l)} style={[s.segBtn, on && s.segOn]}>
-                  <Text style={[s.segText, on && s.segTextOn]}>{l === 'satellite' ? 'Satellite' : 'Plain'}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          {showSwitch && (
+            <View style={s.seg} accessibilityRole="radiogroup" accessibilityLabel="Map background">
+              {(['satellite', 'plain'] as const).map((l) => {
+                const on = layer === l;
+                return (
+                  <Pressable key={l} accessibilityRole="radio" accessibilityState={{ checked: on }} onPress={() => setLayer(l)} style={[s.segBtn, on && s.segOn]}>
+                    <Text style={[s.segText, on && s.segTextOn]}>{l === 'satellite' ? 'Satellite' : 'Plain'}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
           {sat && <Text style={s.credit}>{basemap.attribution}</Text>}
         </View>
       )}

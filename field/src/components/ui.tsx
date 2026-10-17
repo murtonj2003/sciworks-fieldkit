@@ -92,11 +92,11 @@ export function GroupTitle({ children }: { children: ReactNode }) {
 }
 
 /** 20 px section heading with a leading icon (Location, Scale counts…). */
-export function SectionTitle({ children, icon }: { children: ReactNode; icon?: IconName }) {
+export function SectionTitle({ children, icon, style }: { children: ReactNode; icon?: IconName; style?: StyleProp<ViewStyle> }) {
   const s = useBox();
   const { t } = useTheme();
   return (
-    <View style={s.section}>
+    <View style={[s.section, style]}>
       {icon && <Icon name={icon} size={20} color={t.ink2} />}
       <T v="head">{children}</T>
     </View>

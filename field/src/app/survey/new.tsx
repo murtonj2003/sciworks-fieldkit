@@ -64,7 +64,7 @@ export default function NewSurvey() {
         {chosen && (
           <>
             <Text style={s.help}>
-              {chosen.properties.name} · {thousands(chosen.properties.lengthM)} m
+              {chosen.properties.name} · {`${thousands(chosen.properties.lengthM)}\u00a0m`}
             </Text>
             <View style={[s.mapCard, { marginTop: 10 }]}>
               <TransectMap transect={chosen} />

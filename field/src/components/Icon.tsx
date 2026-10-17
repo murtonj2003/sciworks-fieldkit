@@ -52,8 +52,10 @@ export const BAND_WORD: Record<CoordBand, string> = {
 
 /** The same band shapes as BandMarker, drawn as SVG children for use inside another <Svg> (the strip, the map),
  * where nesting a second SVG root is unreliable on Android. 20-grid, placed at (x, y) and scaled to `size`. */
-export function MarkShape({ band, x, y, size = 16 }: { band: Band; x: number; y: number; size?: number }) {
-  const { t } = useTheme();
+export function MarkShape({ band, x, y, size = 16, tokens }: { band: Band; x: number; y: number; size?: number; tokens?: Tokens }) {
+  const { t: theme } = useTheme();
+  // Over a satellite picture the marks keep their day colours (the night tints wash out on a white outline).
+  const t = tokens ?? theme;
   const { color, glyph } = markColors(band, t);
   const k = size / 20;
   const g = { fill: 'none', stroke: glyph, strokeWidth: 2.1, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };

@@ -6,12 +6,12 @@
 // A venomous best match pins a red-tint banner under the app bar (never solid red).
 import { TRAIT_LABEL, runKey, type KeyCandidate, type ScaleCounts } from '@sciworks/shared';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { Chips, NumberInput, useFieldStyles } from '@/components/fields';
 import { Icon } from '@/components/Icon';
-import { BottomBar, Button, Group, GroupTitle, Row, SavedMark, T, Tag } from '@/components/ui';
+import { BottomBar, Button, Group, Row, SavedMark, SectionTitle, T, Tag } from '@/components/ui';
 import { useRecord } from '@/hooks/useRecord';
 import type { LocalEncounter } from '@/model/records';
 import { useField } from '@/state/field';
@@ -33,6 +33,8 @@ const TRAITS: Trait[] = [
 ];
 
 const cap = (x: string) => x[0]!.toUpperCase() + x.slice(1);
+/** Stored codes in plain words: 'not-assessed' → 'not assessed'. */
+const words = (x: string | undefined) => x?.replace(/-/g, ' ');
 const labelOf = (key: keyof ScaleCounts) => TRAIT_LABEL[key as keyof typeof TRAIT_LABEL] ?? String(key);
 
 const useStyles = makeStyles((t) => ({
@@ -41,14 +43,14 @@ const useStyles = makeStyles((t) => ({
   venom: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: t.offTint, borderRadius: radius.card, paddingVertical: 12, paddingHorizontal: 14, marginTop: 2, marginHorizontal: 16, marginBottom: 8 },
   venomText: { ...type.sub, lineHeight: 20, color: t.offTintInk, flex: 1 },
   disc: { ...type.small, fontWeight: '400', lineHeight: 18, color: t.ink2, marginTop: 2, marginHorizontal: 4, marginBottom: 12 },
-  next: { backgroundColor: t.card, borderRadius: radius.card, padding: 14, borderWidth: 2, borderColor: t.ink },
+  next: { backgroundColor: t.card, borderRadius: radius.card, padding: 12, borderWidth: 2, borderColor: t.ink },
   nextHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   tile: { width: 30, height: 30, borderRadius: radius.tile, backgroundColor: t.pri, alignItems: 'center', justifyContent: 'center' },
   nextTitle: { ...type.headBold, color: t.ink, flex: 1 },
-  traits: { paddingTop: 4, paddingHorizontal: 8, paddingBottom: 10, marginTop: 10 },
-  label: { ...type.label, color: t.ink, marginTop: 14, marginBottom: 8, marginHorizontal: 4 },
-  note: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 8, marginHorizontal: 4 },
-  noteText: { ...type.small, fontWeight: '400', lineHeight: 17, color: t.ink2, flex: 1 },
+  traits: { paddingTop: 4, paddingHorizontal: 8, paddingBottom: 10, marginTop: 10, gap: 0 },
+  label: { ...type.label, color: t.ink, marginTop: 14, marginBottom: 6, marginHorizontal: 4 },
+  note: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 6, marginHorizontal: 4 },
+  noteText: { ...type.small, fontWeight: '400', lineHeight: 18, color: t.ink2, flex: 1 },
   cand: { backgroundColor: t.card, borderRadius: radius.card, paddingTop: 12, paddingHorizontal: 14, paddingBottom: 13 },
   candName: { ...type.head, color: t.ink },
   counts: { ...type.sub, color: t.ink2, marginTop: 3 },
@@ -66,8 +68,15 @@ export default function KeyScreen() {
   const fs = useFieldStyles();
   const { t } = useTheme();
   // While a count is being typed in the "Check this next" card it stays there, so the box doesn't jump away
-  // after the first digit; it moves on when the keyboard closes.
+  // after the first digit. It moves on a moment after the keyboard closes (so a tap that closed it lands on what
+  // was under the finger, not on whatever slid there), or straight after the next chip tap.
   const [held, setHeld] = useState<keyof ScaleCounts | null>(null);
+  const release = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => void (release.current && clearTimeout(release.current)), []);
+  const releaseSoon = () => {
+    if (release.current) clearTimeout(release.current);
+    release.current = setTimeout(() => setHeld(null), 450);
+  };
   const counts = e?.scaleCounts ?? {};
   const result = useMemo(
     () => (pack && e ? runKey({ ...counts, sex: e.sex, tailCondition: e.tailCondition }, pack) : null),
@@ -102,15 +111,28 @@ export default function KeyScreen() {
         integer
         value={counts[x.key as NumKey]}
         onChange={(v) => {
-          if (inCard) setHeld(x.key);
+          if (inCard) {
+            if (release.current) clearTimeout(release.current);
+            setHeld(x.key);
+          }
           set(x.key, v);
         }}
-        onBlur={inCard ? () => setHeld(null) : undefined}
+        onBlur={inCard ? releaseSoon : undefined}
         accessibilityLabel={labelOf(x.key)}
         boxStyle={inCard ? { backgroundColor: t.group } : undefined}
       />
     ) : (
-      <Chips grid onGround={inCard} options={x.options!} value={counts[x.key] as string | undefined} onChange={(v) => set(x.key, v)} />
+      <Chips
+        grid
+        onGround={inCard}
+        options={x.options!}
+        value={counts[x.key] as string | undefined}
+        onChange={(v) => {
+          set(x.key, v);
+          if (release.current) clearTimeout(release.current);
+          setHeld(null);
+        }}
+      />
     );
 
   const tailNote = (x: Trait) =>
@@ -118,7 +140,7 @@ export default function KeyScreen() {
       <View style={s.note}>
         <Icon name="info" size={16} color={t.ink2} />
         <Text style={s.noteText}>
-          Ignored by the key: the tail is {e.tailCondition ?? 'not marked intact'}. The count is still saved.
+          Ignored by the key: the tail is {words(e.tailCondition) ?? 'not marked intact'}. The count is still saved.
         </Text>
       </View>
     ) : null;
@@ -146,7 +168,7 @@ export default function KeyScreen() {
       )}
       <ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
         <Text style={s.disc}>
-          {pack.disclaimer.split('.')[0]}. Sex: {e.sex}. Tail: {e.tailCondition ?? 'not set'}. Enter what you can see, in any order.
+          {pack.disclaimer.split('.')[0]}. Sex: {words(e.sex)}. Tail: {words(e.tailCondition) ?? 'not set'}. Enter what you can see, in any order.
         </Text>
 
         {nextTrait && (
@@ -174,7 +196,7 @@ export default function KeyScreen() {
           ))}
         </Group>
 
-        {shown.length > 0 && <GroupTitle>Best matches</GroupTitle>}
+        {shown.length > 0 && <SectionTitle style={{ marginTop: 14, marginHorizontal: 4 }}>Best matches</SectionTitle>}
         {shown.map((c, i) => (
           <Group key={c.taxonId} style={i > 0 ? { marginTop: 10, gap: 6 } : undefined}>
             <View style={s.cand}>
@@ -184,12 +206,10 @@ export default function KeyScreen() {
                 </Text>
                 {c.dangerous && <Tag label="VENOMOUS" venomous />}
               </View>
-              {i === 0 && (
-                <Text style={s.counts}>
-                  {c.matched.length} match · {c.conflicts.length} conflict · {c.unknown.length} no data{'\n'}
-                  <Text style={{ color: t.ink, fontWeight: '600' }}>score {Math.round(c.score * 100)}%</Text>
-                </Text>
-              )}
+              <Text style={s.counts}>
+                {c.matched.length} match · {c.conflicts.length} conflict · {c.unknown.length} no data{'\n'}
+                <Text style={{ color: t.ink, fontWeight: '600' }}>score {Math.round(c.score * 100)}%</Text>
+              </Text>
               <View style={s.why}>
                 {c.matched.map((m) => reasonLine('check', m, t.onMark))}
                 {c.conflicts.map((m) => reasonLine('cross', m, t.offMark))}
