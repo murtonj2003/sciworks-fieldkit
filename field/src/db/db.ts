@@ -107,6 +107,13 @@ CREATE TABLE IF NOT EXISTS bundles_out (
   scope TEXT NOT NULL,
   counts_json TEXT NOT NULL
 );
+-- Which record revs went out in a "Send to HQ" bundle (the amber "Sent" tier until HQ's receipt arrives).
+CREATE TABLE IF NOT EXISTS sent_revs (
+  id TEXT NOT NULL,
+  rev INTEGER NOT NULL,
+  bundle_id TEXT NOT NULL,
+  PRIMARY KEY (id, rev, bundle_id)
+);
 CREATE TABLE IF NOT EXISTS bundles_in (
   bundle_id TEXT PRIMARY KEY NOT NULL,
   received_at TEXT NOT NULL,

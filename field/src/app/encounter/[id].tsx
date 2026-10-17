@@ -2,12 +2,14 @@
 import { checkRanges, type Encounter, type Transect } from '@sciworks/shared';
 import { Image } from 'expo-image';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Chips, FieldInput, FieldLabel, Hint, NumberInput, useFieldStyles } from '@/components/fields';
 import { BandMarker, Icon } from '@/components/Icon';
 import { LocationEntry } from '@/components/LocationEntry';
+import { TransectThumb } from '@/components/TransectMap';
+import Svg, { Circle } from 'react-native-svg';
 import type { IconName } from '@/components/sprite';
 import { BottomBar, Button, Group, Pair, Row, SectionTitle, T, Tag } from '@/components/ui';
 import { makeStyles, useTheme } from '@/theme/ThemeProvider';
@@ -18,7 +20,7 @@ import { listRecords } from '@/db/records';
 import { useRecord } from '@/hooks/useRecord';
 import { pickPhoto, recoverPendingPhoto, takePhoto, type ShotResult } from '@/lib/camera';
 import { clockOf, nowIso } from '@/lib/time';
-import { GROUPS, byGroup, effectiveFields, getPath, setPath, type EffectiveField } from '@/model/form';
+import { byGroup, effectiveFields, getPath, setPath, type EffectiveField } from '@/model/form';
 import { nextDistance } from '@/model/location';
 import { missingForHq, type LocalEncounter } from '@/model/records';
 import { useField } from '@/state/field';
@@ -29,6 +31,42 @@ const ID_BASIS = [
   { code: 'photo-later', label: 'ID from photo later' },
 ] as const;
 
+type SecKey = 'animal' | 'photos' | 'measurements' | 'location' | 'scales' | 'extras' | 'notes';
+/** The tiles, in the order a surveyor works (design pick 3C). Photos is its own tile so it is never buried. */
+const SECTIONS: { key: SecKey; label: string; icon: IconName }[] = [
+  { key: 'animal', label: 'Animal', icon: 'snake' },
+  { key: 'photos', label: 'Photos', icon: 'camera' },
+  { key: 'measurements', label: 'Measure', icon: 'ruler' },
+  { key: 'location', label: 'Location', icon: 'map-pin' },
+  { key: 'scales', label: 'Scales', icon: 'key' },
+  { key: 'extras', label: 'Extras', icon: 'sliders' },
+  { key: 'notes', label: 'Notes', icon: 'pencil' },
+];
+const PHOTO_TARGET = 3; // dorsal, ventral and head if you can
+const filled = (v: unknown) => v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && v.length === 0);
+
+/** A small progress ring with "n/m" inside: mint when complete, amber when started, grey when empty. */
+function Ring({ done, total }: { done: number; total: number }) {
+  const { t } = useTheme();
+  const r = 17;
+  const c = 2 * Math.PI * r;
+  const frac = total > 0 ? Math.min(1, done / total) : 0;
+  const color = frac >= 1 ? t.onMark : frac > 0 ? t.nearMark : t.hair;
+  return (
+    <View style={{ width: 42, height: 42, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={`${done} of ${total}`}>
+      <Svg width={42} height={42} viewBox="0 0 42 42" style={{ position: 'absolute' }}>
+        <Circle cx={21} cy={21} r={r} stroke={t.hair} strokeWidth={4} fill="none" />
+        {frac > 0 && (
+          <Circle cx={21} cy={21} r={r} stroke={color} strokeWidth={4} fill="none" strokeDasharray={`${c * frac} ${c}`} strokeLinecap="round" transform="rotate(-90 21 21)" />
+        )}
+      </Svg>
+      <Text style={[type.small, { fontSize: 12, fontWeight: '700', color: frac > 0 ? t.ink : t.ink2, fontVariant: ['tabular-nums'] }]}>
+        {done}/{total}
+      </Text>
+    </View>
+  );
+}
+
 export default function EncounterScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const field = useField();
@@ -38,6 +76,15 @@ export default function EncounterScreen() {
   const fs = useFieldStyles();
   const { t } = useTheme();
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  // Design pick 3C: one section open at a time as a card above the tiles. A new animal opens on Animal; a
+  // pending "Did you mean?" keeps Location open.
+  const [open, setOpen] = useState<SecKey | null>(() => {
+    if (!e) return null;
+    const loc = e.location;
+    if (loc && loc.check.band !== 'green' && !loc.check.decision && !loc.original) return 'location';
+    return e.taxon.scientificName || e.taxon.unidentified || e.location ? null : 'animal';
+  });
   const tz = project?.timeZone;
   const now = () => nowIso(tz);
 
@@ -166,60 +213,128 @@ export default function EncounterScreen() {
     return <FieldInput key={f.key} field={f} value={getPath(e, f.path)} onChange={(v) => set(f.path, v)} nowIso={now} special={sp} />;
   };
 
-  // Comp P4 has no icons on Animal / Measurements; P6 gives Location and Scale counts theirs.
-  const SECTION_ICON: Record<string, IconName> = {
-    location: 'map-pin',
-    scales: 'key',
-  };
-  const SECTION_LABEL: Record<string, string> = { location: 'Location' }; // DESIGN-HANDOFF §1.2: "Where" → "Location"
 
-  const section = (group: string) => {
-    const list = byGroup(fields, [group]);
-    if (list.length === 0) return null;
-    const title = SECTION_LABEL[group] ?? GROUPS.find((g) => g.key === group)?.label ?? group;
-    if (group === 'location') {
-      const loc = list.find((f) => f.type === 'location');
-      const dist = list.find((f) => f.key === 'distanceAlongM');
-      return (
-        <View key={group}>
-          <SectionTitle icon={SECTION_ICON[group]}>{title}</SectionTitle>
-          {loc && transect ? (
-            <LocationEntry
-              location={e.location}
-              transect={transect}
-              project={project}
-              personId={person.personId}
-              now={now}
-              previousChainageM={previousChainageM}
-              typedDistanceM={e.distanceAlongM?.source === 'typed' ? e.distanceAlongM.value : undefined}
-              distanceField={dist ? distanceField(dist) : undefined}
-              onChange={({ location, distance }) =>
-                update((r) => {
-                  const next = { ...r, location };
-                  const d = nextDistance(r.distanceAlongM, distance);
-                  if (d) next.distanceAlongM = d;
-                  else delete next.distanceAlongM;
-                  return next;
-                })
-              }
-            />
-          ) : (
-            <Hint text={`Transect ${e.transectId} is not on this phone.`} />
-          )}
-        </View>
-      );
+  const fieldsOf = (key: SecKey): EffectiveField[] =>
+    key === 'photos'
+      ? byGroup(fields, ['animal']).filter((f) => f.type === 'photos')
+      : key === 'animal'
+        ? byGroup(fields, ['animal']).filter((f) => f.type !== 'photos')
+        : byGroup(fields, [key]);
+
+  const progressOf = (key: SecKey): { done: number; total: number } => {
+    if (key === 'photos') return { done: Math.min(photos.length, PHOTO_TARGET), total: fieldsOf('photos').length ? PHOTO_TARGET : 0 };
+    if (key === 'location') {
+      const settled = !!e.location && (e.location.check.band === 'green' || !!e.location.check.decision || !!e.location.original);
+      return { done: settled ? 1 : 0, total: fieldsOf('location').some((f) => f.type === 'location') ? 1 : 0 };
     }
+    const list = fieldsOf(key);
+    const done = list.filter((f) => (f.type === 'taxon' ? !!(e.taxon.scientificName || e.taxon.unidentified) : filled(getPath(e, f.path)))).length;
+    return { done, total: list.length };
+  };
+
+  const shown = SECTIONS.filter((x) => progressOf(x.key).total > 0);
+  const complete = shown.filter((x) => {
+    const p = progressOf(x.key);
+    return p.done >= p.total;
+  }).length;
+
+  const locationBody = () => {
+    const list = fieldsOf('location');
+    const loc = list.find((f) => f.type === 'location');
+    const dist = list.find((f) => f.key === 'distanceAlongM');
+    if (!loc) return null;
+    return transect ? (
+      <LocationEntry
+        location={e.location}
+        transect={transect}
+        project={project}
+        personId={person.personId}
+        now={now}
+        previousChainageM={previousChainageM}
+        typedDistanceM={e.distanceAlongM?.source === 'typed' ? e.distanceAlongM.value : undefined}
+        distanceField={dist ? distanceField(dist) : undefined}
+        onChange={({ location, distance }) =>
+          update((r) => {
+            const next = { ...r, location };
+            const d = nextDistance(r.distanceAlongM, distance);
+            if (d) next.distanceAlongM = d;
+            else delete next.distanceAlongM;
+            return next;
+          })
+        }
+      />
+    ) : (
+      <Hint text={`Transect ${e.transectId} is not on this phone.`} />
+    );
+  };
+
+  const body = (key: SecKey) => {
+    if (key === 'location') return locationBody();
     return (
-      <View key={group}>
-        <SectionTitle icon={SECTION_ICON[group]}>{title}</SectionTitle>
-        <Group style={{ gap: 10, paddingVertical: 10 }}>{list.map(renderField)}</Group>
-        {group === 'measurements' &&
+      <View style={{ gap: 10 }}>
+        {fieldsOf(key).map(renderField)}
+        {key === 'measurements' &&
           rangeWarnings.map((w) => (
-            <View key={w.fieldPath + w.message} style={{ marginTop: 8 }}>
+            <View key={w.fieldPath + w.message}>
               <Hint text={w.message} />
             </View>
           ))}
       </View>
+    );
+  };
+
+  /** The open section, full width above the tiles, with Close (design pick 3C). */
+  const openCard = (key: SecKey) => {
+    const sec = SECTIONS.find((x) => x.key === key)!;
+    const title = key === 'measurements' ? 'Measurements' : key === 'scales' ? 'Scale counts' : sec.label;
+    return (
+      <View key={`open-${key}`} style={key === 'location' ? null : st.openCard}>
+        <View style={st.openHead}>
+          <Icon name={sec.icon} size={20} color={t.ink2} />
+          <T v="head" style={{ flex: 1 }}>
+            {title}
+          </T>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Close ${title}`} onPress={() => setOpen(null)} hitSlop={8} style={({ pressed }) => [st.close, pressed && { backgroundColor: t.secPress }]}>
+            <Text style={st.closeText}>Close</Text>
+            <Icon name="up" size={14} color={t.ink} strokeWidth={2.25} />
+          </Pressable>
+        </View>
+        {body(key)}
+      </View>
+    );
+  };
+
+  const tile = (key: SecKey) => {
+    const sec = SECTIONS.find((x) => x.key === key)!;
+    const p = progressOf(key);
+    const firstPhoto = key === 'photos' ? photos[0] : undefined;
+    const locPoint =
+      key === 'location' && e.location
+        ? { lat: e.location.lat, lon: e.location.lon, band: e.location.check.decision?.kind === 'accepted-suggestion' || e.location.original ? ('green' as const) : e.location.check.band }
+        : undefined;
+    return (
+      <Pressable
+        key={key}
+        accessibilityRole="button"
+        accessibilityLabel={`${sec.label}, ${p.done} of ${p.total} done. Open.`}
+        onPress={() => {
+          setOpen(key);
+          scrollRef.current?.scrollTo({ y: 0, animated: true });
+        }}
+        style={({ pressed }) => [st.tile, pressed && { backgroundColor: t.secPress }]}
+      >
+        <View style={st.tileArt}>
+          {firstPhoto ? (
+            <Image source={{ uri: photoUri(firstPhoto.path) }} style={st.tilePhoto} contentFit="cover" />
+          ) : key === 'location' && transect ? (
+            <TransectThumb transect={transect} size={64} width={128} point={locPoint} />
+          ) : (
+            <Icon name={sec.icon} size={30} color={t.ink} strokeWidth={1.75} />
+          )}
+        </View>
+        <Text style={st.tileName}>{sec.label}</Text>
+        <Ring done={p.done} total={p.total} />
+      </Pressable>
     );
   };
 
@@ -244,7 +359,7 @@ export default function EncounterScreen() {
           </Text>
         </View>
       )}
-      <ScrollView contentContainerStyle={st.page} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scrollRef} contentContainerStyle={st.page} keyboardShouldPersistTaps="handled">
         <View style={st.info}>
           <Icon name="clock" size={16} color={t.ink2} />
           <Text style={st.infoText}>
@@ -262,7 +377,19 @@ export default function EncounterScreen() {
             </Text>
           </View>
         )}
-        {['animal', 'measurements', 'location', 'scales', 'extras', 'notes'].map(section)}
+        <View style={st.progress} accessibilityLabel={`${complete} of ${shown.length} sections done`}>
+          <Text style={st.progressText}>
+            {complete} of {shown.length} sections done
+          </Text>
+          <View style={st.bar}>
+            {shown.map((x) => {
+              const p = progressOf(x.key);
+              return <View key={x.key} style={[st.seg, { backgroundColor: p.done >= p.total ? t.onMark : p.done > 0 ? t.nearMark : t.hair }]} />;
+            })}
+          </View>
+        </View>
+        {open && openCard(open)}
+        <View style={st.grid}>{shown.filter((x) => x.key !== open).map((x) => tile(x.key))}</View>
         {e.status === 'void' && <T dim>This record is voided. It is kept, and HQ will see it as voided.</T>}
       </ScrollView>
       <BottomBar>
@@ -287,6 +414,19 @@ const useStyles = makeStyles((t) => ({
   infoText: { ...type.sub, color: t.ink2, flex: 1 },
   todo: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingTop: 10, paddingHorizontal: 14, paddingBottom: 11, borderRadius: radius.card, borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.ink2 },
   todoText: { ...type.sub, color: t.ink, flex: 1 },
+  progress: { gap: 6, marginTop: 12, marginBottom: 10, marginHorizontal: 4 },
+  progressText: { ...type.small, color: t.ink2 },
+  bar: { flexDirection: 'row', gap: 4 },
+  seg: { flex: 1, height: 4, borderRadius: 2 },
+  openCard: { backgroundColor: t.group, borderRadius: radius.group, padding: 8, paddingTop: 6, gap: 6, marginBottom: 10 },
+  openHead: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 6, minHeight: 48 },
+  close: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 36, paddingHorizontal: 12, borderRadius: radius.pill, backgroundColor: t.card },
+  closeText: { ...type.small, fontWeight: '600', color: t.ink },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 },
+  tile: { width: '48.5%', minHeight: 150, backgroundColor: t.card, borderRadius: radius.card, padding: 12, alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  tileArt: { height: 64, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
+  tilePhoto: { width: '100%', height: 64, borderRadius: 8, backgroundColor: t.tile },
+  tileName: { ...type.label, color: t.ink },
   spName: { fontSize: 22, fontWeight: '700', fontStyle: 'italic', letterSpacing: -0.2, lineHeight: 26, color: t.ink },
   spUnset: { fontStyle: 'normal', fontWeight: '600', color: t.ink2 },
   thumbs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },

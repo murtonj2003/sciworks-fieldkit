@@ -1,5 +1,5 @@
 // P2a · Start a survey: pick the transect and who is walking it, then Start (the time is taken automatically).
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
@@ -29,7 +29,11 @@ export default function NewSurvey() {
   const s = useStyles();
   const team = project?.teams.find((x) => x.teamId === person?.teamId);
   const teamTransects = (transects?.features ?? []).filter((f) => team?.transectIds.includes(f.properties.transectId));
-  const [transectId, setTransectId] = useState<string | undefined>(teamTransects[0]?.properties.transectId);
+  // Home's chosen transect (design pick 1D) arrives as a param; otherwise the team's first.
+  const params = useLocalSearchParams<{ transectId?: string }>();
+  const [transectId, setTransectId] = useState<string | undefined>(
+    teamTransects.find((f) => f.properties.transectId === params.transectId)?.properties.transectId ?? teamTransects[0]?.properties.transectId,
+  );
   const [surveyors, setSurveyors] = useState<string[]>(person ? [person.personId] : []);
 
   if (!project || !template || !person) return <T>Load a project and choose a person first.</T>;

@@ -216,3 +216,42 @@ export function TransectMap({
     </View>
   );
 }
+
+/** A 64 px satellite thumbnail of one transect (design pick 1D): the picture, the line on a white outline, the
+ * start dot. Plain grey with the line when no picture came from HQ. */
+export function TransectThumb({ transect, size = 64, width, point }: { transect: Transect; size?: number; width?: number; point?: MapPoint }) {
+  const W = width ?? size;
+  const { t } = useTheme();
+  const { basemaps } = useField();
+  const line = transect.geometry.coordinates as [number, number][];
+  const basemap = basemapFor(basemaps, transect.properties.transectId, line);
+  const href = useMemo(() => (basemap ? hrefOf(basemap) : null), [basemap]);
+  const fitPts = point ? [point] : [];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const frame = useMemo(() => makeFrame(line, W, size, 9, fitPts, basemap?.bounds), [line, W, size, basemap, point?.lat, point?.lon]);
+  if (line.length < 2) return null;
+  const pts = line.map(([lo, la]) => frame.px(lo, la));
+  const img = basemap ? frame.rect(basemap.bounds) : null;
+  const d = pts.map((p) => `${p.x},${p.y}`).join(' ');
+  return (
+    <View style={{ width: W, height: size, borderRadius: 10, overflow: 'hidden', backgroundColor: t.tile }} accessibilityElementsHidden importantForAccessibility="no">
+      <Svg width={W} height={size} viewBox={`0 0 ${W} ${size}`}>
+        {href && img && <SvgImage href={href} x={img.x} y={img.y} width={img.width} height={img.height} preserveAspectRatio="none" opacity={t.name === 'night' ? 0.8 : 1} />}
+        {href && <Polyline points={d} fill="none" stroke={HALO} strokeOpacity={0.9} strokeWidth={4.5} strokeLinejoin="round" strokeLinecap="round" />}
+        <Polyline points={d} fill="none" stroke={href ? ON_IMG : t.transect} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+        <Circle cx={pts[0]!.x} cy={pts[0]!.y} r={3.5} fill={href ? ON_IMG : t.ink} stroke={href ? HALO : 'none'} strokeWidth={1.5} />
+        {point &&
+          (() => {
+            const q = frame.px(point.lon, point.lat);
+            return (
+              <G>
+                {href && <Circle cx={q.x} cy={q.y} r={9} fill={HALO} fillOpacity={0.92} />}
+                <MarkShape band={point.band ?? 'none'} x={q.x - 7} y={q.y - 7} size={14} tokens={href ? day : undefined} />
+              </G>
+            );
+          })()}
+      </Svg>
+    </View>
+  );
+}
+

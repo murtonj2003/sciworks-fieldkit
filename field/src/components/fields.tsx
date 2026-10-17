@@ -3,7 +3,7 @@
 // numbers 24 px tabular with unit + keypad icon) and choice chips (56 px, 14 px radius; selected = ink ring + check).
 import type { Measurement } from '@sciworks/shared';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { clockOf } from '@/lib/time';
 import { SCALE_PRECISION_G, UNIT_LABEL, rangeHint, type EffectiveField } from '@/model/form';
@@ -93,6 +93,16 @@ export function Hint({ text, tone = 'warn' }: { text: string | null; tone?: 'war
   return <KitHint>{text}</KitHint>;
 }
 
+/** A plain wrapping row, or (rail) a sideways-scrolling one that runs to the group's edge. */
+function Wrap({ rail, style, children }: { rail: boolean; style: StyleProp<ViewStyle>; children: ReactNode }) {
+  if (!rail) return <View style={style}>{children}</View>;
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ marginRight: -8 }} contentContainerStyle={[style, { flexWrap: 'nowrap', paddingRight: 24 }]}>
+      {children}
+    </ScrollView>
+  );
+}
+
 export function Chips<T extends string | number>({
   options,
   value,
@@ -101,6 +111,7 @@ export function Chips<T extends string | number>({
   onGround,
   grid,
   grid2,
+  rail,
 }: {
   options: { code: T; label: string }[];
   value: T | T[] | undefined;
@@ -110,6 +121,8 @@ export function Chips<T extends string | number>({
   grid?: boolean;
   /** Two equal columns (kit `.pg-grid2`), e.g. the four Sex choices. */
   grid2?: boolean;
+  /** One compact line that scrolls sideways, the next chip peeking (design pick 1D, Survey screen). */
+  rail?: boolean;
   /** Chips sitting straight on the screen ground (not in a grey group) are grey; selected turns white + ring. */
   onGround?: boolean;
 }) {
@@ -117,7 +130,7 @@ export function Chips<T extends string | number>({
   const { t } = useTheme();
   const selected = (code: T) => (Array.isArray(value) ? value.includes(code) : value === code);
   return (
-    <View style={[s.chips, grid && { flexWrap: 'nowrap' }]}>
+    <Wrap rail={!!rail} style={[s.chips, grid && { flexWrap: 'nowrap' }]}>
       {options.map((o) => {
         const on = selected(o.code);
         return (
@@ -135,17 +148,18 @@ export function Chips<T extends string | number>({
               s.chip,
               grid && { flex: 1, minWidth: 0, paddingHorizontal: 8 },
               grid2 && { flexBasis: '47%', flexGrow: 1, paddingHorizontal: 10 },
+              rail && { minHeight: 44, paddingHorizontal: 14, borderRadius: 12 },
               onGround && !on && { backgroundColor: t.grey },
               on && s.chipOn,
               pressed && { backgroundColor: onGround ? t.greyPress : t.secPress },
             ]}
           >
             {on && <Icon name="check" size={20} color={t.ink} strokeWidth={2.25} />}
-            <Text style={[s.chipText, on && s.chipTextOn, grid && { textAlign: 'center', flexShrink: 1, lineHeight: 20 }]}>{o.label}</Text>
+            <Text style={[s.chipText, on && s.chipTextOn, grid && { textAlign: 'center', flexShrink: 1, lineHeight: 20 }, rail && { fontSize: 15 }]}>{o.label}</Text>
           </Pressable>
         );
       })}
-    </View>
+    </Wrap>
   );
 }
 
@@ -315,12 +329,15 @@ export function FieldInput({
   onChange,
   nowIso,
   special,
+  compact,
 }: {
   field: EffectiveField;
   value: unknown;
   onChange: (v: unknown) => void;
   nowIso: () => string;
   special?: ReactNode;
+  /** Choices as one sideways-scrolling rail of smaller chips (Survey screen). */
+  compact?: boolean;
 }) {
   const s = useFieldStyles();
   let body: ReactNode = special ?? null;
@@ -352,15 +369,18 @@ export function FieldInput({
           label: c.label,
         }));
         // Four choices on an animal sit in two even columns, as in comp P4 (Sex, Scale used).
-        body = <Chips grid2={field.recordType === 'encounter' && options.length === 4} options={options} value={value as string | number | undefined} onChange={onChange} />;
+        body = (
+          <Chips rail={compact} grid2={!compact && field.recordType === 'encounter' && options.length === 4} options={options} value={value as string | number | undefined} onChange={onChange} />
+        );
         break;
       }
       case 'multi-choice':
-        body = <Chips options={field.choices ?? []} value={value as string[] | undefined} onChange={onChange} multi />;
+        body = <Chips rail={compact} options={field.choices ?? []} value={value as string[] | undefined} onChange={onChange} multi />;
         break;
       case 'boolean':
         body = (
           <Chips
+            rail={compact}
             options={[
               { code: 'yes', label: 'Yes' },
               { code: 'no', label: 'No' },

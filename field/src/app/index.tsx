@@ -1,12 +1,17 @@
-// P1 · Home. Large title + person pill + Night switch; the counter (sticky, first); recovered drafts; the survey in
-// progress; corrections; actions; surveys; the project line last. Bottom bar: Add animal (survey running) or
-// Start a survey. No project yet: Set up this phone.
+// P1 · Home. Large title + person pill + Night switch; the counter (sticky, first) with the red / amber / green
+// upload strip; recovered drafts; the survey in progress; corrections; Transects with satellite thumbnails and a
+// preview map of the chosen one (design pick 1D); Recent surveys and animals with their upload tags (2B); the
+// project line last. Floating black pill nav: Survey · Add animal · Profile (2B). No project yet: Set up this phone.
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CounterBar } from '@/components/CounterBar';
+import { NAV_PILL_CLEARANCE, NavPill } from '@/components/NavPill';
+import { TransectMap, TransectThumb } from '@/components/TransectMap';
+import { TierTag, UploadStrip } from '@/components/UploadStatus';
+import { tierCounts, uploadTier } from '@/db/status';
 import { BandMarker, Icon } from '@/components/Icon';
 import type { IconName } from '@/components/sprite';
 import { BottomBar, Button, Group, GroupTitle, Row, T, Tag } from '@/components/ui';
@@ -28,6 +33,7 @@ import { radius, type } from '@/theme/theme';
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 /** '2026-10-16' → '16 Oct'. */
 const shortDate = (d: string) => `${Number(d.slice(8, 10))} ${MONTHS[Number(d.slice(5, 7)) - 1] ?? ''}`;
+const thousands = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 const useStyles = makeStyles((t) => ({
   wrap: { flex: 1, backgroundColor: t.ground },
@@ -48,11 +54,15 @@ const useStyles = makeStyles((t) => ({
   rowTitle: { ...type.body, color: t.ink, flex: 1 },
   current: { paddingVertical: 12, paddingHorizontal: 14, gap: 3 },
   curTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  trow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 8, paddingRight: 12, borderRadius: radius.card, backgroundColor: t.card, borderWidth: 2, borderColor: 'transparent' },
+  trowOn: { borderColor: t.ink },
+  trTitle: { ...type.title, color: t.ink },
+  mapCard: { backgroundColor: t.card, borderRadius: radius.card, paddingHorizontal: 6, paddingVertical: 4 },
 }));
 
 export default function Home() {
   const field = useField();
-  const { project, template, person, pack, overlay } = field;
+  const { project, template, person, pack, overlay, transects } = field;
   const s = useStyles();
   const { t, setAppearance } = useTheme();
   const insets = useSafeAreaInsets();
@@ -78,7 +88,6 @@ export default function Home() {
     }
   }
 
-  const team = project?.teams.find((x) => x.teamId === person?.teamId);
   const surveys = person ? listRecords<LocalSurvey>('survey').sort((a, b) => b.startedAt.localeCompare(a.startedAt)) : [];
   const encounters = person ? listRecords<LocalEncounter>('encounter') : [];
   const current = surveys.find((sv) => !sv.finishedAt && sv.status === 'active');
@@ -86,6 +95,27 @@ export default function Home() {
   const incompleteOf = (sv: LocalSurvey) => missingForHq(sv).length + animalsOf(sv).filter((e) => missingForHq(e).length > 0).length;
   const corrections = person ? pendingCount() : 0;
   const nightNow = t.name === 'night';
+  const team = project?.teams.find((x) => x.teamId === person?.teamId);
+  const teamTransects = (transects?.features ?? []).filter((f) => !team || team.transectIds.includes(f.properties.transectId));
+  const [picked, setPicked] = useState<string | null>(null);
+  const chosenId = picked ?? current?.transectId ?? teamTransects[0]?.properties.transectId ?? null;
+  const chosen = teamTransects.find((f) => f.properties.transectId === chosenId) ?? null;
+  const lastWalked = (transectId: string) => surveys.find((sv) => sv.transectId === transectId)?.date;
+  const counts = person ? tierCounts() : { phone: 0, sent: 0, hq: 0 };
+  const recentAnimals = useMemo(
+    () => [...encounters].filter((e) => e.status === 'active').sort((a, b) => b.observedAt.localeCompare(a.observedAt)).slice(0, 5),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [field.counter],
+  );
+  const chosenPoints = chosen && current && current.transectId === chosenId
+    ? animalsOf(current).flatMap((e) =>
+        e.location
+          ? [{ lat: e.location.lat, lon: e.location.lon, band: e.location.check.decision?.kind === 'accepted-suggestion' || e.location.original ? ('green' as const) : e.location.check.band }]
+          : [],
+      )
+    : [];
+  const openSurvey = () =>
+    current ? router.push({ pathname: '/survey/[id]', params: { id: current.id } }) : router.push({ pathname: '/survey/new', params: chosenId ? { transectId: chosenId } : {} });
 
   function addAnimal() {
     if (!project || !template || !person || !current) return;
@@ -138,7 +168,7 @@ export default function Home() {
           <T v="display">Fieldkit</T>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 }}>
             {person && (
-              <Pressable accessibilityRole="button" accessibilityLabel={`${person.name}, ${team?.name ?? ''}. Switch person.`} onPress={() => router.push('/person')} hitSlop={{ top: 9, bottom: 9 }} style={s.pill}>
+              <Pressable accessibilityRole="button" accessibilityLabel={`${person.name}, ${team?.name ?? ''}. Switch person.`} onPress={() => router.push('/profile')} hitSlop={{ top: 9, bottom: 9 }} style={s.pill}>
                 <Icon name="user" size={15} color={t.ink2} />
                 <Text style={s.pillText} numberOfLines={1}>
                   {person.name} · {team?.name ?? person.teamId}
@@ -165,12 +195,17 @@ export default function Home() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={s.page} stickyHeaderIndices={project ? [0] : undefined} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={[s.page, project && person ? { paddingBottom: NAV_PILL_CLEARANCE } : null]}
+        stickyHeaderIndices={project ? [0] : undefined}
+        keyboardShouldPersistTaps="handled"
+      >
         {project ? (
           <View style={s.sticky}>
             <CounterBar onPress={() => router.push('/handover')} />
           </View>
         ) : null}
+        {project && person && <UploadStrip counts={counts} />}
 
         {recovered > 0 && (
           <Group>
@@ -267,62 +302,111 @@ export default function Home() {
           </Group>
         )}
 
-        {project && (
-          <Group>
-            <View style={s.list}>
-              {actionRow('updown', 'Hand over to HQ', () => router.push('/handover'), undefined, 0)}
-              {person &&
-                actionRow(
-                  'sliders',
-                  'Form settings',
-                  () => router.push('/form-settings'),
-                  person.role === 'team-lead' ? <Tag label="Team Lead" /> : undefined,
-                  1,
-                  person.role === 'team-lead' ? 'Change the form offline' : undefined,
-                )}
-              {actionRow('users', 'Switch person', () => router.push('/person'))}
-              {actionRow('folder', 'Storage check', () => router.push('/storage'))}
-            </View>
-          </Group>
-        )}
-        {!project && (
-          <Group>
-            <View style={s.list}>{actionRow('folder', 'Storage check', () => router.push('/storage'), undefined, 0)}</View>
-          </Group>
+        {person && teamTransects.length > 0 && (
+          <>
+            <GroupTitle>Transects</GroupTitle>
+            <Group style={{ gap: 6 }}>
+              {teamTransects.map((f) => {
+                const id = f.properties.transectId;
+                const on = id === chosenId;
+                const walked = lastWalked(id);
+                const latest = surveys.find((sv) => sv.transectId === id);
+                return (
+                  <Pressable
+                    key={id}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: on }}
+                    accessibilityLabel={`${id}, ${Math.round(f.properties.lengthM)} metres`}
+                    onPress={() => setPicked(id)}
+                    style={({ pressed }) => [s.trow, on && s.trowOn, pressed && { backgroundColor: t.secPress }]}
+                  >
+                    <TransectThumb transect={f} />
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text style={s.trTitle}>{f.properties.name.replace(/\s*\(.*\)\s*$/, '')}</Text>
+                      <T v="sub" dim>
+                        {thousands(f.properties.lengthM)} m · {walked ? `last walked ${shortDate(walked)}` : 'not walked yet'}
+                      </T>
+                    </View>
+                    {latest && <TierTag tier={uploadTier(latest.id)} />}
+                  </Pressable>
+                );
+              })}
+              {chosen && (
+                <View style={s.mapCard}>
+                  <TransectMap transect={chosen} points={chosenPoints} height={170} />
+                </View>
+              )}
+              {chosen && !current && (
+                <Button label={`Start survey on ${chosen.properties.transectId}`} kind="white" size={56} onPress={openSurvey} />
+              )}
+            </Group>
+          </>
         )}
 
-        {person && surveys.length > 0 && (
+        {person && (surveys.length > 0 || recentAnimals.length > 0) && (
           <>
-            <GroupTitle>Surveys on this phone</GroupTitle>
-            <Group>
-              <View style={s.list}>
-                {surveys.map((sv, i) => {
-                  const n = animalsOf(sv).length;
-                  const k = incompleteOf(sv);
-                  return (
-                    <View key={sv.id}>
-                      {i > 0 && <View style={s.sepPlain} />}
+            <GroupTitle>Recent</GroupTitle>
+            <Group style={{ gap: 6 }}>
+              {surveys.length > 0 && (
+                <View style={s.list}>
+                  {surveys.slice(0, 4).map((sv, i) => {
+                    const n = animalsOf(sv).length;
+                    const k = incompleteOf(sv);
+                    return (
+                      <View key={sv.id}>
+                        {i > 0 && <View style={s.sep} />}
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() => router.push({ pathname: '/survey/[id]', params: { id: sv.id } })}
+                          style={({ pressed }) => [s.row, { minHeight: 62 }, pressed && { backgroundColor: t.secPress }]}
+                        >
+                          <View style={s.tile}>
+                            <Icon name={isNight(sv) ? 'moon' : 'sun'} size={18} color={t.ink} />
+                          </View>
+                          <View style={{ flex: 1, gap: 2 }}>
+                            <T v="body">
+                              {sv.transectId} · {shortDate(sv.date)} · {clockOf(sv.startedAt)}
+                              {sv.finishedAt ? `–${clockOf(sv.finishedAt)}` : ' · in progress'}
+                            </T>
+                            <T v="sub" dim>
+                              {n} {n === 1 ? 'animal' : 'animals'}
+                              {k > 0 ? ` · ${k} incomplete` : ''}
+                            </T>
+                          </View>
+                          <TierTag tier={uploadTier(sv.id)} />
+                        </Pressable>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+              {recentAnimals.length > 0 && (
+                <View style={s.list}>
+                  {recentAnimals.map((a, i) => (
+                    <View key={a.id}>
+                      {i > 0 && <View style={s.sep} />}
                       <Pressable
                         accessibilityRole="button"
-                        onPress={() => router.push({ pathname: '/survey/[id]', params: { id: sv.id } })}
-                        style={({ pressed }) => [s.row, { paddingHorizontal: 14, minHeight: 62 }, pressed && { backgroundColor: t.secPress }]}
+                        onPress={() => router.push({ pathname: '/encounter/[id]', params: { id: a.id } })}
+                        style={({ pressed }) => [s.row, { minHeight: 62 }, pressed && { backgroundColor: t.secPress }]}
                       >
+                        <View style={s.tile}>
+                          <Icon name="snake" size={18} color={t.ink} />
+                        </View>
                         <View style={{ flex: 1, gap: 2 }}>
-                          <T v="body">
-                            {sv.transectId} · {shortDate(sv.date)} · {clockOf(sv.startedAt)}
-                            {sv.finishedAt ? `–${clockOf(sv.finishedAt)}` : ' · in progress'}
+                          <T v="body" italic={!!a.taxon.scientificName} dim={!a.taxon.scientificName}>
+                            {a.taxon.scientificName ?? (a.taxon.unidentified ? 'Unidentified' : 'Not chosen yet')}
                           </T>
                           <T v="sub" dim>
-                            {n} {n === 1 ? 'animal' : 'animals'}
-                            {k > 0 ? ` · ${k} incomplete` : ''}
+                            {a.transectId} · {clockOf(a.observedAt)}
                           </T>
                         </View>
-                        <Icon name="chev" size={16} color={t.ink2} strokeWidth={2.25} />
+                        <TierTag tier={uploadTier(a.id)} />
                       </Pressable>
                     </View>
-                  );
-                })}
-              </View>
+                  ))}
+                </View>
+              )}
             </Group>
           </>
         )}
@@ -330,6 +414,11 @@ export default function Home() {
           <T v="sub" dim style={{ marginHorizontal: 4 }}>
             No surveys on this phone yet.
           </T>
+        )}
+        {!project && (
+          <Group>
+            <View style={s.list}>{actionRow('folder', 'Storage check', () => router.push('/storage'), undefined, 0)}</View>
+          </Group>
         )}
 
         {project && (
@@ -348,36 +437,12 @@ export default function Home() {
         )}
       </ScrollView>
 
-      <BottomBar>
-        {!project && <Button label={busy ? 'Loading…' : 'Load demo project'} size={64} onPress={loadDemo} disabled={busy} />}
-        {project && person && current && (
-          <>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Add animal"
-              onPress={addAnimal}
-              style={({ pressed }) => ({
-                height: 72,
-                borderRadius: radius.pill,
-                backgroundColor: pressed ? t.priPress : t.pri,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingLeft: 28,
-                paddingRight: 8,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              })}
-            >
-              <Text style={[type.title, { fontSize: 20, color: t.onPri }]}>Add animal</Text>
-              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: t.onPri, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name="plus" size={26} color={t.pri} strokeWidth={2.25} />
-              </View>
-            </Pressable>
-            <Button label="Open survey" kind="grey" size={56} onPress={() => router.push({ pathname: '/survey/[id]', params: { id: current.id } })} />
-          </>
-        )}
-        {project && person && !current && <Button label="Start a survey" size={64} onPress={() => router.push('/survey/new')} />}
-      </BottomBar>
+      {!project && (
+        <BottomBar>
+          <Button label={busy ? 'Loading…' : 'Load demo project'} size={64} onPress={loadDemo} disabled={busy} />
+        </BottomBar>
+      )}
+      {project && person && <NavPill onSurvey={openSurvey} onAdd={current ? addAnimal : openSurvey} onProfile={() => router.push('/profile')} />}
     </View>
   );
 }

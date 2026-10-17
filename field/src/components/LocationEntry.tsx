@@ -267,6 +267,7 @@ export function LocationEntry({
 
   const needsChoice = !!check && check.band !== 'green' && !decision;
   const prefix = FORMATS.find((f) => f.code === format)?.prefix;
+  const typedZone = !!prefix && /^\s*\d{1,2}\s*[A-Za-z]\b/.test(raw);
 
   // The band block shows where the point is now: the used fix if any, else the typed reading.
   const blockBand: Band | null = movedNow ? movedNow.band : check ? check.band : null;
@@ -332,7 +333,8 @@ export function LocationEntry({
 
       <Group style={{ marginTop: 10 }}>
         <View style={[s.coordBox, focus && s.coordFocus]}>
-          {prefix && <Text style={s.coordPrefix}>{prefix}</Text>}
+          {/* The zone label is shown for you; if it is typed as well ("16P …", as the GPS shows it), it is not shown twice. */}
+          {prefix && !typedZone && <Text style={s.coordPrefix}>{prefix}</Text>}
           <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
           {fixedView && (
               <Pressable style={s.fixedOverlay} onPress={() => inputRef.current?.focus()} accessibilityRole="text" accessibilityLabel={`Used: ${fixedView.plain}`}>
@@ -350,7 +352,10 @@ export function LocationEntry({
             accessibilityLabel="Coordinate"
             autoCapitalize="characters"
             autoCorrect={false}
-            keyboardType={prefix || format === 'crtm05' ? 'numbers-and-punctuation' : 'default'}
+            // Jack's iPhone test: the numbers keypad hid the letters, so "16P" could not be typed. A full keyboard
+            // everywhere; Android's 'visible-password' adds a number row and turns off suggestions.
+            keyboardType={Platform.OS === 'android' ? 'visible-password' : 'default'}
+            spellCheck={false}
             placeholder={EXAMPLES[format]}
             placeholderTextColor={t.ink2}
             onFocus={() => setFocus(true)}
@@ -365,7 +370,9 @@ export function LocationEntry({
             <Icon name="keypad" size={20} color={t.ink2} />
           </View>
         </View>
-        <Text style={s.help}>{FORMAT_LABELS[format]} · type it exactly as the GPS shows it</Text>
+        <Text style={s.help}>
+          {FORMAT_LABELS[format]} · type it exactly as the GPS shows it{prefix ? ` (the ${prefix} is optional)` : ''}
+        </Text>
         {parsed && 'error' in parsed && <Text style={s.help}>{parsed.error}</Text>}
 
         {blockBand && blockWords && (

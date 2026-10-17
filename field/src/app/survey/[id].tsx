@@ -9,6 +9,8 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { FieldInput } from '@/components/fields';
 import { BandMarker, Icon } from '@/components/Icon';
 import { TransectMap } from '@/components/TransectMap';
+import { TierTag } from '@/components/UploadStatus';
+import { uploadTier } from '@/db/status';
 import { BottomBar, Button, DiscButton, Group, Hint, SavedMark, SectionTitle, StatusChip, T, Tag, type Status } from '@/components/ui';
 import { latestReview } from '@/db/feedback';
 import { createFreshDraft, listRecords } from '@/db/records';
@@ -107,7 +109,7 @@ export default function SurveyScreen() {
     return (
       <Group style={{ gap: 10, paddingVertical: 10 }}>
         {list.map((f) => (
-          <FieldInput key={f.key} field={f} value={getPath(survey, f.path)} onChange={(v) => set(f.path, v)} nowIso={now} />
+          <FieldInput key={f.key} field={f} value={getPath(survey, f.path)} onChange={(v) => set(f.path, v)} nowIso={now} compact />
         ))}
         {after}
       </Group>
@@ -188,7 +190,10 @@ export default function SurveyScreen() {
               <T italic={!!name} dim={!name} style={{ flex: 1 }}>
                 {name ?? (a.taxon.unidentified ? 'Unidentified' : 'Not chosen yet')}
               </T>
-              {review ? <StatusChip status={review} /> : incomplete.length > 0 ? <Tag label="incomplete" dashed /> : null}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                {review ? <StatusChip status={review} /> : incomplete.length > 0 ? <Tag label="incomplete" dashed /> : null}
+                <TierTag tier={uploadTier(a.id)} />
+              </View>
             </View>
             <T v="sub" dim>
               {bits.join(' · ')}

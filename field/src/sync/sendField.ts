@@ -140,6 +140,12 @@ export async function makeFieldBundle(field: FieldState, scope: Scope): Promise<
     scope,
     JSON.stringify(counts),
   ]);
+  // "Sent" only counts a bundle meant for HQ (a full backup may go anywhere).
+  if (scope === 'unconfirmed') {
+    for (const r of [...plan.surveys, ...plan.encounters]) {
+      run('INSERT OR IGNORE INTO sent_revs (id, rev, bundle_id) VALUES (?, ?, ?)', [r.id, r.rev, header.bundleId]);
+    }
+  }
   setMeta('lastHandoverAt', createdAt);
   return { fileName, uri: new File(dir, fileName).uri, bytes: zip.length, counts };
 }

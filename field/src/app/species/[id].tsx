@@ -8,6 +8,8 @@ import { useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
+import { SpeciesPhoto } from '@/components/SpeciesPhoto';
+import { lookAlikes } from '@/lib/speciesGuide';
 import { BottomBar, Button, Group, GroupTitle, T, Tag } from '@/components/ui';
 import { clearFresh, getRecord, listRecords, saveDraftNow } from '@/db/records';
 import { listProvisionalTaxa } from '@/db/team';
@@ -31,7 +33,12 @@ const useStyles = makeStyles((t) => ({
   list: { backgroundColor: t.card, borderRadius: radius.card, overflow: 'hidden' },
   row: { minHeight: 56, paddingVertical: 10, paddingHorizontal: 14, justifyContent: 'center', gap: 3 },
   rowTall: { minHeight: 70, paddingTop: 11, paddingBottom: 10, justifyContent: 'flex-start' },
-  sep: { height: 1, backgroundColor: t.hair, marginLeft: 14 },
+  sep: { height: 1, backgroundColor: t.hair, marginLeft: 88 },
+  prow: { minHeight: 84, flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingLeft: 12, paddingRight: 12 },
+  prowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  fam2: { ...type.sub, color: t.ink2 },
+  guide: { height: 36, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: t.group, alignItems: 'center', justifyContent: 'center' },
+  guideText: { ...type.small, fontWeight: '600', color: t.ink },
   line: { flexDirection: 'row', alignItems: 'baseline', gap: 12 },
   name: { ...type.body, fontStyle: 'italic', color: t.ink, flexShrink: 1 },
   fam: { ...type.sub, color: t.ink2, marginLeft: 'auto' },
@@ -114,16 +121,19 @@ export default function SpeciesPicker() {
     return (
       <View key={item.taxon.taxonId}>
         {i > 0 && <View style={s.sep} />}
+        <View style={s.prow}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${item.taxon.scientificName}, ${item.taxon.family ?? ''}${item.taxon.dangerous ? ', venomous' : ''}${close ? ', close match' : ''}`}
           onPress={() => pickTaxon(item.taxon)}
-          style={({ pressed }) => [s.row, (close || item.taxon.dangerous) && s.rowTall, pressed && { backgroundColor: t.secPress }]}
+          style={({ pressed }) => [s.prowMain, pressed && { opacity: 0.7 }]}
         >
+          <SpeciesPhoto taxon={item.taxon} size={64} />
+          <View style={{ flex: 1, gap: 3 }}>
           <View style={s.line}>
             {nameWithMatch(item)}
-            {item.taxon.family ? <Text style={s.fam}>{item.taxon.family}</Text> : null}
           </View>
+          {item.taxon.family ? <Text style={s.fam2}>{item.taxon.family}</Text> : null}
           {close && (
             <View style={s.note}>
               <Icon name="spell" size={16} color={t.ink2} />
@@ -131,11 +141,22 @@ export default function SpeciesPicker() {
             </View>
           )}
           {item.taxon.dangerous && (
-            <View style={{ marginTop: 5 }}>
+            <View style={{ marginTop: 2, alignSelf: 'flex-start' }}>
               <Tag label="VENOMOUS" venomous />
             </View>
           )}
+          </View>
         </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Field notebook: ${item.taxon.scientificName}`}
+          onPress={() => router.push({ pathname: '/notebook/[taxonId]', params: { taxonId: item.taxon.taxonId, for: id } })}
+          hitSlop={6}
+          style={({ pressed }) => [s.guide, pressed && { backgroundColor: t.greyPress }]}
+        >
+          <Text style={s.guideText}>Guide</Text>
+        </Pressable>
+        </View>
       </View>
     );
   };
@@ -223,6 +244,34 @@ export default function SpeciesPicker() {
             </View>
           )}
         </Group>
+
+        {!!q.trim() && rows.length > 0 && pack && lookAlikes(rows[0]!.taxon, pack).length > 0 && (
+          <>
+            <GroupTitle>Not sure? Compare look-alikes</GroupTitle>
+            <Group>
+              <View style={s.list}>
+                {lookAlikes(rows[0]!.taxon, pack).map((o, i) => (
+                  <View key={o.taxonId}>
+                    {i > 0 && <View style={s.sep} />}
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Compare ${rows[0]!.taxon.scientificName} with ${o.scientificName}`}
+                      onPress={() => router.push({ pathname: '/compare', params: { a: rows[0]!.taxon.taxonId, b: o.taxonId, for: id } })}
+                      style={({ pressed }) => [s.prow, pressed && { backgroundColor: t.secPress }]}
+                    >
+                      <SpeciesPhoto taxon={o} size={48} />
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={s.name}>{o.scientificName}</Text>
+                        <Text style={s.fam2}>Compare with {rows[0]!.taxon.scientificName}</Text>
+                      </View>
+                      <Icon name="chev" size={18} color={t.ink2} />
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            </Group>
+          </>
+        )}
 
         {!!q.trim() && !!subset && !all && shortlist.length > 0 && (
           <>

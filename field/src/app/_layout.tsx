@@ -62,6 +62,9 @@ function Shell() {
       >
         <Stack.Screen name="index" options={{ title: 'Fieldkit', headerShown: false }} />
         <Stack.Screen name="person" options={{ title: 'Who is using this phone?' }} />
+        <Stack.Screen name="profile" options={{ title: 'Profile' }} />
+        <Stack.Screen name="notebook/[taxonId]" options={{ title: 'Field notebook' }} />
+        <Stack.Screen name="compare" options={{ title: 'Compare look-alikes', presentation: 'modal' }} />
         <Stack.Screen name="storage" options={{ title: 'Storage check' }} />
         <Stack.Screen name="survey/new" options={{ title: 'New survey' }} />
         <Stack.Screen name="survey/[id]" options={{ title: 'Survey' }} />
