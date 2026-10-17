@@ -75,7 +75,7 @@ export function checkPointSet(
   const tuned: Project = { ...project, coordCheck: { ...cfg, baseToleranceM: { ...cfg.baseToleranceM, [habitat]: tolerance } } };
 
   return points.map((p, i) => {
-    const others = points.filter((q, j) => j !== i && !outlier[j]);
+    const others = points.filter((_, j) => j !== i && !outlier[j]);
     const result: PointSetResult = {
       id: p.id,
       ...(p.label !== undefined ? { label: p.label } : {}),
