@@ -10,7 +10,7 @@ import { useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
-import { SpeciesPhoto } from '@/components/SpeciesPhoto';
+import { PhotoCredit, SpeciesPhoto } from '@/components/SpeciesPhoto';
 import { lookAlikes } from '@/lib/speciesGuide';
 import { Button, Group, GroupTitle, T, Tag, TrayTitle } from '@/components/ui';
 import { clearFresh, getRecord, listRecords, saveDraftNow } from '@/db/records';
@@ -158,6 +158,7 @@ export default function SpeciesPicker() {
               {item.taxon.family ? <Text style={s.fam2}>{item.taxon.family}</Text> : null}
               {item.taxon.dangerous && <Tag label="VENOMOUS" venomous />}
             </View>
+            <PhotoCredit taxon={item.taxon} />
           </View>
         </Pressable>
         {guideButton(item.taxon)}

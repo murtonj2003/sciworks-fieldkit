@@ -4,6 +4,7 @@ import type { Person } from '@sciworks/shared';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
 import { listBasemaps, type StoredBasemap } from '@/db/basemaps';
+import { listSpeciesPhotos, type StoredSpeciesPhoto } from '@/db/speciesPhotos';
 import { computeCounter, type Counter } from '@/db/feedback';
 import { deviceId, getMeta, setMeta } from '@/db/meta';
 import { loadSetup, type SetupState } from '@/db/setup';
@@ -14,6 +15,8 @@ export interface FieldState extends SetupState {
   counter: Counter;
   /** Satellite pictures to draw under the transect maps (newest per basemapId, file on the phone). */
   basemaps: StoredBasemap[];
+  /** Species photos saved from HQ bundles, by taxonId (shown offline, each with its credit). */
+  speciesPhotos: Record<string, StoredSpeciesPhoto>;
   /** Re-read everything from the database. */
   refresh: () => void;
   choosePerson: (personId: string) => void;
@@ -31,6 +34,7 @@ function read(): Omit<FieldState, 'refresh' | 'choosePerson'> {
     person,
     counter: computeCounter(),
     basemaps: listBasemaps(),
+    speciesPhotos: listSpeciesPhotos(),
   };
 }
 

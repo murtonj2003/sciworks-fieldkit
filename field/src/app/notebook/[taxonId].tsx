@@ -7,9 +7,9 @@ import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
-import { SpeciesPhoto } from '@/components/SpeciesPhoto';
+import { PhotoCredit, SpeciesPhoto } from '@/components/SpeciesPhoto';
 import { BottomBar, Button, T, Tag } from '@/components/ui';
-import { firstDifference, licenceShort, lookAlikes, photoOf, sizeLines, sourceHosts, splitSex, traitIcon, traitLines } from '@/lib/speciesGuide';
+import { firstDifference, lookAlikes, sizeLines, sourceHosts, splitSex, traitIcon, traitLines } from '@/lib/speciesGuide';
 import { chooseTaxon } from '@/model/chooseTaxon';
 import { useField } from '@/state/field';
 import { makeStyles, useTheme } from '@/theme/ThemeProvider';
@@ -18,7 +18,7 @@ import { radius, type } from '@/theme/theme';
 const useStyles = makeStyles((t) => ({
   wrap: { flex: 1, backgroundColor: t.ground },
   page: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 28 },
-  credit: { position: 'absolute', left: 10, bottom: 8, right: 10, fontSize: 11, fontWeight: '500', color: '#FFFFFF', textShadowColor: 'rgba(0,0,0,0.75)', textShadowRadius: 3, textShadowOffset: { width: 0, height: 0.5 } },
+  credit: { position: 'absolute', left: 10, bottom: 8, right: 10, fontSize: 11 },
   name: { fontSize: 26, lineHeight: 31, fontWeight: '600', fontStyle: 'italic', letterSpacing: -0.3, color: t.ink, marginTop: 14, marginHorizontal: 4 },
   fam: { ...type.sub, color: t.ink2, marginHorizontal: 4, marginTop: 2 },
   venom: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: t.offTint, borderRadius: radius.card, paddingVertical: 12, paddingHorizontal: 14, marginTop: 12 },
@@ -49,7 +49,6 @@ export default function Notebook() {
   const [noteOpen, setNoteOpen] = useState(false);
   const taxon = pack?.taxa.find((x) => x.taxonId === taxonId);
   if (!pack || !taxon) return <T>This species is not in the pack on this phone.</T>;
-  const photo = photoOf(taxon);
   const facts = [...traitLines(taxon), ...sizeLines(taxon)];
   const alikes = lookAlikes(taxon, pack);
   const hosts = sourceHosts(taxon);
@@ -66,11 +65,7 @@ export default function Notebook() {
       <ScrollView contentContainerStyle={s.page}>
         <View>
           <SpeciesPhoto taxon={taxon} size={400} aspect={4 / 3} />
-          {photo && (
-            <Text style={s.credit} numberOfLines={1}>
-              Photo: {photo.rightsHolder} · {licenceShort(photo.licence)}
-            </Text>
-          )}
+          <PhotoCredit taxon={taxon} onImage style={s.credit} />
         </View>
         <Text style={s.name}>{taxon.scientificName}</Text>
         <Text style={s.fam}>{[taxon.commonName, taxon.family].filter(Boolean).join(' · ')}</Text>
@@ -143,6 +138,7 @@ export default function Notebook() {
                           <T v="small" dim style={{ fontWeight: '400' }}>
                             {diff ?? 'No clear count difference in the pack'}
                           </T>
+                          <PhotoCredit taxon={o} />
                         </View>
                       </Pressable>
                       <Pressable

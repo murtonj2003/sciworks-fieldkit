@@ -7,7 +7,7 @@ import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
-import { SpeciesPhoto } from '@/components/SpeciesPhoto';
+import { PhotoCredit, SpeciesPhoto } from '@/components/SpeciesPhoto';
 import { Button, Pair, T, Tag } from '@/components/ui';
 import { NO_DATA, compareRows, splitSex } from '@/lib/speciesGuide';
 import { chooseTaxon } from '@/model/chooseTaxon';
@@ -119,6 +119,7 @@ export default function Compare() {
                       </View>
                     )}
                   </View>
+                  <PhotoCredit taxon={x} style={{ marginTop: 4 }} />
                   <Text style={s.name}>{x.scientificName}</Text>
                 </View>
               ))}

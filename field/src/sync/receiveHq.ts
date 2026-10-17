@@ -4,6 +4,7 @@ import { readBundle, type HqBundleParts, type Manifest, type Project, type Templ
 import { Directory, File, Paths } from 'expo-file-system';
 
 import { saveBasemaps } from '@/db/basemaps';
+import { saveSpeciesPhotos } from '@/db/speciesPhotos';
 import { run } from '@/db/db';
 import {
   addChangeRequestDecisions,
@@ -98,6 +99,7 @@ export function receiveHqBundle(bytes: Uint8Array, fileName: string): ReceiveRes
     changes.push('Credits for the species data updated');
   }
   changes.push(...saveBasemaps(hq.basemaps ?? [], hq.basemapFiles ?? {}, source, manifest.createdAt));
+  changes.push(...saveSpeciesPhotos(hq.speciesPhotos ?? [], hq.speciesPhotoFiles ?? {}, source, manifest.createdAt));
 
   // Feedback.
   const receipts = addReceipts(hq.receipts ?? []);

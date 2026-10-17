@@ -37,6 +37,16 @@ export function photoOf(t: Taxon): TaxonPhoto | undefined {
   return t.photos?.find((p) => p.url || p.file);
 }
 
+/** Where a species' photo comes from, best first: the one saved from the HQ bundle (offline), then the pack's
+ * online link. Each comes with the credit line that must show beside it. */
+export function photoChoices(t: Taxon, saved: { credit: string } | undefined): ({ kind: 'saved'; credit: string } | { kind: 'online'; credit: string; url: string })[] {
+  const out: ({ kind: 'saved'; credit: string } | { kind: 'online'; credit: string; url: string })[] = [];
+  if (saved) out.push({ kind: 'saved', credit: saved.credit });
+  const p = photoOf(t);
+  if (p?.url) out.push({ kind: 'online', credit: `${p.rightsHolder} · ${licenceShort(p.licence)}`, url: p.url });
+  return out;
+}
+
 /** "CC BY 4.0", "CC0" from a licence URL. */
 export function licenceShort(url: string): string {
   if (/publicdomain\/zero/.test(url)) return 'CC0';
