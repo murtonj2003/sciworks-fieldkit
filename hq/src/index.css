@@ -219,7 +219,7 @@ html {
   height: 12px;
 }
 
-/* ---------- map: a CSS grid behind a transparent MapLibre canvas, no basemap ---------- */
+/* ---------- map: the satellite picture, or a CSS grid behind a transparent MapLibre canvas ---------- */
 .hq-map {
   background-color: var(--card);
   background-image:
@@ -249,6 +249,70 @@ html {
 }
 .fk-zoom button:hover {
   background: var(--sec-hover);
+}
+/* satellite picture: the scale and the kit's small segmented control share one row top right (both on solid
+   group plates, like every other map plate); the licence credit sits bottom right under the legend whenever the
+   picture is on screen, and keeps its space when it isn't, so the legend never jumps */
+.hq-map__tr {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fk-map .hq-map__tr > .fk-scale {
+  position: static;
+}
+.hq-map:not(.hq-map--layers) .hq-map__tr {
+  top: 14px;
+  right: 16px;
+}
+.hq-map--layers .hq-map__tr > .fk-scale {
+  height: 44px;
+  justify-content: center;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: var(--group);
+}
+.hq-map__layers > button {
+  min-width: 84px;
+  padding: 0 12px;
+}
+.hq-map__layers > button:focus-visible {
+  outline-offset: -3px;
+}
+.hq-map__foot {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  pointer-events: none;
+}
+.hq-map__foot > * {
+  pointer-events: auto;
+}
+.fk-map .hq-map__foot > .fk-legend {
+  position: static;
+  max-width: 100%;
+}
+.hq-map__credit {
+  align-self: flex-end;
+  max-width: 100%;
+  margin: 0;
+  padding: 3px 8px 4px;
+  border-radius: 8px;
+  background: var(--group);
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--ink-2);
+  text-align: right;
 }
 .hq-m-lbl {
   padding: 1px 7px;

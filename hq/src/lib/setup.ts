@@ -1,6 +1,6 @@
-// HQ's set-up: project, form template (every version kept), transects, species pack, attribution.
+// HQ's set-up: project, form template (every version kept), transects, species pack, attribution, satellite pictures.
 
-import type { HqBundleParts, Project, SpeciesPack, Template, TransectCollection } from '@sciworks/shared'
+import { sha256Hex, type Basemap, type HqBundleParts, type Project, type SpeciesPack, type Template, type TransectCollection } from '@sciworks/shared'
 import { db, type HqDb } from '../db'
 import { nowIso, setSiteTimeZone } from './time'
 
@@ -58,6 +58,17 @@ export async function applySetup(parts: HqBundleParts, d: HqDb = db): Promise<st
     await d.setup.put({ key: 'attribution', value: parts.attribution })
     applied.push('attribution')
   }
+  // Satellite pictures: only ones whose bytes arrived and passed the checksum. Same picture again = no change.
+  let pictures = 0
+  for (const meta of parts.basemaps ?? []) {
+    const bytes = parts.basemapFiles?.[meta.basemapId]
+    if (!bytes || sha256Hex(bytes) !== meta.sha256) continue
+    const had = await d.basemaps.get(meta.basemapId)
+    if (had?.meta.sha256 === meta.sha256) continue
+    await d.basemaps.put({ basemapId: meta.basemapId, meta, bytes, receivedAt: now })
+    pictures++
+  }
+  if (pictures) applied.push(`${pictures} satellite picture${pictures === 1 ? '' : 's'}`)
   if (parts.template) {
     const existing = await d.templates.get(parts.template.coreVersion)
     if (!existing) {
@@ -66,6 +77,18 @@ export async function applySetup(parts: HqBundleParts, d: HqDb = db): Promise<st
     }
   }
   return applied
+}
+
+/** The satellite pictures that cover any of these transects: listed for one of them, or holding one of their points. */
+export function basemapsFor(basemaps: Basemap[], transects: TransectCollection | undefined): Basemap[] {
+  const feats = transects?.features ?? []
+  return basemaps.filter(
+    (b) =>
+      b.transectIds?.some((id) => feats.some((f) => f.properties.transectId === id)) ||
+      feats.some((f) =>
+        f.geometry.coordinates.some(([lon, lat]) => lon! >= b.bounds.lonMin && lon! <= b.bounds.lonMax && lat! >= b.bounds.latMin && lat! <= b.bounds.latMax),
+      ),
+  )
 }
 
 export function transectById(setup: Pick<Setup, 'transects'>, transectId: string) {

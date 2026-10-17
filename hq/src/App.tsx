@@ -10,7 +10,7 @@ import { AiPanel } from './components/AiPanel'
 import { Detail } from './components/Detail'
 import { DevicesPanel, ExportDialog, HqBundleDialog } from './components/Dialogs'
 import { FormScreen } from './components/FormScreen'
-import { MapView } from './components/MapView'
+import { MapView, type MapLayerChoice } from './components/MapView'
 import { PointsScreen } from './components/PointsScreen'
 import { DEFAULT_FILTER, Queue, applyFilter, sortRows, type QueueFilter } from './components/Queue'
 import { Icon, Sprite } from './kit/Icons'
@@ -22,6 +22,9 @@ import { importBundleFile, summaryLine } from './lib/importBundle'
 import { setStatus } from './lib/review'
 import { dataManagerOf, loadSetup, teamName } from './lib/setup'
 import { shortTime } from './lib/time'
+
+/** Satellite or plain under the map lines: a per-browser convenience only. */
+const MAP_LAYER_KEY = 'sciworks-hq.map-layer'
 
 type Dialog = 'none' | 'hq-bundle' | 'export' | 'devices' | 'ai'
 type View = 'review' | 'form' | 'points'
@@ -54,6 +57,22 @@ export default function App() {
   const aiNotes = useLiveQuery(() => db.aiNotes.toArray(), [], [])
   const devices = useLiveQuery(() => db.devices.toArray(), [], [])
   const lastRun = useLiveQuery(() => db.aiRuns.orderBy('startedAt').last(), [], undefined)
+  const basemaps = useLiveQuery(() => db.basemaps.toArray(), [], [])
+  const [mapLayer, setMapLayer] = useState<MapLayerChoice>(() => {
+    try {
+      return localStorage.getItem(MAP_LAYER_KEY) === 'plain' ? 'plain' : 'satellite'
+    } catch {
+      return 'satellite'
+    }
+  })
+  const chooseMapLayer = (l: MapLayerChoice) => {
+    setMapLayer(l)
+    try {
+      localStorage.setItem(MAP_LAYER_KEY, l)
+    } catch {
+      /* the choice just isn't remembered */
+    }
+  }
   // Team requests waiting for a decision: species added in the field, and form requests.
   const pendingRequests = useLiveQuery(
     async () => {
@@ -438,10 +457,25 @@ export default function App() {
           <section className="fk-col" aria-label="Map">
             <div className="fk-col-h">
               <h3>Map</h3>
-              <span>All teams · no basemap</span>
+              <span>
+                {!basemaps.length
+                  ? 'All teams · no satellite picture'
+                  : mapLayer === 'satellite'
+                    ? `All teams · Satellite · ${basemaps.map((b) => b.meta.name.replace(/^Satellite \((.*)\)$/, '$1')).join(', ')}`
+                    : 'All teams · Plain'}
+              </span>
             </div>
             <div className="fk-group" style={{ flex: 1, minHeight: 0 }}>
-              <MapView transects={setup?.transects} records={records.filter((r) => !r.voided)} selectedKey={selectedKey} onSelect={(k) => (pick(k), setCorrectionOpen(false))} counter={counter} />
+              <MapView
+                transects={setup?.transects}
+                records={records.filter((r) => !r.voided)}
+                selectedKey={selectedKey}
+                onSelect={(k) => (pick(k), setCorrectionOpen(false))}
+                counter={counter}
+                basemaps={basemaps}
+                layer={mapLayer}
+                onLayer={chooseMapLayer}
+              />
             </div>
           </section>
           <Detail

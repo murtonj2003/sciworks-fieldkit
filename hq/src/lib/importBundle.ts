@@ -76,7 +76,15 @@ export async function importBundleFile(bytes: Uint8Array, fileName: string, d: H
       }
       const hq = r.hq ?? {}
       summary.setupApplied = await applySetup(
-        { project: hq.project, template: hq.template, transects: hq.transects, speciesPack: hq.speciesPack, attribution: hq.attribution },
+        {
+          project: hq.project,
+          template: hq.template,
+          transects: hq.transects,
+          speciesPack: hq.speciesPack,
+          attribution: hq.attribution,
+          basemaps: hq.basemaps,
+          basemapFiles: hq.basemapFiles,
+        },
         d,
       )
       summary.alreadyHadFile = await keepRaw(d, sha, fileName, bytes, { kind: 'hq', manifest: m, teamId: m.teamId, createdAt: m.createdAt, summary })

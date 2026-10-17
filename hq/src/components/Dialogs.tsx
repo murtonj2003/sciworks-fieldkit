@@ -20,6 +20,7 @@ export function HqBundleDialog({ project, onClose }: { project: Project; onClose
   const [result, setResult] = useState<HqBundleResult>()
   const [error, setError] = useState('')
   const pending = useLiveQuery(() => db.corrections.where('state').equals('draft').count(), [], 0)
+  const pictures = useLiveQuery(() => db.basemaps.count(), [], 0)
   const make = async () => {
     setError('')
     try {
@@ -47,8 +48,8 @@ export function HqBundleDialog({ project, onClose }: { project: Project; onClose
       }
     >
       <p>
-        It carries the current form, the team's transects, the species pack, every record HQ has from the team, your review results and the
-        corrections you approved. AirDrop it or copy it to the team's phones.
+        It carries the current form, the team's transects{pictures ? ' with the satellite picture under them' : ''}, the species pack, every
+        record HQ has from the team, your review results and the corrections you approved. AirDrop it or copy it to the team's phones.
       </p>
       <div className="fk-group">
         <label className="hq-field" style={{ padding: '2px 4px 4px' }}>
@@ -84,7 +85,8 @@ export function HqBundleDialog({ project, onClose }: { project: Project; onClose
             <span style={{ display: 'block', marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>
               {result.counts.receipts} records confirmed (the phone's "not with HQ" counter drops by these) · {result.counts.reviews} review results ·{' '}
               {result.counts.corrections} approved corrections · {result.counts.taxonDecisions} species decisions · {result.counts.changeRequestDecisions}{' '}
-              form-request decisions · {result.counts.transects} transects.
+              form-request decisions · {result.counts.transects} transects · {result.counts.basemaps} satellite picture
+              {result.counts.basemaps === 1 ? '' : 's'}.
             </span>
           </span>
         </p>

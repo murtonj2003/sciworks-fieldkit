@@ -3,6 +3,7 @@
 
 import Dexie, { type EntityTable } from 'dexie'
 import type {
+  Basemap,
   ChangeRequest,
   ChangeRequestDecision,
   CoordCheck,
@@ -250,6 +251,15 @@ export interface AiNoteRow {
   dismissed?: boolean
 }
 
+/** A satellite picture to draw under the transect lines, offline (SHARED-CONTRACT changelog, Sat 16:50). */
+export interface BasemapRow {
+  basemapId: string
+  meta: Basemap
+  /** The JPEG, exactly as it arrived (its SHA-256 matches meta.sha256: readBundle checks it). */
+  bytes: Uint8Array
+  receivedAt: string
+}
+
 export class HqDb extends Dexie {
   bundles!: EntityTable<RawBundleRow, 'sha256'>
   records!: EntityTable<RecordRow, 'key'>
@@ -270,6 +280,7 @@ export class HqDb extends Dexie {
   quarantine!: EntityTable<QuarantineRow, 'seq'>
   aiRuns!: EntityTable<AiRunRow, 'runId'>
   aiNotes!: EntityTable<AiNoteRow, 'id'>
+  basemaps!: EntityTable<BasemapRow, 'basemapId'>
 
   constructor(name = 'sciworks-hq') {
     super(name)
@@ -298,6 +309,9 @@ export class HqDb extends Dexie {
     this.version(3).stores({
       aiRuns: 'runId, startedAt, state',
       aiNotes: '++id, runId, recordKey',
+    })
+    this.version(4).stores({
+      basemaps: 'basemapId',
     })
   }
 }

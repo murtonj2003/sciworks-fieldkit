@@ -1,11 +1,12 @@
 // HQ → phone bundle, one per team (SHARED-CONTRACT §7.3):
-// set-up (project, current form, transects, species pack, attribution, the team's overlay baseline) and
+// set-up (project, current form, transects, species pack, attribution, the team's overlay baseline, the satellite
+// pictures that cover the team's transects) and
 // feedback (a receipt for every (id, rev) received from the team, reviews, APPROVED corrections only, decisions).
 
 import { v7 as uuidv7 } from 'uuid'
 import { bundleFileName, sha256Hex, writeBundle, type CorrectionRequest, type HqBundleParts, type Receipt, type Review } from '@sciworks/shared'
 import { db, type HqDb } from '../db'
-import { loadSetup, dataManagerOf } from './setup'
+import { basemapsFor, loadSetup, dataManagerOf } from './setup'
 import { nowIso } from './time'
 
 export const HQ_APP_VERSION = '0.1.0'
@@ -13,7 +14,7 @@ export const HQ_APP_VERSION = '0.1.0'
 export interface HqBundleResult {
   bytes: Uint8Array
   fileName: string
-  counts: { receipts: number; reviews: number; corrections: number; taxonDecisions: number; changeRequestDecisions: number; transects: number }
+  counts: { receipts: number; reviews: number; corrections: number; taxonDecisions: number; changeRequestDecisions: number; transects: number; basemaps: number }
 }
 
 export async function makeHqBundle(teamId: string, opts: { allTransects?: boolean } = {}, d: HqDb = db): Promise<HqBundleResult> {
@@ -77,6 +78,14 @@ export async function makeHqBundle(teamId: string, opts: { allTransects?: boolea
       ? { ...setup.transects, features: setup.transects.features.filter((f) => team.transectIds.includes(f.properties.transectId)) }
       : setup.transects
 
+  // Satellite pictures for the transects going in this bundle, byte for byte as HQ received them.
+  const stored = await d.basemaps.toArray()
+  const basemaps = basemapsFor(
+    stored.map((b) => b.meta),
+    transects,
+  )
+  const basemapFiles = Object.fromEntries(basemaps.map((b) => [b.basemapId, stored.find((s) => s.basemapId === b.basemapId)!.bytes]))
+
   const parts: HqBundleParts = {
     project,
     template: setup.template,
@@ -89,6 +98,7 @@ export async function makeHqBundle(teamId: string, opts: { allTransects?: boolea
     corrections,
     taxonDecisions,
     changeRequestDecisions,
+    ...(basemaps.length ? { basemaps, basemapFiles } : {}),
   }
 
   const header = {
@@ -128,6 +138,7 @@ export async function makeHqBundle(teamId: string, opts: { allTransects?: boolea
       taxonDecisions: taxonDecisions.length,
       changeRequestDecisions: changeRequestDecisions.length,
       transects: transects?.features.length ?? 0,
+      basemaps: basemaps.length,
     },
   }
 }
