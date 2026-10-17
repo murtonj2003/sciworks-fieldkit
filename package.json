@@ -1,0 +1,16 @@
+{
+  "name": "sciworks-fieldkit",
+  "private": true,
+  "description": "Offline field data collection for transect surveys: a phone app (field/) and a base-camp HQ app (hq/) that swap bundle files.",
+  "license": "MIT",
+  "workspaces": [
+    "shared",
+    "field",
+    "hq"
+  ],
+  "scripts": {
+    "test": "npm test -w shared",
+    "fixtures": "npm run fixtures -w shared",
+    "typecheck": "npm run typecheck -w shared"
+  }
+}

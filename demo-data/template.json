@@ -1,0 +1,1104 @@
+{
+  "templateId": "herp-ves-transect",
+  "name": "Herp visual encounter survey (transect)",
+  "coreVersion": 1,
+  "publishedAt": "2026-10-15T09:00:00-06:00",
+  "publishedBy": "p-dm",
+  "fields": [
+    {
+      "key": "transectId",
+      "path": "transectId",
+      "recordType": "survey",
+      "label": "Transect",
+      "type": "transect",
+      "tier": "core",
+      "group": "start",
+      "required": true,
+      "dwc": "dwc:locationID",
+      "order": 1,
+      "addedInCore": 1
+    },
+    {
+      "key": "surveyorIds",
+      "path": "surveyorIds",
+      "recordType": "survey",
+      "label": "Surveyors",
+      "type": "people",
+      "tier": "core",
+      "group": "start",
+      "required": true,
+      "dwc": "dwc:recordedBy",
+      "order": 2,
+      "addedInCore": 1
+    },
+    {
+      "key": "surveyorCount",
+      "path": "surveyorCount",
+      "recordType": "survey",
+      "label": "Number of surveyors",
+      "type": "number",
+      "tier": "core",
+      "group": "start",
+      "min": 1,
+      "max": 6,
+      "teamCan": [
+        "default"
+      ],
+      "order": 3,
+      "addedInCore": 1
+    },
+    {
+      "key": "startedAt",
+      "path": "startedAt",
+      "recordType": "survey",
+      "label": "Start time",
+      "type": "time",
+      "tier": "core",
+      "group": "start",
+      "required": true,
+      "dwc": "dwc:eventDate",
+      "order": 4,
+      "addedInCore": 1
+    },
+    {
+      "key": "weatherStart.airTempC",
+      "path": "weatherStart.airTempC",
+      "recordType": "survey",
+      "label": "Air temperature (start)",
+      "type": "number",
+      "unit": "degC",
+      "tier": "core",
+      "group": "weather-start",
+      "min": 15,
+      "max": 35,
+      "teamCan": [
+        "range"
+      ],
+      "limits": {
+        "minFloor": 0,
+        "maxCeiling": 45
+      },
+      "order": 5,
+      "addedInCore": 1
+    },
+    {
+      "key": "weatherStart.cloud",
+      "path": "weatherStart.cloud",
+      "recordType": "survey",
+      "label": "Cloud (start)",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "clear",
+          "label": "Clear"
+        },
+        {
+          "code": "scattered",
+          "label": "Scattered"
+        },
+        {
+          "code": "broken",
+          "label": "Broken"
+        },
+        {
+          "code": "overcast",
+          "label": "Overcast"
+        },
+        {
+          "code": "cannot-assess",
+          "label": "Can't assess (canopy)"
+        }
+      ],
+      "tier": "core",
+      "group": "weather-start",
+      "required": true,
+      "order": 6,
+      "addedInCore": 1
+    },
+    {
+      "key": "weatherStart.rainNow",
+      "path": "weatherStart.rainNow",
+      "recordType": "survey",
+      "label": "Rain now (start)",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "none",
+          "label": "None"
+        },
+        {
+          "code": "mist",
+          "label": "Mist"
+        },
+        {
+          "code": "drizzle",
+          "label": "Drizzle"
+        },
+        {
+          "code": "rain",
+          "label": "Rain"
+        },
+        {
+          "code": "heavy",
+          "label": "Heavy rain"
+        }
+      ],
+      "tier": "core",
+      "group": "weather-start",
+      "required": true,
+      "order": 7,
+      "addedInCore": 1
+    },
+    {
+      "key": "weatherStart.windBeaufort",
+      "path": "weatherStart.windBeaufort",
+      "recordType": "survey",
+      "label": "Wind, Beaufort (start)",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "0",
+          "label": "0 Calm"
+        },
+        {
+          "code": "1",
+          "label": "1 Light air"
+        },
+        {
+          "code": "2",
+          "label": "2 Light breeze"
+        },
+        {
+          "code": "3",
+          "label": "3 Gentle breeze"
+        },
+        {
+          "code": "4",
+          "label": "4 Moderate breeze"
+        },
+        {
+          "code": "5",
+          "label": "5 Fresh breeze"
+        },
+        {
+          "code": "6",
+          "label": "6+ Strong"
+        }
+      ],
+      "valueType": "number",
+      "tier": "core",
+      "group": "weather-start",
+      "required": true,
+      "order": 8,
+      "addedInCore": 1
+    },
+    {
+      "key": "herp.rainLast24h",
+      "path": "herp.rainLast24h",
+      "recordType": "survey",
+      "label": "Rain in the last 24 h",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "none",
+          "label": "None"
+        },
+        {
+          "code": "light",
+          "label": "Light"
+        },
+        {
+          "code": "heavy",
+          "label": "Heavy"
+        }
+      ],
+      "tier": "team",
+      "group": "herp",
+      "teamCan": [
+        "show-hide",
+        "default"
+      ],
+      "order": 9,
+      "addedInCore": 1
+    },
+    {
+      "key": "herp.hoursSinceRain",
+      "path": "herp.hoursSinceRain",
+      "recordType": "survey",
+      "label": "Hours since rain",
+      "type": "number",
+      "unit": "h",
+      "tier": "team",
+      "group": "herp",
+      "min": 0,
+      "max": 72,
+      "teamCan": [
+        "show-hide"
+      ],
+      "order": 10,
+      "addedInCore": 1
+    },
+    {
+      "key": "herp.relativeHumidityPct",
+      "path": "herp.relativeHumidityPct",
+      "recordType": "survey",
+      "label": "Relative humidity",
+      "type": "number",
+      "unit": "pct",
+      "tier": "team",
+      "group": "herp",
+      "min": 30,
+      "max": 100,
+      "teamCan": [
+        "show-hide"
+      ],
+      "order": 11,
+      "addedInCore": 1
+    },
+    {
+      "key": "herp.substrateTempC",
+      "path": "herp.substrateTempC",
+      "recordType": "survey",
+      "label": "Substrate temperature",
+      "type": "number",
+      "unit": "degC",
+      "tier": "team",
+      "group": "herp",
+      "hidden": true,
+      "teamCan": [
+        "show-hide"
+      ],
+      "order": 12,
+      "addedInCore": 1
+    },
+    {
+      "key": "herp.moonVisible",
+      "path": "herp.moonVisible",
+      "recordType": "survey",
+      "label": "Moon (night surveys)",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "visible",
+          "label": "Visible"
+        },
+        {
+          "code": "behind-cloud",
+          "label": "Behind cloud"
+        },
+        {
+          "code": "not-up",
+          "label": "Not up"
+        }
+      ],
+      "tier": "team",
+      "group": "herp",
+      "teamCan": [
+        "show-hide"
+      ],
+      "order": 13,
+      "addedInCore": 1
+    },
+    {
+      "key": "herp.leafLitterMoisture",
+      "path": "herp.leafLitterMoisture",
+      "recordType": "survey",
+      "label": "Leaf litter (night surveys)",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "dry",
+          "label": "Dry"
+        },
+        {
+          "code": "damp",
+          "label": "Damp"
+        },
+        {
+          "code": "wet",
+          "label": "Wet"
+        }
+      ],
+      "tier": "team",
+      "group": "herp",
+      "teamCan": [
+        "show-hide"
+      ],
+      "order": 14,
+      "addedInCore": 1
+    },
+    {
+      "key": "finishedAt",
+      "path": "finishedAt",
+      "recordType": "survey",
+      "label": "Finish time",
+      "type": "time",
+      "tier": "core",
+      "group": "weather-end",
+      "order": 15,
+      "addedInCore": 1
+    },
+    {
+      "key": "weatherEnd.airTempC",
+      "path": "weatherEnd.airTempC",
+      "recordType": "survey",
+      "label": "Air temperature (end)",
+      "type": "number",
+      "unit": "degC",
+      "tier": "core",
+      "group": "weather-end",
+      "min": 15,
+      "max": 35,
+      "teamCan": [
+        "range"
+      ],
+      "limits": {
+        "minFloor": 0,
+        "maxCeiling": 45
+      },
+      "order": 16,
+      "addedInCore": 1
+    },
+    {
+      "key": "weatherEnd.cloud",
+      "path": "weatherEnd.cloud",
+      "recordType": "survey",
+      "label": "Cloud (end)",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "clear",
+          "label": "Clear"
+        },
+        {
+          "code": "scattered",
+          "label": "Scattered"
+        },
+        {
+          "code": "broken",
+          "label": "Broken"
+        },
+        {
+          "code": "overcast",
+          "label": "Overcast"
+        },
+        {
+          "code": "cannot-assess",
+          "label": "Can't assess (canopy)"
+        }
+      ],
+      "tier": "core",
+      "group": "weather-end",
+      "required": true,
+      "order": 17,
+      "addedInCore": 1
+    },
+    {
+      "key": "weatherEnd.rainNow",
+      "path": "weatherEnd.rainNow",
+      "recordType": "survey",
+      "label": "Rain now (end)",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "none",
+          "label": "None"
+        },
+        {
+          "code": "mist",
+          "label": "Mist"
+        },
+        {
+          "code": "drizzle",
+          "label": "Drizzle"
+        },
+        {
+          "code": "rain",
+          "label": "Rain"
+        },
+        {
+          "code": "heavy",
+          "label": "Heavy rain"
+        }
+      ],
+      "tier": "core",
+      "group": "weather-end",
+      "required": true,
+      "order": 18,
+      "addedInCore": 1
+    },
+    {
+      "key": "weatherEnd.windBeaufort",
+      "path": "weatherEnd.windBeaufort",
+      "recordType": "survey",
+      "label": "Wind, Beaufort (end)",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "0",
+          "label": "0 Calm"
+        },
+        {
+          "code": "1",
+          "label": "1 Light air"
+        },
+        {
+          "code": "2",
+          "label": "2 Light breeze"
+        },
+        {
+          "code": "3",
+          "label": "3 Gentle breeze"
+        },
+        {
+          "code": "4",
+          "label": "4 Moderate breeze"
+        },
+        {
+          "code": "5",
+          "label": "5 Fresh breeze"
+        },
+        {
+          "code": "6",
+          "label": "6+ Strong"
+        }
+      ],
+      "valueType": "number",
+      "tier": "core",
+      "group": "weather-end",
+      "required": true,
+      "order": 19,
+      "addedInCore": 1
+    },
+    {
+      "key": "survey.notes",
+      "path": "notes",
+      "recordType": "survey",
+      "label": "Survey notes",
+      "type": "text",
+      "tier": "free",
+      "group": "notes",
+      "dwc": "dwc:eventRemarks",
+      "order": 20,
+      "addedInCore": 1
+    },
+    {
+      "key": "taxon",
+      "path": "taxon",
+      "recordType": "encounter",
+      "label": "Species",
+      "type": "taxon",
+      "tier": "core",
+      "group": "animal",
+      "required": true,
+      "teamCan": [
+        "choices-subset"
+      ],
+      "dwc": "dwc:scientificName",
+      "help": "Pick from the site list, use the scale-count key, or mark unidentified and take a photo.",
+      "order": 21,
+      "addedInCore": 1
+    },
+    {
+      "key": "sex",
+      "path": "sex",
+      "recordType": "encounter",
+      "label": "Sex",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "male",
+          "label": "Male"
+        },
+        {
+          "code": "female",
+          "label": "Female"
+        },
+        {
+          "code": "indeterminate",
+          "label": "Indeterminate"
+        },
+        {
+          "code": "not-assessed",
+          "label": "Not assessed"
+        }
+      ],
+      "default": "not-assessed",
+      "tier": "core",
+      "group": "animal",
+      "required": true,
+      "dwc": "dwc:sex",
+      "order": 22,
+      "addedInCore": 1
+    },
+    {
+      "key": "sexMethod",
+      "path": "sexMethod",
+      "recordType": "encounter",
+      "label": "How sexed",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "probing",
+          "label": "Probing"
+        },
+        {
+          "code": "popping",
+          "label": "Popping"
+        },
+        {
+          "code": "secondary-characters",
+          "label": "Secondary characters"
+        },
+        {
+          "code": "other",
+          "label": "Other"
+        }
+      ],
+      "tier": "core",
+      "group": "animal",
+      "teamCan": [
+        "show-hide",
+        "default"
+      ],
+      "order": 23,
+      "addedInCore": 1
+    },
+    {
+      "key": "lifeStage",
+      "path": "lifeStage",
+      "recordType": "encounter",
+      "label": "Life stage",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "hatchling",
+          "label": "Hatchling"
+        },
+        {
+          "code": "juvenile",
+          "label": "Juvenile"
+        },
+        {
+          "code": "subadult",
+          "label": "Subadult"
+        },
+        {
+          "code": "adult",
+          "label": "Adult"
+        },
+        {
+          "code": "tadpole",
+          "label": "Tadpole"
+        },
+        {
+          "code": "metamorph",
+          "label": "Metamorph"
+        },
+        {
+          "code": "unknown",
+          "label": "Unknown"
+        }
+      ],
+      "tier": "core",
+      "group": "animal",
+      "required": true,
+      "teamCan": [
+        "choices-subset",
+        "default"
+      ],
+      "dwc": "dwc:lifeStage",
+      "order": 24,
+      "addedInCore": 1
+    },
+    {
+      "key": "mass",
+      "path": "mass",
+      "recordType": "encounter",
+      "label": "Mass",
+      "type": "measurement",
+      "unit": "g",
+      "choices": [
+        {
+          "code": "pesola-10",
+          "label": "Pesola 10 g (0.1 g)"
+        },
+        {
+          "code": "pesola-100",
+          "label": "Pesola 100 g (1 g)"
+        },
+        {
+          "code": "pesola-500",
+          "label": "Pesola 500 g (5 g)"
+        },
+        {
+          "code": "digital",
+          "label": "Digital scale"
+        }
+      ],
+      "tier": "core",
+      "group": "measurements",
+      "min": 0.1,
+      "max": 6000,
+      "teamCan": [
+        "range",
+        "default"
+      ],
+      "limits": {
+        "minFloor": 0,
+        "maxCeiling": 10000
+      },
+      "dwc": "MoF: mass",
+      "order": 25,
+      "addedInCore": 1
+    },
+    {
+      "key": "svl",
+      "path": "svl",
+      "recordType": "encounter",
+      "label": "Snout–vent length (SVL)",
+      "type": "measurement",
+      "unit": "mm",
+      "choices": [
+        {
+          "code": "ruler",
+          "label": "Ruler"
+        },
+        {
+          "code": "tape",
+          "label": "Tape"
+        },
+        {
+          "code": "squeeze-box",
+          "label": "Squeeze box"
+        },
+        {
+          "code": "calipers",
+          "label": "Calipers"
+        }
+      ],
+      "tier": "core",
+      "group": "measurements",
+      "min": 50,
+      "max": 2500,
+      "teamCan": [
+        "range",
+        "default"
+      ],
+      "limits": {
+        "minFloor": 5,
+        "maxCeiling": 4000
+      },
+      "dwc": "MoF: snout-vent length",
+      "order": 26,
+      "addedInCore": 1
+    },
+    {
+      "key": "tailLength",
+      "path": "tailLength",
+      "recordType": "encounter",
+      "label": "Tail length",
+      "type": "measurement",
+      "unit": "mm",
+      "tier": "core",
+      "group": "measurements",
+      "min": 5,
+      "max": 1000,
+      "teamCan": [
+        "range"
+      ],
+      "limits": {
+        "minFloor": 0,
+        "maxCeiling": 2000
+      },
+      "dwc": "MoF: tail length",
+      "order": 27,
+      "addedInCore": 1
+    },
+    {
+      "key": "tailCondition",
+      "path": "tailCondition",
+      "recordType": "encounter",
+      "label": "Tail condition",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "intact",
+          "label": "Intact"
+        },
+        {
+          "code": "regenerated",
+          "label": "Regenerated"
+        },
+        {
+          "code": "broken",
+          "label": "Broken"
+        }
+      ],
+      "default": "intact",
+      "tier": "core",
+      "group": "measurements",
+      "help": "Subcaudal counts are ignored unless the tail is intact.",
+      "order": 28,
+      "addedInCore": 1
+    },
+    {
+      "key": "location",
+      "path": "location",
+      "recordType": "encounter",
+      "label": "GPS point",
+      "type": "location",
+      "tier": "core",
+      "group": "location",
+      "required": true,
+      "dwc": "dwc:decimalLatitude",
+      "order": 29,
+      "addedInCore": 1
+    },
+    {
+      "key": "distanceAlongM",
+      "path": "distanceAlongM",
+      "recordType": "encounter",
+      "label": "Distance along transect",
+      "type": "number",
+      "unit": "m",
+      "tier": "core",
+      "group": "location",
+      "help": "Filled in from the GPS point. Edit only if you measured it.",
+      "order": 30,
+      "addedInCore": 1
+    },
+    {
+      "key": "scaleCounts.dorsalRowsMidbody",
+      "path": "scaleCounts.dorsalRowsMidbody",
+      "recordType": "encounter",
+      "label": "Dorsal scale rows at midbody",
+      "type": "number",
+      "tier": "core",
+      "group": "scales",
+      "min": 8,
+      "max": 80,
+      "teamCan": [
+        "show-hide"
+      ],
+      "dwc": "MoF: dorsal scale rows at midbody",
+      "order": 31,
+      "addedInCore": 1
+    },
+    {
+      "key": "scaleCounts.ventrals",
+      "path": "scaleCounts.ventrals",
+      "recordType": "encounter",
+      "label": "Ventral scales",
+      "type": "number",
+      "tier": "core",
+      "group": "scales",
+      "min": 90,
+      "max": 350,
+      "teamCan": [
+        "show-hide"
+      ],
+      "dwc": "MoF: ventral scale count",
+      "order": 32,
+      "addedInCore": 1
+    },
+    {
+      "key": "scaleCounts.subcaudals",
+      "path": "scaleCounts.subcaudals",
+      "recordType": "encounter",
+      "label": "Subcaudal scales",
+      "type": "number",
+      "tier": "core",
+      "group": "scales",
+      "min": 10,
+      "max": 200,
+      "teamCan": [
+        "show-hide"
+      ],
+      "dwc": "MoF: subcaudal scale count",
+      "order": 33,
+      "addedInCore": 1
+    },
+    {
+      "key": "scaleCounts.analPlate",
+      "path": "scaleCounts.analPlate",
+      "recordType": "encounter",
+      "label": "Anal plate",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "single",
+          "label": "Single"
+        },
+        {
+          "code": "divided",
+          "label": "Divided"
+        }
+      ],
+      "tier": "core",
+      "group": "scales",
+      "teamCan": [
+        "show-hide"
+      ],
+      "order": 34,
+      "addedInCore": 1
+    },
+    {
+      "key": "scaleCounts.keeled",
+      "path": "scaleCounts.keeled",
+      "recordType": "encounter",
+      "label": "Dorsal scales",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "smooth",
+          "label": "Smooth"
+        },
+        {
+          "code": "weak",
+          "label": "Weakly keeled"
+        },
+        {
+          "code": "keeled",
+          "label": "Keeled"
+        }
+      ],
+      "tier": "core",
+      "group": "scales",
+      "teamCan": [
+        "show-hide"
+      ],
+      "order": 35,
+      "addedInCore": 1
+    },
+    {
+      "key": "scaleCounts.loreal",
+      "path": "scaleCounts.loreal",
+      "recordType": "encounter",
+      "label": "Loreal scale",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "present",
+          "label": "Present"
+        },
+        {
+          "code": "absent",
+          "label": "Absent"
+        }
+      ],
+      "tier": "core",
+      "group": "scales",
+      "teamCan": [
+        "show-hide"
+      ],
+      "order": 36,
+      "addedInCore": 1
+    },
+    {
+      "key": "scaleCounts.pupil",
+      "path": "scaleCounts.pupil",
+      "recordType": "encounter",
+      "label": "Pupil",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "round",
+          "label": "Round"
+        },
+        {
+          "code": "vertical",
+          "label": "Vertical"
+        },
+        {
+          "code": "horizontal",
+          "label": "Horizontal"
+        }
+      ],
+      "tier": "core",
+      "group": "scales",
+      "teamCan": [
+        "show-hide"
+      ],
+      "order": 37,
+      "addedInCore": 1
+    },
+    {
+      "key": "photoIds",
+      "path": "photoIds",
+      "recordType": "encounter",
+      "label": "Photos",
+      "type": "photos",
+      "tier": "core",
+      "group": "animal",
+      "help": "Dorsal, ventral and head if you can.",
+      "order": 38,
+      "addedInCore": 1
+    },
+    {
+      "key": "extras.encounterType",
+      "path": "extras.encounterType",
+      "recordType": "encounter",
+      "label": "Captured or sighted",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "captured",
+          "label": "Captured"
+        },
+        {
+          "code": "sighted",
+          "label": "Sighted only"
+        }
+      ],
+      "default": "captured",
+      "tier": "team",
+      "group": "extras",
+      "teamCan": [
+        "show-hide",
+        "default"
+      ],
+      "order": 39,
+      "addedInCore": 1
+    },
+    {
+      "key": "extras.microhabitat",
+      "path": "extras.microhabitat",
+      "recordType": "encounter",
+      "label": "Microhabitat",
+      "type": "choice",
+      "choices": [
+        {
+          "code": "leaf-litter",
+          "label": "Leaf litter"
+        },
+        {
+          "code": "log",
+          "label": "Log or bark"
+        },
+        {
+          "code": "vegetation",
+          "label": "Low vegetation"
+        },
+        {
+          "code": "tree",
+          "label": "Tree or branch"
+        },
+        {
+          "code": "stream-edge",
+          "label": "Stream edge"
+        },
+        {
+          "code": "trail",
+          "label": "Trail"
+        },
+        {
+          "code": "other",
+          "label": "Other"
+        }
+      ],
+      "tier": "team",
+      "group": "extras",
+      "hidden": true,
+      "teamCan": [
+        "show-hide",
+        "choices-subset"
+      ],
+      "order": 40,
+      "addedInCore": 1
+    },
+    {
+      "key": "extras.behaviour",
+      "path": "extras.behaviour",
+      "recordType": "encounter",
+      "label": "Behaviour",
+      "type": "text",
+      "tier": "team",
+      "group": "extras",
+      "hidden": true,
+      "teamCan": [
+        "show-hide"
+      ],
+      "dwc": "dwc:behavior",
+      "order": 41,
+      "addedInCore": 1
+    },
+    {
+      "key": "extras.gravid",
+      "path": "extras.gravid",
+      "recordType": "encounter",
+      "label": "Gravid",
+      "type": "boolean",
+      "tier": "team",
+      "group": "extras",
+      "hidden": true,
+      "teamCan": [
+        "show-hide"
+      ],
+      "order": 42,
+      "addedInCore": 1
+    },
+    {
+      "key": "extras.injuries",
+      "path": "extras.injuries",
+      "recordType": "encounter",
+      "label": "Injuries or disease signs",
+      "type": "text",
+      "tier": "team",
+      "group": "extras",
+      "hidden": true,
+      "teamCan": [
+        "show-hide"
+      ],
+      "order": 43,
+      "addedInCore": 1
+    },
+    {
+      "key": "extras.markId",
+      "path": "extras.markId",
+      "recordType": "encounter",
+      "label": "Mark-recapture ID",
+      "type": "text",
+      "tier": "team",
+      "group": "extras",
+      "hidden": true,
+      "teamCan": [
+        "show-hide"
+      ],
+      "order": 44,
+      "addedInCore": 1
+    },
+    {
+      "key": "encounter.notes",
+      "path": "notes",
+      "recordType": "encounter",
+      "label": "Notes",
+      "type": "text",
+      "tier": "free",
+      "group": "notes",
+      "dwc": "dwc:occurrenceRemarks",
+      "order": 45,
+      "addedInCore": 1
+    }
+  ],
+  "protocolRules": [
+    {
+      "code": "HEAVY_RAIN",
+      "fieldPath": "weatherStart.rainNow",
+      "op": "in",
+      "values": [
+        "heavy"
+      ],
+      "message": "The protocol says don't survey in heavy rain. Save anyway?"
+    },
+    {
+      "code": "STRONG_WIND",
+      "fieldPath": "weatherStart.windBeaufort",
+      "op": "gt",
+      "values": [
+        4
+      ],
+      "message": "Wind above Beaufort 4 lowers detection. Save anyway?"
+    }
+  ]
+}

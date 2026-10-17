@@ -1,0 +1,105 @@
+{
+  "projectId": "cr-herps",
+  "name": "Costa Rica herp transects (demo)",
+  "timeZone": "America/Costa_Rica",
+  "bbox": {
+    "latMin": 5,
+    "latMax": 11.5,
+    "lonMin": -88,
+    "lonMax": -82
+  },
+  "coordCheck": {
+    "baseToleranceM": {
+      "canopy": 30,
+      "open": 15
+    },
+    "accuracyMultiplier": 3,
+    "amberMultiplier": 3,
+    "maxSuggestions": 3,
+    "grids": [
+      "utm16n",
+      "utm17n",
+      "crtm05"
+    ]
+  },
+  "teams": [
+    {
+      "teamId": "hq",
+      "name": "Base camp (HQ)",
+      "transectIds": []
+    },
+    {
+      "teamId": "team-a",
+      "name": "Team A",
+      "transectIds": [
+        "T-LS-01",
+        "T-LS-03"
+      ]
+    },
+    {
+      "teamId": "team-b",
+      "name": "Team B",
+      "transectIds": [
+        "T-LS-02"
+      ]
+    }
+  ],
+  "people": [
+    {
+      "personId": "p-dm",
+      "name": "Dana Mora",
+      "initials": "DM",
+      "teamId": "hq",
+      "role": "data-manager"
+    },
+    {
+      "personId": "p-pl",
+      "name": "Priya Lal",
+      "initials": "PL",
+      "teamId": "hq",
+      "role": "project-lead"
+    },
+    {
+      "personId": "p-a-lead",
+      "name": "Ana Rojas",
+      "initials": "AR",
+      "teamId": "team-a",
+      "role": "team-lead"
+    },
+    {
+      "personId": "p-a-1",
+      "name": "Luis Vargas",
+      "initials": "LV",
+      "teamId": "team-a",
+      "role": "surveyor"
+    },
+    {
+      "personId": "p-a-2",
+      "name": "Maya Chen",
+      "initials": "MC",
+      "teamId": "team-a",
+      "role": "surveyor"
+    },
+    {
+      "personId": "p-b-lead",
+      "name": "Ben Okafor",
+      "initials": "BO",
+      "teamId": "team-b",
+      "role": "team-lead"
+    },
+    {
+      "personId": "p-b-1",
+      "name": "Carla Mendez",
+      "initials": "CM",
+      "teamId": "team-b",
+      "role": "surveyor"
+    },
+    {
+      "personId": "p-b-2",
+      "name": "Tom Reid",
+      "initials": "TR",
+      "teamId": "team-b",
+      "role": "surveyor"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "name": "@sciworks/shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The shared contract between the Field app and the HQ app: types, schemas, bundle zipper and checks.",
+  "license": "MIT",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "fixtures": "tsx scripts/make-fixtures.ts",
+    "demo-data": "tsx scripts/build-demo-data.ts"
+  },
+  "dependencies": {
+    "@noble/hashes": "^2.4.0",
+    "@turf/distance": "^7.4.0",
+    "@turf/helpers": "^7.4.0",
+    "@turf/length": "^7.4.0",
+    "@turf/nearest-point-on-line": "^7.4.0",
+    "fflate": "^0.8.3",
+    "proj4": "^2.22.0",
+    "suncalc": "^2.1.1",
+    "uuid": "^14.0.3",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^26.6.5",
+    "@types/suncalc": "^1.9.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

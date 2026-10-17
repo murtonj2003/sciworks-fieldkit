@@ -1,0 +1,1250 @@
+{
+  "status": "draft — verify before demo",
+  "packId": "cr-la-selva-snakes-demo-draft",
+  "generated": "2026-10-17",
+  "disclaimer": "DEMO ONLY: not for identifying snakes in the field. Every value is sourced, but many ranges come from outside Costa Rica, and a few have only Tier 3 provenance (Wikipedia). Several venomous species are included.",
+  "site": {
+    "name": "La Selva Biological Station area, Caribbean lowlands, Heredia, Costa Rica",
+    "bbox": {
+      "latMin": 10.38,
+      "latMax": 10.46,
+      "lonMin": -84.06,
+      "lonMax": -83.97
+    },
+    "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+    "summary": "7,428 squamate occurrences; 121 squamate species; 79 snake species (family filter), GBIF API accessed 2026-10-17"
+  },
+  "taxonomyBackbone": {
+    "name": "The Reptile Database via Catalogue of Life / ChecklistBank, version 2026-06",
+    "doi": "https://doi.org/10.48580/d37s",
+    "source": "https://api.checklistbank.org/dataset/1008",
+    "licence": "CC BY 4.0"
+  },
+  "valueSchema": "Each trait entry has: value, sex, verbatim (the source's own wording), source (URL), licence, and where known citedOriginal and sampleRegion.",
+  "species": [
+    {
+      "scientificName": "Bothrops asper",
+      "familyAsInGBIF": "Viperidae",
+      "gbifTaxonKey": 5220796,
+      "laSelvaGbifOccurrences": {
+        "value": 439,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "value": {
+            "min": 23,
+            "max": 33
+          },
+          "sex": "pooled",
+          "verbatim": "23 a 33 filas de escamas dorsales a medio cuerpo",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Folleco-Fernandez 2010 (quoted in Reptile Database Diagnosis)",
+          "sampleRegion": "Colombia (Cauca); n=20 examined"
+        },
+        {
+          "trait": "ventrals",
+          "value": {
+            "min": 161,
+            "max": 216
+          },
+          "sex": "male",
+          "verbatim": "escamas ventrales en machos 161-216",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Folleco-Fernandez 2010 (quoted in Reptile Database Diagnosis)",
+          "sampleRegion": "Colombia (Cauca)"
+        },
+        {
+          "trait": "ventrals",
+          "value": {
+            "min": 187,
+            "max": 240
+          },
+          "sex": "female",
+          "verbatim": "en hembras 187-240",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Folleco-Fernandez 2010 (quoted in Reptile Database Diagnosis)",
+          "sampleRegion": "Colombia (Cauca)"
+        },
+        {
+          "trait": "subcaudals",
+          "value": {
+            "min": 57,
+            "max": 81
+          },
+          "sex": "male",
+          "verbatim": "Escamas subcaudales en machos 57-81",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Folleco-Fernandez 2010 (quoted in Reptile Database Diagnosis)",
+          "sampleRegion": "Colombia (Cauca)"
+        },
+        {
+          "trait": "subcaudals",
+          "value": {
+            "min": 46,
+            "max": 70
+          },
+          "sex": "female",
+          "verbatim": "en hembras 46-70",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Folleco-Fernandez 2010 (quoted in Reptile Database Diagnosis)",
+          "sampleRegion": "Colombia (Cauca)"
+        },
+        {
+          "trait": "analPlate",
+          "value": "single",
+          "sex": "pooled",
+          "verbatim": "una placa anal unica",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Folleco-Fernandez 2010 (quoted in Reptile Database Diagnosis)"
+        },
+        {
+          "trait": "maxLength_mm",
+          "value": 1600,
+          "sex": "male",
+          "verbatim": "Los machos pueden medir hasta 160 cm (Campbell y Lamar, 1989)",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Campbell & Lamar 1989 via Folleco-Fernandez 2010",
+          "note": "length type not stated; probably total length"
+        },
+        {
+          "trait": "maxLength_mm",
+          "value": 2500,
+          "sex": "female",
+          "verbatim": "las hembras hasta 250 cm (Campbell y Lamar, 1989)",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Campbell & Lamar 1989 via Folleco-Fernandez 2010",
+          "note": "length type not stated; probably total length"
+        }
+      ],
+      "notFound": [
+        "Costa Rica-specific counts"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/606461298/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6129950746",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Mark Valen",
+          "source": "https://www.gbif.org/occurrence/6129950746"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/609308179/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6130013369",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "Daten Schutz",
+          "source": "https://www.gbif.org/occurrence/6130013369"
+        }
+      ]
+    },
+    {
+      "scientificName": "Corallus annulatus",
+      "familyAsInGBIF": "Boidae",
+      "gbifTaxonKey": 2464957,
+      "laSelvaGbifOccurrences": {
+        "value": 187,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "dorsalRowsMax",
+          "value": {
+            "min": 50,
+            "max": 57
+          },
+          "sex": "pooled",
+          "verbatim": "maximum number of dorsal scale rows (... 50-57 in C. annulatus)",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Corallus&species=annulatus",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Henderson et al. 2001 (quoted in Reptile Database Diagnosis)",
+          "note": "this is the MAXIMUM row count, not necessarily the count at midbody"
+        },
+        {
+          "trait": "ventrals",
+          "value": {
+            "min": 251,
+            "max": 268
+          },
+          "sex": "pooled",
+          "verbatim": "ventrals (251-268 in C. annulatus ...)",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Corallus&species=annulatus",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Henderson et al. 2001 (quoted in Reptile Database Diagnosis)"
+        },
+        {
+          "trait": "subcaudals",
+          "value": {
+            "min": 79,
+            "max": 88
+          },
+          "sex": "pooled",
+          "verbatim": "number of sub-caudals (... 79-88 in C. annulatus)",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Corallus&species=annulatus",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Henderson et al. 2001 (quoted in Reptile Database Diagnosis)"
+        }
+      ],
+      "notFound": [
+        "analPlate",
+        "SVL"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/615953752/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6159315651",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Jacek Pietruszewski",
+          "source": "https://www.gbif.org/occurrence/6159315651"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/615166924/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6159358512",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Jacek Pietruszewski",
+          "source": "https://www.gbif.org/occurrence/6159358512"
+        }
+      ]
+    },
+    {
+      "scientificName": "Imantodes cenchoa",
+      "familyAsInGBIF": "Colubridae",
+      "gbifTaxonKey": 8960303,
+      "laSelvaGbifOccurrences": {
+        "value": 152,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "meanTotalLength_mm",
+          "value": 800,
+          "sex": "pooled",
+          "verbatim": "averages about 800 mm in total length (including tail)",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1356964416",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "citedOriginal": "Myers 1982, American Museum Novitates 2738"
+        },
+        {
+          "trait": "maxTotalLength_mm",
+          "value": 1500,
+          "sex": "pooled",
+          "verbatim": "Maximum total length is about 1.5 m",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1356964416",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "citedOriginal": "Boos (as cited by Wikipedia)"
+        }
+      ],
+      "notFound": [
+        "ventrals",
+        "subcaudals",
+        "dorsalRowsMidbody",
+        "analPlate"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/618417469/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6163244861",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "James Adney Zehr",
+          "source": "https://www.gbif.org/occurrence/6163244861"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/625404658/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6179402492",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Jacek Pietruszewski",
+          "source": "https://www.gbif.org/occurrence/6179402492"
+        }
+      ],
+      "suggestedRoute": "Myers 1982 Amer. Mus. Novitates 2738 (open access at AMNH) should have Panama counts; my fetch failed (TLS error)"
+    },
+    {
+      "scientificName": "Imantodes inornatus",
+      "familyAsInGBIF": "Colubridae",
+      "gbifTaxonKey": 2458676,
+      "laSelvaGbifOccurrences": {
+        "value": 68,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "value": 17,
+          "sex": "pooled",
+          "verbatim": "17 scale rows at midbody in I. inornatus",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Imantodes&species=inornatus",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "McCranie 2011: 319"
+        }
+      ],
+      "notFound": [
+        "ventrals",
+        "subcaudals",
+        "analPlate",
+        "SVL"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/660933504/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6320107970",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "Curtis Eckerman",
+          "source": "https://www.gbif.org/occurrence/6320107970"
+        }
+      ]
+    },
+    {
+      "scientificName": "Sibon annulatus",
+      "familyAsInGBIF": "Colubridae",
+      "gbifTaxonKey": 2454957,
+      "laSelvaGbifOccurrences": {
+        "value": 48,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [],
+      "notFound": [
+        "ventrals",
+        "subcaudals",
+        "dorsalRowsMidbody",
+        "analPlate",
+        "SVL"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/540351798/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/5230950379",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "Curtis Eckerman",
+          "source": "https://www.gbif.org/occurrence/5230950379"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/660933488/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6320229508",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "Curtis Eckerman",
+          "source": "https://www.gbif.org/occurrence/6320229508"
+        }
+      ],
+      "note": "Reptile Database withholds the description; no open source found in this pass"
+    },
+    {
+      "scientificName": "Phrynonax poecilonotus",
+      "familyAsInGBIF": "Colubridae",
+      "gbifTaxonKey": 2456580,
+      "laSelvaGbifOccurrences": {
+        "value": 77,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "maxTotalLength_mm",
+          "value": 1800,
+          "sex": "pooled",
+          "verbatim": "Max. total length: 1.8 m",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Phrynonax&species=poecilonotus",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "note": "original source not given on the page"
+        },
+        {
+          "trait": "dorsalRowsMidbody",
+          "value": {
+            "min": 19,
+            "max": 25
+          },
+          "sex": "pooled",
+          "verbatim": "Pseustes poecilonotus has oblique dorsal scale rows in 19 to 25 rows at midbody",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Spilotes&species=pullatus",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "note": "from the 'Similar species' note on the Spilotes pullatus page; Pseustes is a former genus name"
+        }
+      ],
+      "notFound": [
+        "ventrals",
+        "subcaudals",
+        "analPlate"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/607296452/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6130780965",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Tom Lawrence",
+          "source": "https://www.gbif.org/occurrence/6130780965"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/606252565/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6130904569",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Tommy Andriollo",
+          "source": "https://www.gbif.org/occurrence/6130904569"
+        }
+      ]
+    },
+    {
+      "scientificName": "Rhadinaea decorata",
+      "familyAsInGBIF": "Colubridae",
+      "gbifTaxonKey": 5959354,
+      "laSelvaGbifOccurrences": {
+        "value": 70,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "maxTotalLength_mm",
+          "value": 350,
+          "sex": "pooled",
+          "verbatim": "Max. total length: 35 cm",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Rhadinaea&species=decorata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "note": "original source not given; RDB points to Myers 1974: 68 for the diagnosis"
+        }
+      ],
+      "notFound": [
+        "ventrals",
+        "subcaudals",
+        "dorsalRowsMidbody",
+        "analPlate"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/642477068/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6236106039",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Aaron Liston",
+          "source": "https://www.gbif.org/occurrence/6236106039"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/709336591/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6481258589",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "Daten Schutz",
+          "source": "https://www.gbif.org/occurrence/6481258589"
+        }
+      ]
+    },
+    {
+      "scientificName": "Boa imperator",
+      "familyAsInGBIF": "Boidae",
+      "gbifTaxonKey": 2464915,
+      "laSelvaGbifOccurrences": {
+        "value": 57,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "dorsalScales",
+          "value": {
+            "min": 55,
+            "max": 79
+          },
+          "sex": "pooled",
+          "verbatim": "55-79 dorsal scales",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1370679677",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "citedOriginal": "Lotte & Lotte 1996, Litteratura Serpentium 16(3): 78-81",
+          "note": "row position not stated; presumably rows at midbody, so verify"
+        },
+        {
+          "trait": "ventrals",
+          "value": {
+            "min": 225,
+            "max": 253
+          },
+          "sex": "pooled",
+          "verbatim": "225-253 ventral scales",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1370679677",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "citedOriginal": "Lotte & Lotte 1996, Litteratura Serpentium 16(3): 78-81"
+        },
+        {
+          "trait": "subcaudals",
+          "value": {
+            "min": 47,
+            "max": 69
+          },
+          "sex": "pooled",
+          "verbatim": "47-69 subcaudal scales",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1370679677",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "citedOriginal": "Lotte & Lotte 1996, Litteratura Serpentium 16(3): 78-81"
+        },
+        {
+          "trait": "analScalesVerbatim",
+          "value": "1-2",
+          "sex": "pooled",
+          "verbatim": "1-2 anal scales",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1370679677",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "citedOriginal": "Lotte & Lotte 1996, Litteratura Serpentium 16(3): 78-81",
+          "note": "do not map this to single or divided without checking"
+        }
+      ],
+      "notFound": [
+        "SVL"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/607058769/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6130198778",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Mark Valen",
+          "source": "https://www.gbif.org/occurrence/6130198778"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/608536869/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6130229368",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Rachel Lee Harper",
+          "source": "https://www.gbif.org/occurrence/6130229368"
+        }
+      ]
+    },
+    {
+      "scientificName": "Pliocercus euryzonus",
+      "familyAsInGBIF": "Colubridae",
+      "gbifTaxonKey": 2455397,
+      "laSelvaGbifOccurrences": {
+        "value": 50,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [],
+      "notFound": [
+        "ventrals",
+        "subcaudals",
+        "dorsalRowsMidbody",
+        "analPlate",
+        "SVL"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/395094545/original.jpeg",
+          "occurrence": "https://www.gbif.org/occurrence/4901948668",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Cricket Raspet",
+          "source": "https://www.gbif.org/occurrence/4901948668"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/419808050/original.jpeg",
+          "occurrence": "https://www.gbif.org/occurrence/4926059052",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "Henggang Cui",
+          "source": "https://www.gbif.org/occurrence/4926059052"
+        }
+      ],
+      "note": "RDB diagnosis (Smith & Chiszar 2001) gives colour-ring characters only"
+    },
+    {
+      "scientificName": "Leptodeira ornata",
+      "familyAsInGBIF": "Colubridae",
+      "gbifTaxonKey": 9265052,
+      "laSelvaGbifOccurrences": {
+        "value": 49,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "value": {
+            "min": 19,
+            "max": 23
+          },
+          "sex": "pooled",
+          "verbatim": "dorsal scales 17-21/19-23/13-17",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Leptodeira&species=ornata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Costa et al. 2022, Supplement S2 (quoted in Reptile Database)",
+          "note": "midbody value taken from the anterior/mid/posterior formula"
+        },
+        {
+          "trait": "ventrals",
+          "value": {
+            "min": 170,
+            "max": 193
+          },
+          "sex": "male",
+          "verbatim": "ventral counts in males 170-193",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Leptodeira&species=ornata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Costa et al. 2022, Supplement S2 (quoted in Reptile Database)"
+        },
+        {
+          "trait": "ventrals",
+          "value": {
+            "min": 169,
+            "max": 194
+          },
+          "sex": "female",
+          "verbatim": "females 169-194",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Leptodeira&species=ornata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Costa et al. 2022, Supplement S2 (quoted in Reptile Database)"
+        },
+        {
+          "trait": "subcaudals",
+          "value": {
+            "min": 81,
+            "max": 105
+          },
+          "sex": "male",
+          "verbatim": "subcaudal counts in male 81-105",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Leptodeira&species=ornata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Costa et al. 2022, Supplement S2 (quoted in Reptile Database)"
+        },
+        {
+          "trait": "subcaudals",
+          "value": {
+            "min": 77,
+            "max": 99
+          },
+          "sex": "female",
+          "verbatim": "females 77-99",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Leptodeira&species=ornata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Costa et al. 2022, Supplement S2 (quoted in Reptile Database)"
+        },
+        {
+          "trait": "SVL_mm",
+          "value": {
+            "min": 341,
+            "max": 543
+          },
+          "sex": "male",
+          "verbatim": "SVL in males 341-543 mm",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Leptodeira&species=ornata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Costa et al. 2022, Supplement S2 (quoted in Reptile Database)"
+        },
+        {
+          "trait": "SVL_mm",
+          "value": {
+            "min": 343,
+            "max": 646
+          },
+          "sex": "female",
+          "verbatim": "females 343-646 mm",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Leptodeira&species=ornata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Costa et al. 2022, Supplement S2 (quoted in Reptile Database)"
+        }
+      ],
+      "notFound": [
+        "analPlate"
+      ],
+      "taxonomyFlag": "Torres-Carvajal et al. 2020 restricted L. ornata to Panama, Colombia and Ecuador (per RDB). Which name applies to La Selva animals (GBIF/iNat name vs L. septentrionalis s.l.) is unresolved, and these counts may come from non-Costa Rican material.",
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/605528360/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/5938718463",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Emily Franzen",
+          "source": "https://www.gbif.org/occurrence/5938718463"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/608297843/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6129852419",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "Daten Schutz",
+          "source": "https://www.gbif.org/occurrence/6129852419"
+        }
+      ]
+    },
+    {
+      "scientificName": "Ninia sebae",
+      "familyAsInGBIF": "Colubridae",
+      "gbifTaxonKey": 5223600,
+      "laSelvaGbifOccurrences": {
+        "value": 42,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "value": 19,
+          "sex": "pooled",
+          "verbatim": "Dorsal scales in 19 rows",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Ninia&species=sebae",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Schmidt & Rand 1957: 74"
+        },
+        {
+          "trait": "ventrals",
+          "value": {
+            "min": 131,
+            "max": 156
+          },
+          "sex": "pooled",
+          "verbatim": "ventrals 131-156",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Ninia&species=sebae",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Schmidt & Rand 1957: 74"
+        },
+        {
+          "trait": "subcaudals",
+          "value": {
+            "min": 40,
+            "max": 74
+          },
+          "sex": "pooled",
+          "verbatim": "caudals 40-74",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Ninia&species=sebae",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Schmidt & Rand 1957: 74"
+        }
+      ],
+      "notFound": [
+        "analPlate",
+        "SVL"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/724469378/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6519676597",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Michelle Monge-Velazquez",
+          "source": "https://www.gbif.org/occurrence/6519676597"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/736530357/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6552351941",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "River Ahlquist",
+          "source": "https://www.gbif.org/occurrence/6552351941"
+        }
+      ]
+    },
+    {
+      "scientificName": "Chironius grandisquamis",
+      "familyAsInGBIF": "Colubridae",
+      "gbifTaxonKey": 2457313,
+      "laSelvaGbifOccurrences": {
+        "value": 30,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "value": 10,
+          "sex": "pooled",
+          "verbatim": "the only Chironius species with 10 scale rows at midbody",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Chironius&species=grandisquamis",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "note": "RDB synonymy follows Dixon et al. 1993"
+        },
+        {
+          "trait": "analPlate",
+          "value": "divided",
+          "sex": "pooled",
+          "verbatim": "and a divided anal plate",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Chironius&species=grandisquamis",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both."
+        }
+      ],
+      "notFound": [
+        "ventrals",
+        "subcaudals",
+        "SVL"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/358645057/original.jpeg",
+          "occurrence": "https://www.gbif.org/occurrence/5292181302",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Buckelkopfcichlide",
+          "source": "https://www.gbif.org/occurrence/5292181302"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/426831110/original.jpeg",
+          "occurrence": "https://www.gbif.org/occurrence/4937035090",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Michelle Monge-Velazquez",
+          "source": "https://www.gbif.org/occurrence/4937035090"
+        }
+      ]
+    },
+    {
+      "scientificName": "Bothriechis nigroadspersus",
+      "familyAsInGBIF": "Viperidae",
+      "gbifTaxonKey": null,
+      "laSelvaGbifOccurrences": {
+        "value": 26,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "value": {
+            "min": 21,
+            "max": 25
+          },
+          "sex": "pooled",
+          "verbatim": "21 - 25 dorsal scale rows at mid-body",
+          "source": "https://treatment.plazi.org/id/FF4665A639F05CFB93354EAB607B67BA",
+          "licence": "CC0 1.0 (Plazi treatment dataset on GBIF)",
+          "citedOriginal": "Arteaga et al. 2024, ZooKeys (Plazi treatment; GBIF dataset doi:10.15468/p68xty)"
+        },
+        {
+          "trait": "ventrals",
+          "value": {
+            "min": 153,
+            "max": 169
+          },
+          "sex": "male",
+          "verbatim": "153 - 169 ventrals in males",
+          "source": "https://treatment.plazi.org/id/FF4665A639F05CFB93354EAB607B67BA",
+          "licence": "CC0 1.0 (Plazi treatment dataset on GBIF)",
+          "citedOriginal": "Arteaga et al. 2024, ZooKeys (Plazi treatment; GBIF dataset doi:10.15468/p68xty)"
+        },
+        {
+          "trait": "ventrals",
+          "value": {
+            "min": 148,
+            "max": 167
+          },
+          "sex": "female",
+          "verbatim": "148 - 167 in females",
+          "source": "https://treatment.plazi.org/id/FF4665A639F05CFB93354EAB607B67BA",
+          "licence": "CC0 1.0 (Plazi treatment dataset on GBIF)",
+          "citedOriginal": "Arteaga et al. 2024, ZooKeys (Plazi treatment; GBIF dataset doi:10.15468/p68xty)"
+        },
+        {
+          "trait": "maxTotalLength_mm",
+          "value": 626,
+          "sex": "male",
+          "verbatim": "maximum total length in males 626 mm",
+          "source": "https://treatment.plazi.org/id/FF4665A639F05CFB93354EAB607B67BA",
+          "licence": "CC0 1.0 (Plazi treatment dataset on GBIF)",
+          "citedOriginal": "Arteaga et al. 2024, ZooKeys (Plazi treatment; GBIF dataset doi:10.15468/p68xty)"
+        },
+        {
+          "trait": "maxTotalLength_mm",
+          "value": 916,
+          "sex": "female",
+          "verbatim": "in females 916 mm",
+          "source": "https://treatment.plazi.org/id/FF4665A639F05CFB93354EAB607B67BA",
+          "licence": "CC0 1.0 (Plazi treatment dataset on GBIF)",
+          "citedOriginal": "Arteaga et al. 2024, ZooKeys (Plazi treatment; GBIF dataset doi:10.15468/p68xty)"
+        }
+      ],
+      "notFound": [
+        "subcaudals (diagnosis range)",
+        "analPlate"
+      ],
+      "taxonomyFlag": "GBIF La Selva records are filed under Bothriechis schlegelii (26). Arteaga et al. 2024 restricted B. schlegelii to Colombia and placed Mesoamerican populations (Tehuantepec to NW Colombia) in B. nigroadspersus.",
+      "gbifNameForOccurrences": "Bothriechis schlegelii",
+      "gbifTaxonKeyForOccurrences": 2444681
+    },
+    {
+      "scientificName": "Dendrophidion apharocybe",
+      "familyAsInGBIF": "Colubridae",
+      "gbifTaxonKey": 7882252,
+      "laSelvaGbifOccurrences": {
+        "value": 18,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "value": 17,
+          "sex": "pooled",
+          "verbatim": "Dendrophidion apharocybe differs from D. boshelli in having 17 midbody scale rows",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Dendrophidion&species=apharocybe",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Cadle 2012: 200"
+        },
+        {
+          "trait": "analPlate",
+          "value": "single",
+          "sex": "pooled",
+          "verbatim": "(2) single anal plate",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Dendrophidion&species=apharocybe",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Cadle 2012: 200"
+        },
+        {
+          "trait": "subcaudalsUpperBound",
+          "value": {
+            "lt": 130
+          },
+          "sex": "pooled",
+          "verbatim": "relatively low subcaudal counts (<130 in males and females)",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Dendrophidion&species=apharocybe",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Cadle 2012: 200",
+          "note": "upper bound only, not a range"
+        },
+        {
+          "trait": "ventralsUpperBound",
+          "value": {
+            "lt": 170
+          },
+          "sex": "pooled",
+          "verbatim": "(>175 compared with <170 in D. apharocybe)",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Dendrophidion&species=apharocybe",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Cadle 2012: 200",
+          "note": "upper bound only, not a range"
+        },
+        {
+          "trait": "holotypeSVL_mm",
+          "value": 574,
+          "sex": "male",
+          "verbatim": "The holotype is 908 mm total length; 574 mm SVL",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Dendrophidion&species=apharocybe",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "citedOriginal": "Cadle 2012 (type description, quoted in RDB Types)",
+          "note": "one specimen; not a maximum"
+        }
+      ],
+      "notFound": [],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/191208104/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6500125881",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "scott_young",
+          "source": "https://www.gbif.org/occurrence/6500125881"
+        }
+      ]
+    },
+    {
+      "scientificName": "Spilotes pullatus",
+      "familyAsInGBIF": "Colubridae",
+      "gbifTaxonKey": 9195230,
+      "laSelvaGbifOccurrences": {
+        "value": 17,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "value": {
+            "min": 14,
+            "max": 16
+          },
+          "sex": "pooled",
+          "verbatim": "arranged in 16 (or 14) rows at midbody",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1374724714",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "note": "Wikipedia has no inline reference on this sentence; the article cites Boulenger 1894 elsewhere, so verify"
+        },
+        {
+          "trait": "ventrals",
+          "value": {
+            "min": 198,
+            "max": 232
+          },
+          "sex": "pooled",
+          "verbatim": "Ventrals 198-232",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1374724714",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "note": "no inline reference; verify against Boulenger 1894"
+        },
+        {
+          "trait": "analPlate",
+          "value": "single",
+          "sex": "pooled",
+          "verbatim": "anal plate entire",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1374724714",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "note": "'entire' means single; verify"
+        },
+        {
+          "trait": "subcaudals",
+          "value": {
+            "min": 90,
+            "max": 120
+          },
+          "sex": "pooled",
+          "verbatim": "subcaudals 90-120, divided",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1374724714",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "note": "verify"
+        },
+        {
+          "trait": "maxTotalLength_mm",
+          "value": 2700,
+          "sex": "pooled",
+          "verbatim": "maximum total length of 2.7 m",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1374724714",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "citedOriginal": "Reptile Database + one other ref (as cited by Wikipedia)"
+        }
+      ],
+      "notFound": [],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/607211525/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6131625085",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Eyder Fonseca Sanchez",
+          "source": "https://www.gbif.org/occurrence/6131625085"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/618989301/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6171176753",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Julia Pupko",
+          "source": "https://www.gbif.org/occurrence/6171176753"
+        }
+      ]
+    },
+    {
+      "scientificName": "Drymobius margaritiferus",
+      "familyAsInGBIF": "Colubridae",
+      "gbifTaxonKey": 2454857,
+      "laSelvaGbifOccurrences": {
+        "value": 8,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "value": 17,
+          "sex": "pooled",
+          "verbatim": "arranged in 17 rows",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1313985339",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "citedOriginal": "Smith & Brodie 1982, Reptiles of North America (Golden Press), pp. 188-189",
+          "note": "row position not stated"
+        },
+        {
+          "trait": "ventrals",
+          "value": {
+            "min": 142,
+            "max": 168
+          },
+          "sex": "pooled",
+          "verbatim": "The ventrals number 142-168",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1313985339",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "citedOriginal": "Smith & Brodie 1982, Reptiles of North America (Golden Press), pp. 188-189"
+        },
+        {
+          "trait": "subcaudals",
+          "value": {
+            "min": 85,
+            "max": 126
+          },
+          "sex": "pooled",
+          "verbatim": "the subcaudals, 85-126",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1313985339",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "citedOriginal": "Smith & Brodie 1982, Reptiles of North America (Golden Press), pp. 188-189"
+        }
+      ],
+      "notFound": [
+        "analPlate",
+        "SVL"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/606262299/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6130431530",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Anthony Mora Aguilar",
+          "source": "https://www.gbif.org/occurrence/6130431530"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/723937020/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6518522081",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Michelle Monge-Velazquez",
+          "source": "https://www.gbif.org/occurrence/6518522081"
+        }
+      ],
+      "note": "North American field guide, so the sample is probably Mexico/Texas"
+    },
+    {
+      "scientificName": "Oxybelis fulgidus",
+      "familyAsInGBIF": "Colubridae",
+      "gbifTaxonKey": 2453625,
+      "laSelvaGbifOccurrences": {
+        "value": 3,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "value": 17,
+          "sex": "pooled",
+          "verbatim": "Dorsal scales weakly keeled, arranged in 17 rows at midbody",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1357151262",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "citedOriginal": "Boulenger 1896, Cat. Snakes Brit. Mus. III: 191-192 (public domain)"
+        },
+        {
+          "trait": "ventrals",
+          "value": {
+            "min": 198,
+            "max": 217
+          },
+          "sex": "pooled",
+          "verbatim": "Ventrals 198-217",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1357151262",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "citedOriginal": "Boulenger 1896, Cat. Snakes Brit. Mus. III: 191-192 (public domain)"
+        },
+        {
+          "trait": "analPlate",
+          "value": "divided",
+          "sex": "pooled",
+          "verbatim": "anal plate divided",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1357151262",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "citedOriginal": "Boulenger 1896, Cat. Snakes Brit. Mus. III: 191-192 (public domain)"
+        },
+        {
+          "trait": "subcaudals",
+          "value": {
+            "min": 139,
+            "max": 165
+          },
+          "sex": "pooled",
+          "verbatim": "subcaudals 139-165, also divided",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1357151262",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "citedOriginal": "Boulenger 1896, Cat. Snakes Brit. Mus. III: 191-192 (public domain)"
+        }
+      ],
+      "notFound": [
+        "SVL"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/618220074/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6163299020",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Andre Knocklein",
+          "source": "https://www.gbif.org/occurrence/6163299020"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/461672228/original.jpeg",
+          "occurrence": "https://www.gbif.org/occurrence/5108119472",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Eyder Fonseca Sanchez",
+          "source": "https://www.gbif.org/occurrence/5108119472"
+        }
+      ],
+      "note": "Few La Selva records (3) but easy to recognise. 1896 taxonomy, range-wide sample"
+    },
+    {
+      "scientificName": "Micrurus alleni",
+      "familyAsInGBIF": "Elapidae",
+      "gbifTaxonKey": 5226858,
+      "laSelvaGbifOccurrences": {
+        "value": 19,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [],
+      "notFound": [
+        "ventrals",
+        "subcaudals",
+        "dorsalRowsMidbody",
+        "analPlate",
+        "SVL"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/651108555/original.jpg",
+          "occurrence": "https://www.gbif.org/occurrence/6253001767",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Vargas Alisson",
+          "source": "https://www.gbif.org/occurrence/6253001767"
+        },
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/474738992/original.jpeg",
+          "occurrence": "https://www.gbif.org/occurrence/5282499752",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Buckelkopfcichlide",
+          "source": "https://www.gbif.org/occurrence/5282499752"
+        }
+      ],
+      "note": "RDB says only 'a much higher number of ventrals' than M. nigrocinctus; no numbers given",
+      "source": "https://reptile-database.reptarium.cz/species?genus=Micrurus&species=alleni"
+    },
+    {
+      "scientificName": "Leptophis depressirostris",
+      "familyAsInGBIF": "Colubridae",
+      "gbifTaxonKey": 5959535,
+      "laSelvaGbifOccurrences": {
+        "value": 37,
+        "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+        "note": "squamate occurrences in La Selva bounding box, GBIF API facet, accessed 2026-10-17; not a citable download"
+      },
+      "traits": [],
+      "notFound": [
+        "ventrals",
+        "subcaudals",
+        "dorsalRowsMidbody",
+        "analPlate",
+        "SVL"
+      ],
+      "referencePhotos": [
+        {
+          "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/405101012/original.jpeg",
+          "occurrence": "https://www.gbif.org/occurrence/4909277759",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Cricket Raspet",
+          "source": "https://www.gbif.org/occurrence/4909277759"
+        }
+      ],
+      "note": "RDB description withheld; Wikipedia has no scalation"
+    }
+  ],
+  "flaggedTaxaExcluded": [
+    {
+      "scientificName": "Sibon nebulatus",
+      "laSelvaGbifOccurrences": 148,
+      "reason": "Fouquet et al. 2025 counts (quoted in RDB) describe South American S. nebulatus sensu stricto. Central American populations are 'S. aff. nebulatus' (Arteaga & Batista 2023), so no values are used.",
+      "source": "https://reptile-database.reptarium.cz/species?genus=Sibon&species=nebulatus"
+    },
+    {
+      "scientificName": "Oxybelis koehleri",
+      "laSelvaGbifOccurrences": 22,
+      "reason": "RDB notes the species may not reach Costa Rica (only N Honduras), so the GBIF name is doubtful here",
+      "source": "https://reptile-database.reptarium.cz/species?genus=Oxybelis&species=koehleri"
+    }
+  ],
+  "optionalAddition": {
+    "scientificName": "Micrurus nigrocinctus",
+    "laSelvaGbifOccurrences": 6,
+    "traits": [
+      {
+        "trait": "maxTotalLength_mm",
+        "value": 1150,
+        "sex": "pooled",
+        "verbatim": "capable of growing to a total length (tail included) of 115 cm, but most are closer to 65 cm",
+        "source": "https://en.wikipedia.org/w/index.php?oldid=1367158612",
+        "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+        "citedOriginal": "AFPMB (as cited by Wikipedia)"
+      }
+    ]
+  }
+}

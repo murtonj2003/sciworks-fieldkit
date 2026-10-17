@@ -1,0 +1,111 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "transectId": "T-LS-01",
+        "name": "T-LS-01 Ridge (demo geometry, not a real trail)",
+        "teamId": "team-a",
+        "habitat": "canopy",
+        "direction": "start-to-end",
+        "stationSpacingM": 50,
+        "lengthM": 1647
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -84.012,
+            10.4262
+          ],
+          [
+            -84.0089,
+            10.4281
+          ],
+          [
+            -84.0052,
+            10.4297
+          ],
+          [
+            -84.0021,
+            10.4318
+          ],
+          [
+            -83.999,
+            10.4336
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "transectId": "T-LS-02",
+        "name": "T-LS-02 Stream (demo geometry, not a real trail)",
+        "teamId": "team-b",
+        "habitat": "canopy",
+        "direction": "start-to-end",
+        "stationSpacingM": 50,
+        "lengthM": 1789
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -84.031,
+            10.4095
+          ],
+          [
+            -84.0287,
+            10.4128
+          ],
+          [
+            -84.0262,
+            10.4163
+          ],
+          [
+            -84.0241,
+            10.4199
+          ],
+          [
+            -84.0225,
+            10.4232
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "transectId": "T-LS-03",
+        "name": "T-LS-03 Pasture edge (demo geometry, not a real trail)",
+        "teamId": "team-a",
+        "habitat": "open",
+        "direction": "either",
+        "lengthM": 1622
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -83.994,
+            10.404
+          ],
+          [
+            -83.9898,
+            10.4061
+          ],
+          [
+            -83.9851,
+            10.4079
+          ],
+          [
+            -83.9806,
+            10.4102
+          ]
+        ]
+      }
+    }
+  ]
+}

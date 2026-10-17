@@ -1,73 +1,67 @@
 # sciworks-fieldkit
 
-Offline field data collection with on-device species ID, for researchers who work for weeks without
-signal.
+Offline data collection for wildlife transect surveys, built for teams that spend weeks without signal.
 
-Built at **Science Works: Reinvent the Wheel**, a tools-for-science hackathon at Pillar VC, King's
-Cross, London, 16–18 October 2026. Everything in this repository was written during the event.
+Built at **Science Works: Reinvent the Wheel**, a tools-for-science hackathon at Pillar VC, King's Cross,
+London, 16–18 October 2026. Everything in this repository was written during the event.
 
-> **Status:** in development during the hackathon. The features below are the target for the demo,
-> not a finished product.
+> **Status:** in development during the hackathon. The shared code and sample data are in place; the two
+> apps are being built now.
 
 ## The problem
 
-Ecologists, NGO survey teams and citizen scientists record observations where there is no signal,
-often for weeks at a time. They typically fill in survey forms in one app and identify species in
-others, then merge and re-type the results before the data can reach the systems science uses, such
-as GBIF.
+Herpetologists walking jungle transects in Costa Rica spend up to six weeks in the field, with WiFi once
+or twice a week. Today they use Epicollect5, which:
 
-## What it does
+- can't change the survey form without internet, and a form update can wipe data that hasn't been
+  uploaded;
+- doesn't stop a mistyped GPS coordinate. On paper, the team spots the point that sits far off the
+  transect line and fixes it at the desk, days later.
 
-- Records survey observations fully offline: forms, averaged GPS, photos and audio, saved to the
-  phone's own storage
-- Suggests the species on the device, with its confidence and the top five candidates; the observer
-  confirms
-- Syncs when a connection returns, without duplicate records or lost media
-- Exports CSV, GeoJSON and a Darwin Core Archive ready for GBIF
+## What we're building
 
-## Tech stack
+Two apps that never need a server to talk to each other. They swap **bundle files**: a zip of records and
+photos, passed by AirDrop, Quick Share, USB or, when there's WiFi, the cloud.
 
-React Native with Expo SDK 57 · SQLite on the device · Supabase for sync · TensorFlow Lite models
-running on the phone · MapLibre with an offline PMTiles basemap.
+| | Field app (`field/`) | HQ app (`hq/`) |
+|---|---|---|
+| Who | Surveyors and Team Leads, on the transect | The Data Manager, at base camp |
+| Built with | React Native + Expo, SQLite on the phone | React + Vite, an installable web app that works offline |
+| Does | Survey and animal records saved on every tap; a typed-coordinate check against the transect line with a "did you mean?" fix; a scale-count species key; Team Lead form changes offline | Imports bundles from every phone without duplicates; one map of all teams; a review queue; an AI reviewer that drafts fixes for a person to approve; Darwin Core export for GBIF |
 
-## Getting started
+**Principle: never loses, never lies.** Records are append-only and saved the moment they're typed. Checks
+and the AI only suggest; people decide.
 
-Setup steps will be added here once the app is scaffolded.
+## What's in the repo
 
-## Team
+```
+shared/      The contract both apps use: data types, import checks, the bundle zipper,
+             the coordinate checker, range and sun/moon checks. Pure TypeScript, tested.
+  fixtures/  Sample bundles (FIELD_sample.zip, HQ_sample.zip) both apps test against.
+demo-data/   The demo project: Costa Rica (La Selva) transects, form template, species pack, credits.
+field/       The phone app (in progress).
+hq/          The laptop app (in progress).
+```
 
-- Jack Murton
+## Run the shared tests
 
-## Licence
+Needs Node 20 or newer.
 
-The code in this repository is released under the [MIT License](LICENSE).
+```bash
+npm install
+npm test
+```
 
-Model weights, datasets and map data are **not** covered by that licence. Each keeps its own
-licence, listed below. When a model file is added to the repository, its licence file goes in the
-same folder.
+To rebuild the demo data and the sample bundles:
 
-## Third-party licences
+```bash
+npm run demo-data -w shared && npm run fixtures -w shared
+```
 
-Checked against each source on 17 October 2026. These are the components we plan to use. Add a row
-before adding any other model, dataset or library whose licence isn't MIT, Apache-2.0 or BSD.
+## Data, credits and licences
 
-### Models and data
-
-| Component | Used for | Licence | What we must do |
-| --- | --- | --- | --- |
-| [BirdNET+ V3.0](https://github.com/birdnet-team/birdnet-live-app) weights, as bundled in BirdNET Live | Bird and wildlife sound ID | Apache-2.0 | Ship its licence with the file. Use this copy, not the Zenodo copy (CC BY-SA 4.0) |
-| [BirdNET+ Geomodel V3.0.4](https://github.com/birdnet-team/geomodel) | Location and season prior for IDs | Apache-2.0 (its code is MIT) | Ship its licence with the file |
-| [BirdNET V2.4](https://github.com/birdnet-team/BirdNET-Analyzer) (fallback only) | Backup sound ID | CC BY-NC-SA 4.0 | Non-commercial use only. Credit BirdNET |
-| [PlantNet-300K ResNet18 (LiteRT)](https://huggingface.co/litert-community/PlantNet-300K-ResNet18-LiteRT) | European plant ID | Apache-2.0 | Ship its licence with the file |
-| [Google AIY vision classifiers](https://www.kaggle.com/models/google/aiy) (plants, insects, birds) | Fast image ID | Apache-2.0 | Ship its licence with the file |
-| [BioCLIP](https://huggingface.co/imageomics/bioclip) (stretch goal) | Zero-shot ID of any taxon | MIT | Keep its copyright notice |
-| [Catalogue of Life](https://www.checklistbank.org/dataset/3LR) checklist | Offline species names | CC BY 4.0 | Credit Catalogue of Life |
-| [OpenStreetMap](https://www.openstreetmap.org/copyright) data, via a [Protomaps](https://docs.protomaps.com) extract | Offline basemap | ODbL 1.0 | Show "© OpenStreetMap contributors" on the map |
-| [Protomaps basemaps-assets](https://github.com/protomaps/basemaps-assets) | Map fonts and icons | Fonts: SIL Open Font License; icons: MIT | Ship the font licence with the fonts |
-
-### Libraries
-
-MIT: Expo, React Native, expo-sqlite, Supabase JS, tus-js-client, react-native-fast-tflite, MapLibre
-React Native, react-native-audio-api, React Native Skia, zod, react-hook-form, fflate and uuid.
-
-Apache-2.0: Drizzle ORM. BSD-3-Clause: `@protomaps/basemaps`.
+- **Code:** MIT (see `LICENSE`).
+- **Demo species pack:** an *illustrative demo pack, not for field ID*. It was built from cited open sources
+  under CC BY 4.0; see `demo-data/attribution.md`. Every value keeps its source, licence and the source's
+  own wording. The transects are synthetic demo lines, not real trails.
+- **Exports** follow Darwin Core (Event + Occurrence + MeasurementOrFact, with Humboldt survey-effort fields).

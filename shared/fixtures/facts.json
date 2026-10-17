@@ -1,0 +1,39 @@
+{
+  "demoTypo": {
+    "typed": "16P 825749 1151370",
+    "correct": "16P 825749 1153170",
+    "format": "utm16n",
+    "transect": "T-LS-02",
+    "band": "red",
+    "offTransectM": 1058.8,
+    "toleranceM": 30,
+    "suggestion": "Swap the 4th and 5th digits of the northing (1151370 → 1153170).",
+    "fixedOffsetM": 5.6,
+    "fixedDistanceAlongM": 1155,
+    "suggestionsOffered": 1
+  },
+  "rangeWarningsOnE2": [
+    "SVL 4,350 mm is above this pack's maximum for Leptodeira ornata (646 mm). Check?"
+  ],
+  "survey": {
+    "astro": {
+      "sunrise": "2026-10-16T05:24:55-06:00",
+      "sunset": "2026-10-16T17:18:13-06:00",
+      "moonPhase": 0.2,
+      "moonIlluminationPct": 35,
+      "moonAboveHorizonAtStart": true,
+      "minutesAfterSunsetAtStart": 87
+    },
+    "effortPersonHours": 7.25
+  },
+  "counts": {
+    "surveys": 1,
+    "encounters": 3,
+    "photos": 2,
+    "provisionalTaxa": 1,
+    "changeRequests": 1,
+    "receipts": 4,
+    "reviews": 1,
+    "corrections": 1
+  }
+}

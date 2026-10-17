@@ -1,0 +1,949 @@
+{
+  "packId": "cr-la-selva-snakes-demo",
+  "version": 1,
+  "status": "draft",
+  "disclaimer": "Illustrative demo pack, not for field ID. DEMO ONLY: not for identifying snakes in the field. Every value is sourced, but many ranges come from outside Costa Rica, and a few have only Tier 3 provenance (Wikipedia). Several venomous species are included.",
+  "site": {
+    "name": "La Selva Biological Station area, Caribbean lowlands, Heredia, Costa Rica",
+    "bbox": {
+      "latMin": 10.38,
+      "latMax": 10.46,
+      "lonMin": -84.06,
+      "lonMax": -83.97
+    },
+    "source": "https://api.gbif.org/v1/occurrence/search?taxonKey=11592253&country=CR&decimalLatitude=10.38,10.46&decimalLongitude=-84.06,-83.97&facet=speciesKey&facetLimit=200&limit=0",
+    "summary": "7,428 squamate occurrences; 121 squamate species; 79 snake species (family filter), GBIF API accessed 2026-10-17"
+  },
+  "taxa": [
+    {
+      "taxonId": "gbif:5220796",
+      "scientificName": "Bothrops asper",
+      "family": "Viperidae",
+      "dangerous": true,
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "sex": "pooled",
+          "range": {
+            "min": 23,
+            "max": 33
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "23 a 33 filas de escamas dorsales a medio cuerpo",
+          "citedOriginal": "Folleco-Fernandez 2010 (quoted in Reptile Database Diagnosis)"
+        },
+        {
+          "trait": "ventrals",
+          "sex": "male",
+          "range": {
+            "min": 161,
+            "max": 216
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "escamas ventrales en machos 161-216",
+          "citedOriginal": "Folleco-Fernandez 2010 (quoted in Reptile Database Diagnosis)"
+        },
+        {
+          "trait": "ventrals",
+          "sex": "female",
+          "range": {
+            "min": 187,
+            "max": 240
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "en hembras 187-240",
+          "citedOriginal": "Folleco-Fernandez 2010 (quoted in Reptile Database Diagnosis)"
+        },
+        {
+          "trait": "subcaudals",
+          "sex": "male",
+          "range": {
+            "min": 57,
+            "max": 81
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "Escamas subcaudales en machos 57-81",
+          "citedOriginal": "Folleco-Fernandez 2010 (quoted in Reptile Database Diagnosis)"
+        },
+        {
+          "trait": "subcaudals",
+          "sex": "female",
+          "range": {
+            "min": 46,
+            "max": 70
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "en hembras 46-70",
+          "citedOriginal": "Folleco-Fernandez 2010 (quoted in Reptile Database Diagnosis)"
+        },
+        {
+          "trait": "analPlate",
+          "sex": "pooled",
+          "values": [
+            "single"
+          ],
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "una placa anal unica",
+          "citedOriginal": "Folleco-Fernandez 2010 (quoted in Reptile Database Diagnosis)"
+        }
+      ],
+      "sizeRanges": {
+        "totalLengthMm": {
+          "max": 2500
+        }
+      },
+      "sizeSources": [
+        {
+          "field": "totalLengthMm",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "Los machos pueden medir hasta 160 cm (Campbell y Lamar, 1989)"
+        },
+        {
+          "field": "totalLengthMm",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Bothrops&species=asper",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "las hembras hasta 250 cm (Campbell y Lamar, 1989)"
+        }
+      ],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/606461298/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Mark Valen",
+          "source": "https://www.gbif.org/occurrence/6129950746"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/609308179/original.jpg",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "Daten Schutz",
+          "source": "https://www.gbif.org/occurrence/6130013369"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:2464957",
+      "scientificName": "Corallus annulatus",
+      "family": "Boidae",
+      "traits": [
+        {
+          "trait": "ventrals",
+          "sex": "pooled",
+          "range": {
+            "min": 251,
+            "max": 268
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Corallus&species=annulatus",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "ventrals (251-268 in C. annulatus ...)",
+          "citedOriginal": "Henderson et al. 2001 (quoted in Reptile Database Diagnosis)"
+        },
+        {
+          "trait": "subcaudals",
+          "sex": "pooled",
+          "range": {
+            "min": 79,
+            "max": 88
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Corallus&species=annulatus",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "number of sub-caudals (... 79-88 in C. annulatus)",
+          "citedOriginal": "Henderson et al. 2001 (quoted in Reptile Database Diagnosis)"
+        }
+      ],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/615953752/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Jacek Pietruszewski",
+          "source": "https://www.gbif.org/occurrence/6159315651"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/615166924/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Jacek Pietruszewski",
+          "source": "https://www.gbif.org/occurrence/6159358512"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:8960303",
+      "scientificName": "Imantodes cenchoa",
+      "family": "Colubridae",
+      "traits": [],
+      "sizeRanges": {
+        "totalLengthMm": {
+          "max": 1500
+        }
+      },
+      "sizeSources": [
+        {
+          "field": "totalLengthMm",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1356964416",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "Maximum total length is about 1.5 m"
+        }
+      ],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/618417469/original.jpg",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "James Adney Zehr",
+          "source": "https://www.gbif.org/occurrence/6163244861"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/625404658/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Jacek Pietruszewski",
+          "source": "https://www.gbif.org/occurrence/6179402492"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:2458676",
+      "scientificName": "Imantodes inornatus",
+      "family": "Colubridae",
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "sex": "pooled",
+          "range": {
+            "min": 17,
+            "max": 17
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Imantodes&species=inornatus",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "17 scale rows at midbody in I. inornatus",
+          "citedOriginal": "McCranie 2011: 319"
+        }
+      ],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/660933504/original.jpg",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "Curtis Eckerman",
+          "source": "https://www.gbif.org/occurrence/6320107970"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:2454957",
+      "scientificName": "Sibon annulatus",
+      "family": "Colubridae",
+      "traits": [],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/540351798/original.jpg",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "Curtis Eckerman",
+          "source": "https://www.gbif.org/occurrence/5230950379"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/660933488/original.jpg",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "Curtis Eckerman",
+          "source": "https://www.gbif.org/occurrence/6320229508"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:2456580",
+      "scientificName": "Phrynonax poecilonotus",
+      "family": "Colubridae",
+      "traits": [],
+      "sizeRanges": {
+        "totalLengthMm": {
+          "max": 1800
+        }
+      },
+      "sizeSources": [
+        {
+          "field": "totalLengthMm",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Phrynonax&species=poecilonotus",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "Max. total length: 1.8 m"
+        }
+      ],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/607296452/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Tom Lawrence",
+          "source": "https://www.gbif.org/occurrence/6130780965"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/606252565/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Tommy Andriollo",
+          "source": "https://www.gbif.org/occurrence/6130904569"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:5959354",
+      "scientificName": "Rhadinaea decorata",
+      "family": "Colubridae",
+      "traits": [],
+      "sizeRanges": {
+        "totalLengthMm": {
+          "max": 350
+        }
+      },
+      "sizeSources": [
+        {
+          "field": "totalLengthMm",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Rhadinaea&species=decorata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "Max. total length: 35 cm"
+        }
+      ],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/642477068/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Aaron Liston",
+          "source": "https://www.gbif.org/occurrence/6236106039"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/709336591/original.jpg",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "Daten Schutz",
+          "source": "https://www.gbif.org/occurrence/6481258589"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:2464915",
+      "scientificName": "Boa imperator",
+      "family": "Boidae",
+      "traits": [
+        {
+          "trait": "ventrals",
+          "sex": "pooled",
+          "range": {
+            "min": 225,
+            "max": 253
+          },
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1370679677",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "225-253 ventral scales",
+          "citedOriginal": "Lotte & Lotte 1996, Litteratura Serpentium 16(3): 78-81"
+        },
+        {
+          "trait": "subcaudals",
+          "sex": "pooled",
+          "range": {
+            "min": 47,
+            "max": 69
+          },
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1370679677",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "47-69 subcaudal scales",
+          "citedOriginal": "Lotte & Lotte 1996, Litteratura Serpentium 16(3): 78-81"
+        }
+      ],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/607058769/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Mark Valen",
+          "source": "https://www.gbif.org/occurrence/6130198778"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/608536869/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Rachel Lee Harper",
+          "source": "https://www.gbif.org/occurrence/6130229368"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:2455397",
+      "scientificName": "Pliocercus euryzonus",
+      "family": "Colubridae",
+      "traits": [],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/395094545/original.jpeg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Cricket Raspet",
+          "source": "https://www.gbif.org/occurrence/4901948668"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/419808050/original.jpeg",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "Henggang Cui",
+          "source": "https://www.gbif.org/occurrence/4926059052"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:9265052",
+      "scientificName": "Leptodeira ornata",
+      "family": "Colubridae",
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "sex": "pooled",
+          "range": {
+            "min": 19,
+            "max": 23
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Leptodeira&species=ornata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "dorsal scales 17-21/19-23/13-17",
+          "citedOriginal": "Costa et al. 2022, Supplement S2 (quoted in Reptile Database)"
+        },
+        {
+          "trait": "ventrals",
+          "sex": "male",
+          "range": {
+            "min": 170,
+            "max": 193
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Leptodeira&species=ornata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "ventral counts in males 170-193",
+          "citedOriginal": "Costa et al. 2022, Supplement S2 (quoted in Reptile Database)"
+        },
+        {
+          "trait": "ventrals",
+          "sex": "female",
+          "range": {
+            "min": 169,
+            "max": 194
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Leptodeira&species=ornata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "females 169-194",
+          "citedOriginal": "Costa et al. 2022, Supplement S2 (quoted in Reptile Database)"
+        },
+        {
+          "trait": "subcaudals",
+          "sex": "male",
+          "range": {
+            "min": 81,
+            "max": 105
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Leptodeira&species=ornata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "subcaudal counts in male 81-105",
+          "citedOriginal": "Costa et al. 2022, Supplement S2 (quoted in Reptile Database)"
+        },
+        {
+          "trait": "subcaudals",
+          "sex": "female",
+          "range": {
+            "min": 77,
+            "max": 99
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Leptodeira&species=ornata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "females 77-99",
+          "citedOriginal": "Costa et al. 2022, Supplement S2 (quoted in Reptile Database)"
+        }
+      ],
+      "sizeRanges": {
+        "svlMm": {
+          "min": 341,
+          "max": 646
+        }
+      },
+      "sizeSources": [
+        {
+          "field": "svlMm",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Leptodeira&species=ornata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "SVL in males 341-543 mm"
+        },
+        {
+          "field": "svlMm",
+          "source": "https://reptile-database.reptarium.cz/species?genus=Leptodeira&species=ornata",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "females 343-646 mm"
+        }
+      ],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/605528360/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Emily Franzen",
+          "source": "https://www.gbif.org/occurrence/5938718463"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/608297843/original.jpg",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "Daten Schutz",
+          "source": "https://www.gbif.org/occurrence/6129852419"
+        }
+      ],
+      "note": "Torres-Carvajal et al. 2020 restricted L. ornata to Panama, Colombia and Ecuador (per RDB). Which name applies to La Selva animals (GBIF/iNat name vs L. septentrionalis s.l.) is unresolved, and these counts may come from non-Costa Rican material."
+    },
+    {
+      "taxonId": "gbif:5223600",
+      "scientificName": "Ninia sebae",
+      "family": "Colubridae",
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "sex": "pooled",
+          "range": {
+            "min": 19,
+            "max": 19
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Ninia&species=sebae",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "Dorsal scales in 19 rows",
+          "citedOriginal": "Schmidt & Rand 1957: 74"
+        },
+        {
+          "trait": "ventrals",
+          "sex": "pooled",
+          "range": {
+            "min": 131,
+            "max": 156
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Ninia&species=sebae",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "ventrals 131-156",
+          "citedOriginal": "Schmidt & Rand 1957: 74"
+        },
+        {
+          "trait": "subcaudals",
+          "sex": "pooled",
+          "range": {
+            "min": 40,
+            "max": 74
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Ninia&species=sebae",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "caudals 40-74",
+          "citedOriginal": "Schmidt & Rand 1957: 74"
+        }
+      ],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/724469378/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Michelle Monge-Velazquez",
+          "source": "https://www.gbif.org/occurrence/6519676597"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/736530357/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "River Ahlquist",
+          "source": "https://www.gbif.org/occurrence/6552351941"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:2457313",
+      "scientificName": "Chironius grandisquamis",
+      "family": "Colubridae",
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "sex": "pooled",
+          "range": {
+            "min": 10,
+            "max": 10
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Chironius&species=grandisquamis",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "the only Chironius species with 10 scale rows at midbody"
+        },
+        {
+          "trait": "analPlate",
+          "sex": "pooled",
+          "values": [
+            "divided"
+          ],
+          "source": "https://reptile-database.reptarium.cz/species?genus=Chironius&species=grandisquamis",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "and a divided anal plate"
+        }
+      ],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/358645057/original.jpeg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Buckelkopfcichlide",
+          "source": "https://www.gbif.org/occurrence/5292181302"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/426831110/original.jpeg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Michelle Monge-Velazquez",
+          "source": "https://www.gbif.org/occurrence/4937035090"
+        }
+      ]
+    },
+    {
+      "taxonId": "pack:bothriechis-nigroadspersus",
+      "scientificName": "Bothriechis nigroadspersus",
+      "family": "Viperidae",
+      "dangerous": true,
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "sex": "pooled",
+          "range": {
+            "min": 21,
+            "max": 25
+          },
+          "source": "https://treatment.plazi.org/id/FF4665A639F05CFB93354EAB607B67BA",
+          "licence": "CC0 1.0 (Plazi treatment dataset on GBIF)",
+          "verbatim": "21 - 25 dorsal scale rows at mid-body",
+          "citedOriginal": "Arteaga et al. 2024, ZooKeys (Plazi treatment; GBIF dataset doi:10.15468/p68xty)"
+        },
+        {
+          "trait": "ventrals",
+          "sex": "male",
+          "range": {
+            "min": 153,
+            "max": 169
+          },
+          "source": "https://treatment.plazi.org/id/FF4665A639F05CFB93354EAB607B67BA",
+          "licence": "CC0 1.0 (Plazi treatment dataset on GBIF)",
+          "verbatim": "153 - 169 ventrals in males",
+          "citedOriginal": "Arteaga et al. 2024, ZooKeys (Plazi treatment; GBIF dataset doi:10.15468/p68xty)"
+        },
+        {
+          "trait": "ventrals",
+          "sex": "female",
+          "range": {
+            "min": 148,
+            "max": 167
+          },
+          "source": "https://treatment.plazi.org/id/FF4665A639F05CFB93354EAB607B67BA",
+          "licence": "CC0 1.0 (Plazi treatment dataset on GBIF)",
+          "verbatim": "148 - 167 in females",
+          "citedOriginal": "Arteaga et al. 2024, ZooKeys (Plazi treatment; GBIF dataset doi:10.15468/p68xty)"
+        }
+      ],
+      "sizeRanges": {
+        "totalLengthMm": {
+          "max": 916
+        }
+      },
+      "sizeSources": [
+        {
+          "field": "totalLengthMm",
+          "source": "https://treatment.plazi.org/id/FF4665A639F05CFB93354EAB607B67BA",
+          "licence": "CC0 1.0 (Plazi treatment dataset on GBIF)",
+          "verbatim": "maximum total length in males 626 mm"
+        },
+        {
+          "field": "totalLengthMm",
+          "source": "https://treatment.plazi.org/id/FF4665A639F05CFB93354EAB607B67BA",
+          "licence": "CC0 1.0 (Plazi treatment dataset on GBIF)",
+          "verbatim": "in females 916 mm"
+        }
+      ],
+      "note": "GBIF La Selva records are filed under Bothriechis schlegelii (26). Arteaga et al. 2024 restricted B. schlegelii to Colombia and placed Mesoamerican populations (Tehuantepec to NW Colombia) in B. nigroadspersus."
+    },
+    {
+      "taxonId": "gbif:7882252",
+      "scientificName": "Dendrophidion apharocybe",
+      "family": "Colubridae",
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "sex": "pooled",
+          "range": {
+            "min": 17,
+            "max": 17
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Dendrophidion&species=apharocybe",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "Dendrophidion apharocybe differs from D. boshelli in having 17 midbody scale rows",
+          "citedOriginal": "Cadle 2012: 200"
+        },
+        {
+          "trait": "analPlate",
+          "sex": "pooled",
+          "values": [
+            "single"
+          ],
+          "source": "https://reptile-database.reptarium.cz/species?genus=Dendrophidion&species=apharocybe",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "(2) single anal plate",
+          "citedOriginal": "Cadle 2012: 200"
+        },
+        {
+          "trait": "subcaudals",
+          "sex": "pooled",
+          "range": {
+            "max": 129
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Dendrophidion&species=apharocybe",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "relatively low subcaudal counts (<130 in males and females)",
+          "citedOriginal": "Cadle 2012: 200"
+        },
+        {
+          "trait": "ventrals",
+          "sex": "pooled",
+          "range": {
+            "max": 169
+          },
+          "source": "https://reptile-database.reptarium.cz/species?genus=Dendrophidion&species=apharocybe",
+          "licence": "Reptile Database website text (no open licence on species pages; page meta 'Copyright (c) 2010 Reptarium'). The number is a fact quoted from the cited original; cite both.",
+          "verbatim": "(>175 compared with <170 in D. apharocybe)",
+          "citedOriginal": "Cadle 2012: 200"
+        }
+      ],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/191208104/original.jpg",
+          "licence": "http://creativecommons.org/publicdomain/zero/1.0/",
+          "rightsHolder": "scott_young",
+          "source": "https://www.gbif.org/occurrence/6500125881"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:9195230",
+      "scientificName": "Spilotes pullatus",
+      "family": "Colubridae",
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "sex": "pooled",
+          "range": {
+            "min": 14,
+            "max": 16
+          },
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1374724714",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "arranged in 16 (or 14) rows at midbody"
+        },
+        {
+          "trait": "ventrals",
+          "sex": "pooled",
+          "range": {
+            "min": 198,
+            "max": 232
+          },
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1374724714",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "Ventrals 198-232"
+        },
+        {
+          "trait": "analPlate",
+          "sex": "pooled",
+          "values": [
+            "single"
+          ],
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1374724714",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "anal plate entire"
+        },
+        {
+          "trait": "subcaudals",
+          "sex": "pooled",
+          "range": {
+            "min": 90,
+            "max": 120
+          },
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1374724714",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "subcaudals 90-120, divided"
+        }
+      ],
+      "sizeRanges": {
+        "totalLengthMm": {
+          "max": 2700
+        }
+      },
+      "sizeSources": [
+        {
+          "field": "totalLengthMm",
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1374724714",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "maximum total length of 2.7 m"
+        }
+      ],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/607211525/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Eyder Fonseca Sanchez",
+          "source": "https://www.gbif.org/occurrence/6131625085"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/618989301/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Julia Pupko",
+          "source": "https://www.gbif.org/occurrence/6171176753"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:2454857",
+      "scientificName": "Drymobius margaritiferus",
+      "family": "Colubridae",
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "sex": "pooled",
+          "range": {
+            "min": 17,
+            "max": 17
+          },
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1313985339",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "arranged in 17 rows",
+          "citedOriginal": "Smith & Brodie 1982, Reptiles of North America (Golden Press), pp. 188-189"
+        },
+        {
+          "trait": "ventrals",
+          "sex": "pooled",
+          "range": {
+            "min": 142,
+            "max": 168
+          },
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1313985339",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "The ventrals number 142-168",
+          "citedOriginal": "Smith & Brodie 1982, Reptiles of North America (Golden Press), pp. 188-189"
+        },
+        {
+          "trait": "subcaudals",
+          "sex": "pooled",
+          "range": {
+            "min": 85,
+            "max": 126
+          },
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1313985339",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "the subcaudals, 85-126",
+          "citedOriginal": "Smith & Brodie 1982, Reptiles of North America (Golden Press), pp. 188-189"
+        }
+      ],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/606262299/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Anthony Mora Aguilar",
+          "source": "https://www.gbif.org/occurrence/6130431530"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/723937020/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Michelle Monge-Velazquez",
+          "source": "https://www.gbif.org/occurrence/6518522081"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:2453625",
+      "scientificName": "Oxybelis fulgidus",
+      "family": "Colubridae",
+      "traits": [
+        {
+          "trait": "dorsalRowsMidbody",
+          "sex": "pooled",
+          "range": {
+            "min": 17,
+            "max": 17
+          },
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1357151262",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "Dorsal scales weakly keeled, arranged in 17 rows at midbody",
+          "citedOriginal": "Boulenger 1896, Cat. Snakes Brit. Mus. III: 191-192 (public domain)"
+        },
+        {
+          "trait": "ventrals",
+          "sex": "pooled",
+          "range": {
+            "min": 198,
+            "max": 217
+          },
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1357151262",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "Ventrals 198-217",
+          "citedOriginal": "Boulenger 1896, Cat. Snakes Brit. Mus. III: 191-192 (public domain)"
+        },
+        {
+          "trait": "analPlate",
+          "sex": "pooled",
+          "values": [
+            "divided"
+          ],
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1357151262",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "anal plate divided",
+          "citedOriginal": "Boulenger 1896, Cat. Snakes Brit. Mus. III: 191-192 (public domain)"
+        },
+        {
+          "trait": "subcaudals",
+          "sex": "pooled",
+          "range": {
+            "min": 139,
+            "max": 165
+          },
+          "source": "https://en.wikipedia.org/w/index.php?oldid=1357151262",
+          "licence": "Wikipedia prose CC BY-SA 4.0; the number is a fact taken from the reference Wikipedia cites; do not copy the prose.",
+          "verbatim": "subcaudals 139-165, also divided",
+          "citedOriginal": "Boulenger 1896, Cat. Snakes Brit. Mus. III: 191-192 (public domain)"
+        }
+      ],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/618220074/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Andre Knocklein",
+          "source": "https://www.gbif.org/occurrence/6163299020"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/461672228/original.jpeg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Eyder Fonseca Sanchez",
+          "source": "https://www.gbif.org/occurrence/5108119472"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:5226858",
+      "scientificName": "Micrurus alleni",
+      "family": "Elapidae",
+      "dangerous": true,
+      "traits": [],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/651108555/original.jpg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Vargas Alisson",
+          "source": "https://www.gbif.org/occurrence/6253001767"
+        },
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/474738992/original.jpeg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Buckelkopfcichlide",
+          "source": "https://www.gbif.org/occurrence/5282499752"
+        }
+      ]
+    },
+    {
+      "taxonId": "gbif:5959535",
+      "scientificName": "Leptophis depressirostris",
+      "family": "Colubridae",
+      "traits": [],
+      "photos": [
+        {
+          "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/405101012/original.jpeg",
+          "licence": "http://creativecommons.org/licenses/by/4.0/",
+          "rightsHolder": "Cricket Raspet",
+          "source": "https://www.gbif.org/occurrence/4909277759"
+        }
+      ]
+    }
+  ]
+}
