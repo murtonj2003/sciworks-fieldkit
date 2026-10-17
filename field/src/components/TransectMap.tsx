@@ -83,6 +83,7 @@ export function TransectMap({
   fit = [],
   links = [],
   height = 190,
+  pad = PAD,
   showSwitch = true,
 }: {
   transect: Transect;
@@ -92,6 +93,8 @@ export function TransectMap({
   /** Dashed connectors, e.g. from where a point was typed to the fix that was used. */
   links?: { from: LonLat; to: LonLat }[];
   height?: number;
+  /** Clear space kept round the line and points (smaller = more zoomed in). */
+  pad?: number;
   /** The Satellite / Plain switch. The choice is kept on the phone, so a map without it follows the others. */
   showSwitch?: boolean;
 }) {
@@ -106,13 +109,13 @@ export function TransectMap({
   const basemap = basemapFor(basemaps, transect.properties.transectId, line);
   const href = useMemo(() => (basemap ? hrefOf(basemap) : null), [basemap]);
   const sat = !!basemap && !!href && layer === 'satellite';
-  const frame = useMemo(() => makeFrame(line, W, H, PAD, fit, sat ? basemap!.bounds : undefined), [line, W, H, fit, sat, basemap]);
+  const frame = useMemo(() => makeFrame(line, W, H, pad, fit, sat ? basemap!.bounds : undefined), [line, W, H, pad, fit, sat, basemap]);
   if (line.length < 2) return null;
 
   const pts = line.map(([lo, la]) => frame.px(lo, la));
   const start = pts[0]!;
   const end = pts[pts.length - 1]!;
-  const bar = niceLength(((W - 2 * PAD) / frame.scale) * 0.35);
+  const bar = niceLength(((W - 2 * pad) / frame.scale) * 0.35);
   const barPx = bar * frame.scale;
   const ink = sat ? ON_IMG : t.ink;
   const ink2 = sat ? ON_IMG : t.ink2;

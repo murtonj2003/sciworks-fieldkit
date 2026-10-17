@@ -399,7 +399,7 @@ export function LocationEntry({
         )}
         {check && mapPoints.length > 0 && (
           <View style={s.mapCard}>
-            <TransectMap transect={transect} height={140} showSwitch={false} points={mapPoints} fit={mapPoints} links={mapLinks} />
+            <TransectMap transect={transect} height={160} pad={16} showSwitch={false} points={mapPoints} fit={mapPoints} links={mapLinks} />
           </View>
         )}
       </Group>

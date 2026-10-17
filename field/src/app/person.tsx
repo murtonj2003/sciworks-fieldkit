@@ -13,7 +13,7 @@ import { radius, type } from '@/theme/theme';
 const useStyles = makeStyles((t) => ({
   wrap: { flex: 1, backgroundColor: t.ground },
   page: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 48 },
-  lead: { ...type.small, fontWeight: '400', lineHeight: 18, color: t.ink2, marginTop: 8, marginHorizontal: 6, marginBottom: 2 },
+  lead: { ...type.small, fontWeight: '400', lineHeight: 18, color: t.ink2, marginTop: 8, marginHorizontal: 14, marginBottom: 2 },
   list: { backgroundColor: t.card, borderRadius: radius.card, overflow: 'hidden' },
   row: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingHorizontal: 12 },
   sep: { height: 1, backgroundColor: t.hair, marginLeft: 54 },

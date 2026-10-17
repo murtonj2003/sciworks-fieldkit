@@ -156,9 +156,12 @@ export default function Storage() {
       <ScrollView contentContainerStyle={st.page} keyboardShouldPersistTaps="handled">
         <GroupTitle>On this phone</GroupTitle>
         <Group>
-          <Row style={{ gap: 4 }}>
+          <Row>
             <T v="title">
-              {s.records} records ({s.revs} saved versions) · {s.photos} photos · {s.unsealed} being edited
+              {s.records} records ({s.revs} saved versions)
+            </T>
+            <T v="title">
+              {s.photos} photos · {s.unsealed} being edited
             </T>
             <T v="sub" dim>
               {s.receipts} HQ receipts · {s.bundlesIn} bundles received · {s.bundlesOut} sent · form versions kept:{' '}
@@ -185,7 +188,14 @@ export default function Storage() {
               every photo are still here.
             </T>
           </Row>
-          <Button label={busy ? 'Working…' : 'Create 30 test records with photos'} size={56} onPress={create30} disabled={busy || !ctx} />
+          <Button
+            label={busy ? 'Working…' : 'Create 30 test records with photos'}
+            size={56}
+            onPress={create30}
+            disabled={busy || !ctx}
+            // Switched off, keep the pill's shape visible on the grey group.
+            style={busy || !ctx ? { backgroundColor: t.card, opacity: 0.6 } : undefined}
+          />
           {survey && (
             <>
               <T v="sub" dim style={{ marginHorizontal: 6, marginTop: 4 }}>
