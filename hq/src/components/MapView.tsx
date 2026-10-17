@@ -58,7 +58,8 @@ export function MapView({ transects, records, selectedKey, onSelect, counter }: 
   const mapRef = useRef<maplibregl.Map | null>(null)
   const [ready, setReady] = useState(false)
   const [scale, setScale] = useState({ metres: 500, px: 100 })
-  const fitted = useRef(false)
+  // What the first view is framed on: the transects that have records (else all). Refit once data arrives.
+  const fittedOn = useRef('')
   const labels = useRef<maplibregl.Marker[]>([])
   const notes = useRef<maplibregl.Marker[]>([])
   const onSelectRef = useRef(onSelect)
@@ -153,16 +154,20 @@ export function MapView({ transects, records, selectedKey, onSelect, counter }: 
       const div = document.createElement('div')
       div.className = 'hq-m-lbl'
       div.textContent = f.properties.transectId
-      const start = f.geometry.coordinates[0] as [number, number]
-      return new maplibregl.Marker({ element: div, anchor: 'right', offset: [-10, 0] }).setLngLat(start).addTo(map)
+      const end = f.geometry.coordinates[f.geometry.coordinates.length - 1] as [number, number]
+      return new maplibregl.Marker({ element: div, anchor: 'left', offset: [10, 0] }).setLngLat(end).addTo(map)
     })
-    if (!fitted.current && transects?.features.length) {
+    const used = new Set(records.map((r) => r.transectId))
+    const frame = (transects?.features ?? []).filter((f) => !used.size || used.has(f.properties.transectId))
+    const key = frame.map((f) => f.properties.transectId).join(',')
+    if (frame.length && key !== fittedOn.current) {
       const b = new maplibregl.LngLatBounds()
-      for (const f of transects.features) for (const c of f.geometry.coordinates) b.extend(c as [number, number])
-      map.fitBounds(b, { padding: { top: 90, bottom: 110, left: 70, right: 70 }, duration: 0 })
-      fitted.current = true
+      for (const f of frame) for (const c of f.geometry.coordinates) b.extend(c as [number, number])
+      // Clear the team card (top left) and the legend (bottom).
+      map.fitBounds(b, { padding: { top: 110, left: 250, bottom: 130, right: 90 }, duration: 0, maxZoom: 15.5 })
+      fittedOn.current = key
     }
-  }, [ready, transects, activeTransect])
+  }, [ready, transects, activeTransect, records])
 
   // Points, rings, and the point as typed before a "did you mean?" fix.
   useEffect(() => {
@@ -204,9 +209,10 @@ export function MapView({ transects, records, selectedKey, onSelect, counter }: 
         div.innerHTML = html
         notes.current.push(new maplibregl.Marker({ element: div, anchor: 'left', offset: [16, 0] }).setLngLat(at).addTo(map))
       }
-      note(`<b>as typed</b><span>Off the line · ${fmtNumber(c.offsetM, 0)} m off ${c.transectId}</span>`, [se.location.original.lon, se.location.original.lat])
+      const mark = (b: string) => `<svg class="fk-mark fk-mark--${b} fk-mark--14" aria-hidden="true"><use href="#m-${b}"/></svg>`
+      note(`<b>as typed</b><span>${mark('off')} Off the line · ${fmtNumber(c.offsetM, 0)} m off ${c.transectId}</span>`, [se.location.original.lon, se.location.original.lat])
       const now = sel.hq?.coord
-      note(`<b>fixed in field</b><span>${now ? `${fmtNumber(now.offsetM, 1)} m from the line` : 'suggestion used'}</span>`, [se.location.lon, se.location.lat])
+      note(`<b>fixed in field</b><span>${now ? `${mark('on')} ${fmtNumber(now.offsetM, 1)} m from the line` : 'suggestion used'}</span>`, [se.location.lon, se.location.lat])
     }
   }, [ready, records, selectedKey])
 

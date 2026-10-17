@@ -50,16 +50,18 @@ export function HqBundleDialog({ project, onClose }: { project: Project; onClose
         It carries the current form, the team's transects, the species pack, every record HQ has from the team, your review results and the
         corrections you approved. AirDrop it or copy it to the team's phones.
       </p>
-      <label className="hq-field">
-        Team
-        <select className="hq-input" value={teamId} onChange={(e) => (setTeamId(e.target.value), setResult(undefined))}>
-          {teams.map((t) => (
-            <option key={t.teamId} value={t.teamId}>
-              {t.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="fk-group">
+        <label className="hq-field" style={{ padding: '2px 4px 4px' }}>
+          Team
+          <select className="hq-input" value={teamId} onChange={(e) => (setTeamId(e.target.value), setResult(undefined))}>
+            {teams.map((t) => (
+              <option key={t.teamId} value={t.teamId}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       {pending > 0 && (
         <p className="fk-info">
           <Icon name="reviewer" />
@@ -78,9 +80,12 @@ export function HqBundleDialog({ project, onClose }: { project: Project; onClose
         <p className="fk-success">
           <Mark band="on" />
           <span>
-            Bundle made: <b>{result.fileName}</b>. {result.counts.receipts} records confirmed (the phone's "not with HQ" counter drops by these) ·{' '}
-            {result.counts.reviews} review results · {result.counts.corrections} approved corrections · {result.counts.taxonDecisions} species decisions ·{' '}
-            {result.counts.changeRequestDecisions} form-request decisions · {result.counts.transects} transects.
+            Bundle made: <b>{result.fileName}</b>.
+            <span style={{ display: 'block', marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>
+              {result.counts.receipts} records confirmed (the phone's "not with HQ" counter drops by these) · {result.counts.reviews} review results ·{' '}
+              {result.counts.corrections} approved corrections · {result.counts.taxonDecisions} species decisions · {result.counts.changeRequestDecisions}{' '}
+              form-request decisions · {result.counts.transects} transects.
+            </span>
           </span>
         </p>
       )}
@@ -165,7 +170,7 @@ export function ExportDialog({ setup, onClose, onSelect }: { setup: Setup; onClo
             </p>
             <div className="fk-hint__actions">
               {surveyKeys.map((k) => (
-                <button key={k} className="fk-btn fk-btn--primary fk-btn--36" onClick={() => setStatus(k, 'approved', { by: me.personId })} disabled={!byKey.get(k)}>
+                <button key={k} className="fk-btn fk-btn--grey fk-btn--36" onClick={() => setStatus(k, 'approved', { by: me.personId })} disabled={!byKey.get(k)}>
                   Approve {byKey.get(k) ? `${recordTitle(byKey.get(k)!)}, ${byKey.get(k)!.date}` : 'the survey (not received yet)'}
                 </button>
               ))}
@@ -180,7 +185,9 @@ export function ExportDialog({ setup, onClose, onSelect }: { setup: Setup; onClo
             {plural(result.skipped.length, 'record', 'records')} not included, and why
           </summary>
           <ul>
-            {result.skipped.map((s) => {
+            {[...result.skipped]
+              .sort((a, b) => +b.why.includes('correction is waiting') - +a.why.includes('correction is waiting'))
+              .map((s) => {
               const r = byKey.get(s.key)
               return (
                 <li key={s.key}>

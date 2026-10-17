@@ -15,6 +15,10 @@ export function PointsScreen({ project }: { project: Project }) {
   const parsed = useMemo(() => parsePointList(checked), [checked])
   const results = useMemo(() => checkPointList(parsed.points, project, { closed }), [parsed.points, project, closed])
   const off = results.filter((r) => r.outlier || r.check?.band === 'red').length
+  // One Shout: only the farthest-off point gets the solid red pill; any other far-off point uses the tint.
+  const shoutId = results
+    .filter((r) => r.outlier || r.check?.band === 'red')
+    .sort((a, b) => (b.check?.offsetM ?? b.fromCentreM) - (a.check?.offsetM ?? a.fromCentreM))[0]?.id
 
   return (
     <div className="pg-cols pg-cols--pts">
@@ -45,7 +49,7 @@ export function PointsScreen({ project }: { project: Project }) {
             <div className="pg-paste__foot">
               <label className="hq-check fk-help">
                 <input type="checkbox" checked={closed} onChange={(e) => setClosed(e.target.checked)} />
-                The points go round a closed outline
+                Closed outline (the last point joins the first)
               </label>
               <button className="fk-btn fk-btn--primary fk-btn--36" type="submit" disabled={!text.trim()}>
                 <Icon name="crosshair" />
@@ -85,28 +89,35 @@ export function PointsScreen({ project }: { project: Project }) {
                     const p = parsed.points.find((x) => x.id === r.id)!
                     const band = r.check?.band
                     const loud = r.outlier || band === 'red'
+                    const shout = r.id === shoutId
                     return (
                       <tr key={r.id}>
                         <td>{r.label}</td>
                         <td>
-                          {band ? (
-                            <span className={`fk-band fk-band--${BAND_MARK[band]}`}>
-                              <Mark band={BAND_MARK[band]} />
-                              {BAND_WORD[band].replace('the line', 'the outline')}
+                          {band && loud ? (
+                            <span className={`fk-band ${shout ? 'fk-band--off' : 'fk-band--off-quiet'}`}>
+                              <Mark band="off" />
+                              {BAND_WORD.red}
+                            </span>
+                          ) : band ? (
+                            <span className="fk-bandtext">
+                              <Mark band={BAND_MARK[band]} size={16} />
+                              {BAND_WORD[band]}
                             </span>
                           ) : (
                             <span className="hq-dim">Too few other points</span>
                           )}
                         </td>
-                        <td>{r.check ? `${fmtNumber(r.check.offsetM, 0)} m` : '—'}</td>
+                        <td>{r.check ? shout ? <b>{fmtNumber(r.check.offsetM, 0)} m</b> : `${fmtNumber(r.check.offsetM, 0)} m` : '—'}</td>
                         <td className="pg-sug">
                           {!r.check?.suggestions.length ? (
-                            <span className="hq-dim">—</span>
+                            <span className="hq-dim">None needed</span>
                           ) : loud ? (
                             <Fixes raw={p.typed?.raw} s={r.check.suggestions} />
                           ) : (
                             <details>
                               <summary>
+                                <Icon name="chev-down" />
                                 {r.check.suggestions.length} possible fix{r.check.suggestions.length === 1 ? '' : 'es'} (probably not needed: it sits on a bend)
                               </summary>
                               <Fixes raw={p.typed?.raw} s={r.check.suggestions} />

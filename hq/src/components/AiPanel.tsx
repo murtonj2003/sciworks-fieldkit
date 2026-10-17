@@ -57,8 +57,12 @@ export function AiPanel({ onClose, onSelect, onReviewAll, onKeyChanged }: Props)
       }
     >
       <p>
-        It reads the records with the same checkers as the phones and <b>drafts</b> corrections and notes. It never changes a record: you approve,
-        edit or discard every draft. It needs the internet; everything else in Fieldkit HQ works offline.
+        It <b>drafts</b>; you decide. It checks the records with the same checkers as the phones and drafts corrections and notes. It never changes a
+        record: you approve, edit or discard every draft.
+      </p>
+      <p className="fk-small">
+        When it runs, the records it reviews (species, measurements, coordinates, notes and check results; no photos) go to Anthropic's API with your
+        key. It needs the internet; everything else in Fieldkit HQ works offline.
       </p>
 
       <div className="fk-group">
@@ -95,6 +99,9 @@ export function AiPanel({ onClose, onSelect, onReviewAll, onKeyChanged }: Props)
               Anthropic API key
               <input className="hq-input" type="password" autoComplete="off" spellCheck={false} value={draftKey} onChange={(e) => setDraftKey(e.target.value)} placeholder="sk-ant-…" />
             </label>
+            <p className="fk-help">
+              <Icon name="lock" className="fk-ico--14" /> Kept only in this browser's storage: never in a file, a bundle, the HQ backup or a log.
+            </p>
             <div className="hq-form__acts">
               <button className="fk-btn fk-btn--primary fk-btn--36" type="submit" disabled={!draftKey.trim()}>
                 Save in this browser
@@ -102,10 +109,7 @@ export function AiPanel({ onClose, onSelect, onReviewAll, onKeyChanged }: Props)
             </div>
           </form>
         )}
-        <p className="fk-help" style={{ margin: '8px 8px 4px' }}>
-          Kept only in this browser's storage: never in a file, a bundle, the HQ backup or a log. Model: {AI_MODEL}.
-        </p>
-        <label className="hq-check" style={{ margin: '4px 8px 4px' }}>
+        <label className="hq-check" style={{ margin: '10px 8px 4px' }}>
           <input
             type="checkbox"
             checked={auto}
@@ -116,7 +120,16 @@ export function AiPanel({ onClose, onSelect, onReviewAll, onKeyChanged }: Props)
           />
           Review new records automatically after each import
         </label>
+        {!key && auto && (
+          <p className="fk-help" style={{ margin: '0 8px 6px 34px' }}>
+            Starts once a key is saved.
+          </p>
+        )}
+        <p className="fk-small" style={{ margin: '6px 8px 4px', fontSize: 12 }}>
+          Model: {AI_MODEL}
+        </p>
       </div>
+      {!key && <p className="fk-help">Save a key first to review records.</p>}
 
       {!online && (
         <p className="fk-hint">

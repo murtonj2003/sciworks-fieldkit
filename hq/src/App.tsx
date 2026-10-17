@@ -117,7 +117,7 @@ export default function App() {
       if (!keys.length || !getAutoReview()) return
       if (!getApiKey()) {
         setAiStripHidden(false)
-        setAiMessage('The AI reviewer is off: add an Anthropic API key in AI reviewer to have new records checked automatically.')
+        setAiMessage('off. Add a key in AI reviewer to check new records.')
         return
       }
       void review(keys)
@@ -274,8 +274,8 @@ export default function App() {
     const last = devs.map((d) => d.lastBundleAt).sort().pop()!
     return {
       team: teamName(project, teamId),
-      line: `Last handover ${shortTime(last)}`,
-      sub: `${devs.length} phone${devs.length === 1 ? '' : 's'} · ${devs.reduce((n, d) => n + d.bundles, 0)} bundle${devs.reduce((n, d) => n + d.bundles, 0) === 1 ? '' : 's'}`,
+      line: 'Last handover',
+      sub: devs.length > 1 ? `${shortTime(last)} · ${devs.length} phones` : shortTime(last),
     }
   }, [selected?.teamId, records, devices, project])
 
@@ -312,18 +312,17 @@ export default function App() {
           Form
           {pendingRequests > 0 && <span className="hq-count-badge" aria-label={`${pendingRequests} team requests waiting`}>{pendingRequests}</span>}
         </button>
-        <button className="fk-btn fk-btn--grey fk-btn--36" onClick={() => setDialog('ai')} disabled={!project}>
+        <button className={`fk-btn fk-btn--grey fk-btn--36${dialog === 'ai' ? ' pg-cur' : ''}`} aria-current={dialog === 'ai' ? 'page' : undefined} onClick={() => setDialog('ai')} disabled={!project}>
           <Icon name="reviewer" />
           {lastRun?.state === 'running' ? 'AI reviewing…' : 'AI reviewer'}
         </button>
-        <button className="fk-btn fk-btn--grey fk-btn--36" onClick={() => setDialog('hq-bundle')} disabled={!project}>
+        <button className={`fk-btn fk-btn--grey fk-btn--36${dialog === 'hq-bundle' ? ' pg-cur' : ''}`} aria-current={dialog === 'hq-bundle' ? 'page' : undefined} onClick={() => setDialog('hq-bundle')} disabled={!project}>
           Make bundle for a team
         </button>
-        <button className="fk-btn fk-btn--grey fk-btn--36 fk-btn--stack" onClick={() => setDialog('export')} disabled={!project}>
+        <button className={`fk-btn fk-btn--grey fk-btn--36${dialog === 'export' ? ' pg-cur' : ''}`} aria-current={dialog === 'export' ? 'page' : undefined} title="Approved records only" onClick={() => setDialog('export')} disabled={!project}>
           Export Darwin Core
-          <small>approved records only</small>
         </button>
-        <button className="fk-btn fk-btn--grey fk-btn--36 fk-btn--icon" aria-label="Devices" title="Devices" onClick={() => setDialog('devices')}>
+        <button className={`fk-btn fk-btn--grey fk-btn--36 fk-btn--icon${dialog === 'devices' ? ' pg-cur' : ''}`} aria-current={dialog === 'devices' ? 'page' : undefined} aria-label="Devices" title="Devices" onClick={() => setDialog('devices')}>
           <Icon name="phone" />
         </button>
         <details className="hq-menu" ref={menuRef} onClick={(e) => (e.target as HTMLElement).closest('button') && menuRef.current?.removeAttribute('open')}>
@@ -342,7 +341,7 @@ export default function App() {
           </div>
         </details>
         <input ref={fileInput} type="file" accept=".zip,application/zip" multiple hidden onChange={(e) => (runImport([...(e.target.files ?? [])]), (e.target.value = ''))} />
-        <button className="fk-btn fk-btn--primary fk-btn--36" onClick={() => fileInput.current?.click()} disabled={busy}>
+        <button className={`fk-btn fk-btn--36 ${project ? 'fk-btn--primary' : 'fk-btn--grey'}`} onClick={() => fileInput.current?.click()} disabled={busy}>
           <Icon name="bundle" />
           Import bundle
         </button>
@@ -350,49 +349,52 @@ export default function App() {
 
       {strips && (
         <div className="hq-strips">
-          {latest && (
-            <div className={`fk-import${latest.ok ? '' : ' is-bad'}`} role="status">
-              <Icon name={latest.ok ? 'bundle' : 'warning'} />
-              <span className="fk-import__text">
-                <b>{latest.fileName}</b>: {summaryLine(latest)}
-                {latest.badFiles.length > 0 && (
-                  <ul>
-                    {latest.badFiles.map((b) => (
-                      <li key={b.path}>
-                        <b>{b.path}</b>: {b.message}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </span>
-              <button className="fk-btn fk-btn--secondary fk-btn--36" onClick={() => setImports([])}>
-                Dismiss
-              </button>
-            </div>
-          )}
-          {showAi && (
-            <div className="fk-import" role="status">
-              <Icon name="reviewer" />
-              <span className="fk-import__text">
-                <b>AI reviewer</b>:{' '}
-                {lastRun?.state === 'running' && !aiMessage
-                  ? `reviewing ${lastRun.scopeKeys.length} records… ${lastRun.steps[lastRun.steps.length - 1]?.text ?? 'starting'}`
-                  : aiMessage
-                    ? aiMessage
-                    : lastRun?.state === 'done'
-                      ? `finished. ${lastRun.draftIds.length} draft correction${lastRun.draftIds.length === 1 ? '' : 's'} and ${lastRun.noteIds.length} note${lastRun.noteIds.length === 1 ? '' : 's'} waiting for you.`
-                      : lastRun?.state === 'stopped'
-                        ? 'stopped.'
-                        : `the review failed. ${lastRun?.error ?? ''}`}
-              </span>
-              <button className="fk-btn fk-btn--secondary fk-btn--36" onClick={() => setDialog('ai')}>
-                Open
-              </button>
-              <button className="fk-btn fk-btn--secondary fk-btn--36" onClick={() => setAiStripHidden(true)}>
-                Dismiss
-              </button>
-            </div>
-          )}
+          <div className={`fk-import${latest && !latest.ok ? ' is-bad' : ''}`} role="status">
+            <Icon name={latest ? (latest.ok ? 'bundle' : 'warning') : 'reviewer'} />
+            <span className="fk-import__text">
+              {latest && (
+                <>
+                  <b>{latest.fileName}</b>: {summaryLine(latest)}
+                  {latest.badFiles.length > 0 && (
+                    <ul>
+                      {latest.badFiles.map((b) => (
+                        <li key={b.path}>
+                          <b>{b.path}</b>: {b.message}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+              {showAi && (
+                <span className="hq-ai-line">
+                  <Icon name="reviewer" />
+                  AI reviewer:{' '}
+                  {lastRun?.state === 'running' && !aiMessage
+                    ? `reviewing ${lastRun.scopeKeys.length} records… ${lastRun.steps[lastRun.steps.length - 1]?.text ?? 'starting'}`
+                    : aiMessage
+                      ? aiMessage
+                      : lastRun?.state === 'done'
+                        ? `finished. ${lastRun.draftIds.length} draft correction${lastRun.draftIds.length === 1 ? '' : 's'} and ${lastRun.noteIds.length} note${lastRun.noteIds.length === 1 ? '' : 's'} waiting for you.`
+                        : lastRun?.state === 'stopped'
+                          ? 'stopped.'
+                          : `the review failed. ${lastRun?.error ?? ''}`}{' '}
+                  <button className="hq-textlink" onClick={() => setDialog('ai')}>
+                    Open
+                  </button>
+                </span>
+              )}
+            </span>
+            <button
+              className="fk-btn fk-btn--secondary fk-btn--36"
+              onClick={() => {
+                setImports([])
+                setAiStripHidden(true)
+              }}
+            >
+              Dismiss
+            </button>
+          </div>
         </div>
       )}
 

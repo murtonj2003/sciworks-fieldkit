@@ -8,7 +8,7 @@ import { FORMAT_LABELS, TRAIT_LABEL, type Encounter, type FieldDef, type Overlay
 import { db, type AiNoteRow, type CorrectionRow, type RecordRow } from '../db'
 import { DecidedCard, DraftCard, CharDiff } from '../kit/DidYouMean'
 import { Icon, Mark } from '../kit/Icons'
-import { BandText, StatusChip, Tag } from '../kit/ui'
+import { BandText, StatusChip, Tag, WithSpecies } from '../kit/ui'
 import { GROUP_LABEL, ID_BASIS, STATUS_WORD, UNIT_LABEL, fieldsFor, fmtLatLon, fmtNumber, fmtValue, recordTitle, shortLabel, valueAt } from '../lib/format'
 import { diffRecords } from '../lib/review'
 import { personName, teamName } from '../lib/setup'
@@ -121,7 +121,7 @@ export function Detail(props: DetailProps) {
         ))}
 
         <h4 className="fk-gt">Flags</h4>
-        <Flags row={row} />
+        <Flags row={row} species={e?.taxon.scientificName} />
         {props.aiNotes.length > 0 && (
           <>
             <h4 className="fk-gt">AI reviewer notes</h4>
@@ -148,7 +148,7 @@ export function Detail(props: DetailProps) {
   )
 }
 
-function Flags({ row }: { row: RecordRow }) {
+function Flags({ row, species }: { row: RecordRow; species?: string }) {
   if (!row.flags.length) {
     return (
       <div className="fk-group">
@@ -166,7 +166,7 @@ function Flags({ row }: { row: RecordRow }) {
         <p key={i} className={`fk-hint fk-hint--line${f.level === 'info' ? ' hq-hint-info' : ''}`}>
           <Icon name={f.code === 'FIXED_IN_FIELD' ? 'crosshair' : f.level === 'warn' ? 'flag' : 'info'} />
           <span>
-            {f.text} <span className="hq-src">({src(f.source)})</span>
+            <WithSpecies text={f.text} names={[species]} /> <span className="hq-src">({src(f.source)})</span>
           </span>
         </p>
       ))}
@@ -179,8 +179,7 @@ function CoordinateTrail({ row, project }: { row: RecordRow; project?: Project }
   const loc = e.location
   const phone = loc.check
   const hq = row.hq?.coord
-  const used = phone.decision?.kind === 'accepted-suggestion' ? (phone.suggestions.find((s) => s.kind === phone.decision?.suggestionKind) ?? phone.suggestions[0]) : undefined
-  const decisionWord =
+    const decisionWord =
     phone.decision?.kind === 'accepted-suggestion'
       ? 'Accepted the suggestion'
       : phone.decision?.kind === 'kept-original'
@@ -227,11 +226,14 @@ function CoordinateTrail({ row, project }: { row: RecordRow; project?: Project }
               <dd>
                 <ul>
                   {phone.suggestions.map((s, i) => {
-                    const d = s.raw && loc.typed ? CharDiff({ from: loc.typed.raw, to: s.raw }) : undefined
+                    // Mark only the number that changed: 115[13]70 → 115[31]70.
+                    const a = loc.typed?.raw.split(/\s+/) ?? []
+                    const b = s.raw?.split(/\s+/) ?? []
+                    const at = a.findIndex((t, k) => t !== b[k])
+                    const d = s.raw && at >= 0 && a.length === b.length ? CharDiff({ from: a[at]!, to: b[at]! }) : undefined
                     return (
                       <li key={i}>
-                        {s.explain.replace(/\.$/, '')} <Icon name="arrow" label="to" /> {fmtNumber(s.offsetM, 1)} m from the line
-                        {s === used ? ' (used)' : ''}
+                        {s.explain.replace(/\s*\([^)]*\)\.?$/, '').replace(/\.$/, '')} <Icon name="arrow" label="to" /> {fmtNumber(s.offsetM, 1)} m from the line
                         {d && (
                           <span className="hq-digits">
                             {d.old} <Icon name="arrow" label="to" /> {d.new}

@@ -1181,3 +1181,115 @@ label.hq-field {
 button.pg-frow--more:hover {
   background: var(--sec-hover);
 }
+
+.pg-why li .fk-ico {
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+  color: var(--ink-2);
+}
+
+/* A field on a white card is grey (the kit's rule for a field on white). */
+.hq-dlg .fk-card .hq-input,
+.fk-card .hq-input {
+  background: var(--group);
+}
+/* A far-off point that is not the screen's one shout: the red tint family. */
+.fk-band--off-quiet {
+  background: var(--off-tint);
+  color: var(--off-tint-ink);
+}
+.fk-band--off-quiet .fk-mark {
+  color: var(--off-mark);
+  --fk-glyph: var(--off-tint);
+}
+.pg-sug details summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pg-sug details summary::-webkit-details-marker {
+  display: none;
+}
+.pg-sug details summary .fk-ico {
+  width: 15px;
+  height: 15px;
+  transform: rotate(-90deg);
+  transition: transform 0.2s var(--ease);
+}
+.pg-sug details[open] summary .fk-ico {
+  transform: none;
+}
+.pg-paste__foot .hq-check {
+  white-space: nowrap;
+}
+.fk-help .fk-ico--14 {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+}
+
+/* Form: the draft line stays pinned at the foot of the column; "Add a field" folds away. */
+.pg-cols--form .pg-scroll {
+  padding-bottom: 0;
+}
+.pg-draft {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  box-shadow: 0 -12px 16px -8px var(--ground);
+}
+.pg-add {
+  margin-top: 10px;
+}
+.pg-add > summary {
+  list-style: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.pg-add > summary::-webkit-details-marker {
+  display: none;
+}
+.pg-add[open] > summary {
+  font-weight: 600;
+}
+.pg-add .pg-addfield {
+  background: var(--card);
+  border-radius: var(--r-card);
+  margin-top: 6px;
+}
+.pg-tag-prov .fk-ico,
+.fk-tag .fk-ico {
+  width: 14px;
+  height: 14px;
+}
+
+/* The AI reviewer's one line inside the import strip */
+.hq-ai-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+}
+.fk-import__text > b + .hq-ai-line,
+.fk-import__text > ul + .hq-ai-line {
+  margin-top: 2px;
+}
+.hq-ai-line .fk-ico {
+  width: 16px;
+  height: 16px;
+  color: var(--ink-2);
+}
+.fk-import {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.hq-digits {
+  white-space: nowrap;
+}
+.hq-m-note span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}

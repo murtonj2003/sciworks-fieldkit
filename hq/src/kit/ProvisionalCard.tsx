@@ -34,7 +34,7 @@ export function ProvisionalCard({ p, me, onDone }: { p: ProvisionalTaxon; me: st
         </span>
       </div>
       <p className="fk-dym__what">
-        "{p.proposedName}" was added in the field{p.notes ? `: ${p.notes}` : '.'}
+        "<i className="fk-sp">{p.proposedName}</i>" was added in the field{p.notes ? `: ${p.notes}` : '.'}
       </p>
       {matches.length > 0 ? (
         <div className="fk-card fk-dym__opts">
@@ -46,7 +46,9 @@ export function ProvisionalCard({ p, me, onDone }: { p: ProvisionalTaxon; me: st
               <div key={m.taxon.taxonId} className="fk-dym__opt">
                 <span className="fk-dym__n">{i + 1}</span>
                 <div className="fk-dym__change">
-                  <span className="fk-dym__old">"{p.proposedName}"</span>
+                  <span className="fk-dym__old">
+                    "<i className="fk-sp">{p.proposedName}</i>"
+                  </span>
                   <Icon name="arrow" />
                   <span className="fk-dym__new fk-sp" style={{ fontSize: 20 }}>
                     {close ? d.new : genus}
@@ -68,9 +70,11 @@ export function ProvisionalCard({ p, me, onDone }: { p: ProvisionalTaxon; me: st
           })}
         </div>
       ) : (
-        <p className="fk-dym__what" style={{ paddingTop: 8 }}>
-          No close name in the species pack.
-        </p>
+        <div className="fk-card fk-dym__opts">
+          <p className="fk-dym__opt-what" style={{ padding: '10px 14px' }}>
+            No close name in the species pack.
+          </p>
+        </div>
       )}
       <div className="fk-dym__actions">
         <button className="fk-btn fk-btn--secondary" onClick={() => decide('approved')}>

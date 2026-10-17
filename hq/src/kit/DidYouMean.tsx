@@ -10,7 +10,7 @@ import { approveDraft, discardDraft } from '../lib/review'
 import { personName } from '../lib/setup'
 import { shortTime } from '../lib/time'
 import { Icon, Mark } from './Icons'
-import { AiTags } from './ui'
+import { AiTags, WithSpecies } from './ui'
 
 /** Marks what changed between two strings: the old side's removed run, the new side's added run. */
 export function CharDiff({ from, to }: { from: string; to: string }): { old: ReactNode; new: ReactNode } {
@@ -188,7 +188,9 @@ export function DraftCard({ c, row, label, me, pack }: { c: CorrectionRow; row: 
         <h3 className="fk-dym__title">Did you mean?</h3>
         {c.source === 'ai-agent' ? <AiTags /> : <span className="fk-tag fk-tag--draft">Draft</span>}
       </div>
-      <p className="fk-dym__what">{c.reason}</p>
+      <p className="fk-dym__what">
+        <WithSpecies text={c.reason} names={[row.recordType === 'encounter' ? (row.data as Encounter).taxon.scientificName : undefined]} />
+      </p>
       <div className="fk-card fk-dym__body">
         <Change c={c} label={label} />
         {effect && (
@@ -220,12 +222,12 @@ export function DraftCard({ c, row, label, me, pack }: { c: CorrectionRow; row: 
           Discard
         </button>
       </div>
-      <p className="fk-dym__fine">
-        Goes to the surveyor to accept. Nothing changes until they do.{' '}
-        <button className="hq-textlink" onClick={() => setEditing(!editing)} style={{ marginLeft: 'auto', fontWeight: 500, whiteSpace: 'nowrap' }}>
-          {editing ? 'Done editing' : 'Edit first'}
+      <p className="fk-dym__fine">Goes to the surveyor to accept. Nothing changes until they do.</p>
+      <div className="fk-dym__links" style={{ justifyContent: 'flex-end', padding: '0 6px 4px' }}>
+        <button className="hq-textlink" onClick={() => setEditing(!editing)} style={{ fontSize: 13, fontWeight: 500 }}>
+          {editing ? 'Done editing' : 'Edit before approving'}
         </button>
-      </p>
+      </div>
     </section>
   )
 }

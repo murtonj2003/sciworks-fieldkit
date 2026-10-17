@@ -71,3 +71,15 @@ export function Dialog({ title, onClose, children, foot, wide }: { title: string
     </div>
   )
 }
+
+/** Sets the species name in italic wherever it appears inside a sentence (Italic Species rule). */
+export function WithSpecies({ text, names }: { text: string; names: (string | undefined)[] }) {
+  const list = names.filter((n): n is string => !!n && n.length > 3)
+  if (!list.length) return <>{text}</>
+  const re = new RegExp(`(${list.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`)
+  return (
+    <>
+      {text.split(re).map((part, i) => (list.includes(part) ? <i key={i} className="fk-sp">{part}</i> : part))}
+    </>
+  )
+}

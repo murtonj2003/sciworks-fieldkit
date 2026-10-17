@@ -66,6 +66,9 @@ export function FormScreen({ project, template, me }: Props) {
   const next = template.coreVersion + 1
   const count = (t: 'survey' | 'encounter') => allFields.filter((f) => f.recordType === t).length
   const taxonName = (id?: string) => (pack?.value as { taxa: { taxonId: string; scientificName: string }[] } | undefined)?.taxa.find((t) => t.taxonId === id)?.scientificName ?? id
+  // The team change (overlay version) that first added a field: "team change 3".
+  const teamChangeOf = (teamId: string, key?: string) =>
+    key ? overlays.filter((o) => o.teamId === teamId && o.data.addedFields.some((f) => f.key === key)).map((o) => o.overlayRev).sort((a, b) => a - b)[0] : undefined
   const fieldSpec = (teamId: string, key?: string) => overlays.map((o) => (o.teamId === teamId ? o.data.addedFields.find((f) => f.key === key) : undefined)).find(Boolean)
 
   const waiting = changeRequests.filter((c) => !crDecisions.some((d) => d.changeRequestId === c.changeRequestId) && !draft?.acceptedRequestIds.includes(c.changeRequestId))
@@ -160,7 +163,13 @@ export function FormScreen({ project, template, me }: Props) {
             })}
           </div>
 
-          <AddField recordType={recordType} next={next} act={act} />
+          <details className="fk-group pg-add">
+            <summary className="pg-frow pg-frow--more">
+              <Icon name="plus" />
+              Add a field to version {next}
+            </summary>
+            <AddField recordType={recordType} next={next} act={act} />
+          </details>
 
           <div className="fk-group pg-draft">
             <div className="fk-card pg-draft__in">
@@ -225,7 +234,7 @@ export function FormScreen({ project, template, me }: Props) {
       <section className="fk-col" aria-label="Team requests">
         <div className="fk-col-h">
           <h3>Team requests</h3>
-          <span>{waiting.length + openTaxa.length} waiting</span>
+          <span>{waiting.length} waiting</span>
         </div>
         <div className="pg-scroll">
           {waiting.length === 0 && openTaxa.length === 0 && (
@@ -241,7 +250,9 @@ export function FormScreen({ project, template, me }: Props) {
                   <article key={c.changeRequestId} className="fk-card pg-req">
                     <p className="pg-req__who">
                       <Icon name="users" />
-                      {teamName(project, c.teamId)} · {personName(project, c.data.createdBy)} · {shortTime(c.data.createdAt)}
+                      {teamName(project, c.teamId)} · {personName(project, c.data.createdBy)}
+                      {teamChangeOf(c.teamId, c.data.fieldKey) ? ` · team change ${teamChangeOf(c.teamId, c.data.fieldKey)}` : ''}
+                      {c.data.kind === 'promote-team-field' || c.data.kind === 'new-field' ? ' · lands in the core form' : ''}
                     </p>
                     <h4>{c.data.proposal}</h4>
                     {spec && (
@@ -274,7 +285,7 @@ export function FormScreen({ project, template, me }: Props) {
             </div>
           )}
 
-          {openTaxa.length > 0 && <h4 className="fk-gt">Species added in the field</h4>}
+          {openTaxa.length > 0 && <h4 className="fk-gt">Species added in the field · {openTaxa.length}</h4>}
           {openTaxa.map((p) => (
             <ProvisionalCard key={p.provisionalTaxonId} p={p.data} me={me} onDone={(t) => setMessage({ ok: true, text: `${p.data.proposedName}: ${t}.` })} />
           ))}
@@ -305,7 +316,10 @@ export function FormScreen({ project, template, me }: Props) {
                         accepted in v{d.inCoreVersion}
                       </span>
                     ) : (
-                      <span className="fk-tag">declined</span>
+                      <span className="fk-tag">
+                        <Icon name="cross" />
+                        declined
+                      </span>
                     )}
                   </article>
                 )
@@ -319,7 +333,9 @@ export function FormScreen({ project, template, me }: Props) {
                         <Icon name="snake" />
                         {teamName(project, p.teamId)} · added in the field
                       </p>
-                      <h4>"{p.data.proposedName}"</h4>
+                      <h4>
+                        "<i className="fk-sp">{p.data.proposedName}</i>"
+                      </h4>
                     </div>
                     {d.decision === 'mapped' ? (
                       <span className="pg-tag-ok">
@@ -327,9 +343,15 @@ export function FormScreen({ project, template, me }: Props) {
                         <span className="fk-sp">{taxonName(d.taxonId)}</span>
                       </span>
                     ) : d.decision === 'approved' ? (
-                      <span className="pg-tag-prov">kept as provisional</span>
+                      <span className="pg-tag-prov">
+                        <Icon name="snake" />
+                        kept as provisional
+                      </span>
                     ) : (
-                      <span className="fk-tag">rejected</span>
+                      <span className="fk-tag">
+                        <Icon name="cross" />
+                        rejected
+                      </span>
                     )}
                   </article>
                 )
@@ -347,9 +369,7 @@ function AddField({ recordType, next, act }: { recordType: 'encounter' | 'survey
   const [choices, setChoices] = useState('')
   return (
     <>
-      <h4 className="fk-gt">Add a field to version {next}</h4>
       <form
-        className="fk-group"
         onSubmit={(e) => {
           e.preventDefault()
           void act(() => addField({ ...nf, recordType, choices: choices.split(',').map((c) => c.trim()).filter(Boolean) }), `Added "${nf.label}" to version ${next} (draft).`).then(() => {
