@@ -206,7 +206,7 @@ export function Tag({ label, icon, outline, dashed, venomous }: { label: string;
       }}
     >
       {icon && <Icon name={icon} size={14} color={fg} />}
-      <Text style={[type.small, { color: fg, fontWeight: venomous ? '800' : '600', letterSpacing: venomous ? 0.8 : 0 }]}>{label}</Text>
+      <Text style={[type.small, venomous ? { fontSize: 12, fontWeight: '700', letterSpacing: 0.72 } : { fontWeight: '600' }, { color: fg }]}>{label}</Text>
     </View>
   );
 }

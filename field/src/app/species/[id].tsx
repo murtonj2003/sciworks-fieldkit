@@ -9,7 +9,7 @@ import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-na
 
 import { Icon } from '@/components/Icon';
 import { BottomBar, Button, Group, GroupTitle, T, Tag } from '@/components/ui';
-import { getRecord, saveDraftNow } from '@/db/records';
+import { getRecord, listRecords, saveDraftNow } from '@/db/records';
 import { listProvisionalTaxa } from '@/db/team';
 import { touched } from '@/model/factory';
 import { effectiveFields } from '@/model/form';
@@ -30,15 +30,18 @@ const useStyles = makeStyles((t) => ({
   q: { fontSize: 20, color: t.ink, flex: 1, minWidth: 0, minHeight: 56, paddingVertical: 0, ...WEB_NO_OUTLINE },
   list: { backgroundColor: t.card, borderRadius: radius.card, overflow: 'hidden' },
   row: { minHeight: 56, paddingVertical: 10, paddingHorizontal: 14, justifyContent: 'center', gap: 3 },
+  rowTall: { minHeight: 70, paddingTop: 11, paddingBottom: 10, justifyContent: 'flex-start' },
   sep: { height: 1, backgroundColor: t.hair, marginLeft: 14 },
   line: { flexDirection: 'row', alignItems: 'baseline', gap: 12 },
   name: { ...type.body, fontStyle: 'italic', color: t.ink, flexShrink: 1 },
   fam: { ...type.sub, color: t.ink2, marginLeft: 'auto' },
   note: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   noteText: { ...type.sub, color: t.ink2 },
-  prov: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.ink2, borderRadius: radius.card },
+  prov: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.ink2, borderRadius: radius.card, minHeight: 64, paddingVertical: 9, paddingHorizontal: 13, gap: 2, justifyContent: 'center' },
   rowBtn: { minHeight: 56, borderRadius: radius.card, backgroundColor: t.sec, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18 },
   rowBtnText: { ...type.title, color: t.ink, flex: 1 },
+  pill: { height: 30, paddingHorizontal: 10, borderRadius: radius.pill, backgroundColor: t.group, alignItems: 'center', justifyContent: 'center', marginRight: 4 },
+  pillText: { ...type.small, fontWeight: '600', color: t.ink },
 }));
 
 export default function SpeciesPicker() {
@@ -60,6 +63,14 @@ export default function SpeciesPicker() {
     if (!q.trim()) return list.map((taxon) => ({ taxon }));
     return searchTaxa(q, list, { limit: list.length }).map((match) => ({ taxon: match.taxon, match }));
   }, [pack, subset, all, q]);
+  const animalNumber = useMemo(() => {
+    const me = getRecord<LocalEncounter>(id);
+    if (!me) return 1;
+    const sibs = listRecords<LocalEncounter>('encounter')
+      .filter((o) => o.surveyId === me.surveyId && o.status === 'active')
+      .sort((a, b) => a.observedAt.localeCompare(b.observedAt));
+    return Math.max(1, sibs.findIndex((o) => o.id === me.id) + 1);
+  }, [id]);
   const shortlist = useMemo(() => (subset ? (pack?.taxa ?? []).filter((x) => subset.includes(x.taxonId)) : []), [pack, subset]);
 
   function choose(change: (e: LocalEncounter) => LocalEncounter) {
@@ -82,16 +93,17 @@ export default function SpeciesPicker() {
       },
     }));
 
-  /** Bold the typed start of the name when the match is on the start (kit: "<b>Lept</b>odeira ornata"). */
+  /** Bold the shared start of what was typed and the name, when it is 3+ letters (kit: "**Lept**odeira ornata"). */
   const nameWithMatch = (item: RowItem) => {
     const name = item.taxon.scientificName;
-    const typed = q.trim();
-    const onStart = item.match && (item.match.reason === 'exact' || item.match.reason === 'starts-with') && name.toLowerCase().startsWith(typed.toLowerCase());
-    if (!onStart) return <Text style={s.name}>{name}</Text>;
+    const typed = q.trim().toLowerCase();
+    let n = 0;
+    while (n < typed.length && n < name.length && typed[n] === name[n]!.toLowerCase()) n++;
+    if (n < 3) return <Text style={s.name}>{name}</Text>;
     return (
       <Text style={s.name}>
-        <Text style={{ fontWeight: '700' }}>{name.slice(0, typed.length)}</Text>
-        {name.slice(typed.length)}
+        <Text style={{ fontWeight: '700' }}>{name.slice(0, n)}</Text>
+        {name.slice(n)}
       </Text>
     );
   };
@@ -105,20 +117,23 @@ export default function SpeciesPicker() {
           accessibilityRole="button"
           accessibilityLabel={`${item.taxon.scientificName}, ${item.taxon.family ?? ''}${item.taxon.dangerous ? ', venomous' : ''}${close ? ', close match' : ''}`}
           onPress={() => pickTaxon(item.taxon)}
-          style={({ pressed }) => [s.row, pressed && { backgroundColor: t.secPress }]}
+          style={({ pressed }) => [s.row, (close || item.taxon.dangerous) && s.rowTall, pressed && { backgroundColor: t.secPress }]}
         >
           <View style={s.line}>
             {nameWithMatch(item)}
             {item.taxon.family ? <Text style={s.fam}>{item.taxon.family}</Text> : null}
           </View>
-          {item.taxon.commonName ? <Text style={s.noteText}>{item.taxon.commonName}</Text> : null}
           {close && (
             <View style={s.note}>
               <Icon name="spell" size={16} color={t.ink2} />
               <Text style={s.noteText}>Close match for “{q.trim()}”</Text>
             </View>
           )}
-          {item.taxon.dangerous && <Tag label="VENOMOUS" venomous />}
+          {item.taxon.dangerous && (
+            <View style={{ marginTop: 5 }}>
+              <Tag label="VENOMOUS" venomous />
+            </View>
+          )}
         </Pressable>
       </View>
     );
@@ -128,10 +143,19 @@ export default function SpeciesPicker() {
 
   return (
     <View style={s.wrap}>
-      <Stack.Screen options={{ title: 'Choose species' }} />
+      <Stack.Screen
+        options={{
+          title: 'Choose species',
+          headerRight: () => (
+            <View style={s.pill}>
+              <Text style={s.pillText}>Animal {animalNumber}</Text>
+            </View>
+          ),
+        }}
+      />
       <ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
         <View style={[s.search, focus && s.searchFocus]}>
-          <Icon name="search" size={20} color={t.ink2} />
+          <Icon name="search" size={22} color={t.ink2} />
           <TextInput
             style={s.q}
             value={q}
@@ -155,15 +179,45 @@ export default function SpeciesPicker() {
           </View>
         )}
 
-        <GroupTitle>{q.trim() ? 'Results' : subset && !all ? 'Team shortlist' : 'Species in the pack'}</GroupTitle>
-        <Group>
+        {rows.length > 0 && <GroupTitle>{q.trim() ? 'Results' : subset && !all ? 'Team shortlist' : 'Species in the pack'}</GroupTitle>}
+        <Group style={rows.length === 0 ? { marginTop: 12 } : undefined}>
+          {!q.trim() &&
+            provisional.map((p) => (
+              <Pressable
+                key={p.provisionalTaxonId}
+                accessibilityRole="button"
+                style={({ pressed }) => [s.prov, pressed && { backgroundColor: t.grey }]}
+                onPress={() =>
+                  choose((e) => ({
+                    ...e,
+                    taxon: {
+                      provisionalTaxonId: p.provisionalTaxonId,
+                      scientificName: p.proposedName,
+                      idBasis: e.taxon.idBasis === 'photo-later' || e.taxon.idBasis === 'scale-key' ? 'in-hand' : e.taxon.idBasis,
+                    },
+                  }))
+                }
+              >
+                <Text style={s.name}>
+                  {p.proposedName.split(/(\bsp\.)/).map((part, k) => (
+                    <Text key={k} style={part === 'sp.' ? { fontStyle: 'normal' } : undefined}>
+                      {part}
+                    </Text>
+                  ))}
+                </Text>
+                <Text style={s.noteText}>Added in the field · provisional until HQ decides</Text>
+              </Pressable>
+            ))}
           {rows.length > 0 ? (
             <View style={s.list}>{rows.map(speciesRow)}</View>
           ) : (
-            <View style={[s.list, { padding: 16, alignItems: 'center', gap: 4 }]}>
-              <T v="title">Nothing matches “{q.trim()}”</T>
-              <T v="sub" dim>
-                Try fewer letters, or mark it unidentified and take a photo.
+            <View style={[s.list, { paddingVertical: 28, paddingHorizontal: 20, alignItems: 'center', gap: 6 }]}>
+              <Icon name="search" size={24} color={t.ink2} />
+              <T v="title" style={{ textAlign: 'center' }}>
+                Nothing matches “{q.trim()}”.
+              </T>
+              <T v="sub" dim style={{ textAlign: 'center' }}>
+                Try fewer letters, or mark it Unidentified + photo.
               </T>
             </View>
           )}
@@ -178,34 +232,6 @@ export default function SpeciesPicker() {
           </>
         )}
 
-        {provisional.length > 0 && (
-          <>
-            <GroupTitle>Added in the field</GroupTitle>
-            <Group>
-              {provisional.map((p) => (
-                <Pressable
-                  key={p.provisionalTaxonId}
-                  accessibilityRole="button"
-                  style={({ pressed }) => [s.list, s.prov, s.row, pressed && { backgroundColor: t.secPress }]}
-                  onPress={() =>
-                    choose((e) => ({
-                      ...e,
-                      taxon: {
-                        provisionalTaxonId: p.provisionalTaxonId,
-                        scientificName: p.proposedName,
-                        idBasis: e.taxon.idBasis === 'photo-later' || e.taxon.idBasis === 'scale-key' ? 'in-hand' : e.taxon.idBasis,
-                      },
-                    }))
-                  }
-                >
-                  <Text style={s.name}>{p.proposedName}</Text>
-                  <Text style={s.noteText}>Provisional until HQ decides</Text>
-                </Pressable>
-              ))}
-            </Group>
-          </>
-        )}
-
         {pack && (
           <T v="small" dim style={{ marginTop: 14, marginHorizontal: 4, fontWeight: '400' }}>
             {pack.disclaimer}
@@ -214,7 +240,7 @@ export default function SpeciesPicker() {
       </ScrollView>
 
       <BottomBar>
-        <Group>
+        <Group style={{ gap: 6 }}>
           <Pressable
             accessibilityRole="button"
             style={({ pressed }) => [s.rowBtn, pressed && { backgroundColor: t.secPress }]}
