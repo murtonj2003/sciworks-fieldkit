@@ -178,6 +178,19 @@ export const taxonSchema = z.looseObject({
     .optional(),
 });
 
+export const speciesPhotoSchema = z.looseObject({
+  taxonId: z.string(),
+  file: z.string(),
+  bytes: z.number(),
+  sha256: z.string(),
+  widthPx: z.number(),
+  heightPx: z.number(),
+  licence: z.string(),
+  credit: z.string(),
+  source: z.string(),
+  originalUrl: z.string().optional(),
+});
+
 export const basemapSchema = z.looseObject({
   basemapId: code,
   name: z.string(),

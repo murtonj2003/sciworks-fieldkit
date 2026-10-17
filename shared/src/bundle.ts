@@ -7,6 +7,7 @@ import { bytesToHex } from '@noble/hashes/utils.js';
 import type { z } from 'zod';
 import {
   basemapSchema,
+  speciesPhotoSchema,
   changeRequestDecisionSchema,
   changeRequestSchema,
   correctionRequestSchema,
@@ -28,6 +29,7 @@ import {
 import {
   CONTRACT_VERSION,
   type Basemap,
+  type SpeciesPhoto,
   type ChangeRequest,
   type ChangeRequestDecision,
   type Code,
@@ -72,6 +74,8 @@ export const HQ_PATHS = {
   attribution: 'setup/attribution.md',
   /** The pictures themselves sit at each Basemap's `file`, e.g. 'setup/basemaps/<id>.jpg'. */
   basemaps: 'setup/basemaps.json',
+  /** Each photo sits at its `file`, e.g. 'setup/species-photos/<taxon>.jpg'. */
+  speciesPhotos: 'setup/species-photos.json',
   receipts: 'feedback/receipts.json',
   reviews: 'feedback/reviews.json',
   corrections: 'feedback/corrections.json',
@@ -92,6 +96,7 @@ const ARRAY_SCHEMAS: Record<string, z.ZodType> = {
   [HQ_PATHS.taxonDecisions]: taxonDecisionSchema,
   [HQ_PATHS.changeRequestDecisions]: changeRequestDecisionSchema,
   [HQ_PATHS.basemaps]: basemapSchema,
+  [HQ_PATHS.speciesPhotos]: speciesPhotoSchema,
 };
 
 const OBJECT_SCHEMAS: Record<string, z.ZodType> = {
@@ -162,6 +167,11 @@ export function writeBundle(input: WriteBundleInput): Uint8Array {
     for (const b of p.basemaps ?? []) {
       const bytes = p.basemapFiles?.[b.basemapId];
       if (bytes) files[b.file] = { bytes };
+    }
+    put(HQ_PATHS.speciesPhotos, p.speciesPhotos);
+    for (const ph of p.speciesPhotos ?? []) {
+      const bytes = p.speciesPhotoFiles?.[ph.taxonId];
+      if (bytes) files[ph.file] = { bytes };
     }
   }
 
@@ -374,6 +384,17 @@ export function readBundle(bytes: Uint8Array): ReadBundleResult {
     }
     basemapFiles[b.basemapId] = file;
   }
+  const speciesPhotos = readArray<SpeciesPhoto>(HQ_PATHS.speciesPhotos);
+  const speciesPhotoFiles: Record<string, Uint8Array> = {};
+  for (const ph of speciesPhotos ?? []) {
+    const file = good[ph.file];
+    if (!file) continue; // already reported as missing or damaged
+    if (sha256Hex(file) !== ph.sha256) {
+      problems.push({ path: ph.file, message: 'Photo bytes do not match the species photo checksum. Skipped.' });
+      continue;
+    }
+    speciesPhotoFiles[ph.taxonId] = file;
+  }
   return {
     ok: true,
     manifest,
@@ -391,6 +412,8 @@ export function readBundle(bytes: Uint8Array): ReadBundleResult {
       changeRequestDecisions: readArray<ChangeRequestDecision>(HQ_PATHS.changeRequestDecisions),
       basemaps,
       basemapFiles: basemaps ? basemapFiles : undefined,
+      speciesPhotos,
+      speciesPhotoFiles: speciesPhotos ? speciesPhotoFiles : undefined,
     }),
     problems,
     rejected,

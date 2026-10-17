@@ -14,6 +14,7 @@ import {
   sha256Hex,
   writeBundle,
   type Basemap,
+  type SpeciesPhoto,
   type ChangeRequest,
   type CorrectionRequest,
   type Encounter,
@@ -43,6 +44,11 @@ export const speciesPack = readJson<SpeciesPack>('species-pack.json');
 export const attribution = readFileSync(join(DEMO, 'attribution.md'), 'utf8');
 // The satellite picture is made by demo-data/basemaps/make-basemap.py (needs rasterio); its output is committed.
 export const basemaps = readJson<Basemap[]>('basemaps/index.json');
+// One small CC BY / CC0 photo per species, made by demo-data/species-photos/make-species-photos.py (committed output).
+export const speciesPhotos = readJson<SpeciesPhoto[]>('species-photos/index.json');
+export const speciesPhotoFiles = Object.fromEntries(
+  speciesPhotos.map((p) => [p.taxonId, new Uint8Array(readFileSync(join(DEMO, 'species-photos', p.file.split('/').pop()!)))]),
+);
 export const basemapFiles = Object.fromEntries(
   basemaps.map((b) => [b.basemapId, new Uint8Array(readFileSync(join(DEMO, 'basemaps', `${b.basemapId}.jpg`)))]),
 );
@@ -264,7 +270,7 @@ export function buildHqBundle(): Uint8Array {
     bundleType: 'hq', bundleId: IDS.hqBundle, createdAt: '2026-10-17T07:30:00-06:00',
     createdBy: { app: 'hq', appVersion: '0.1.0-fixture', personId: 'p-dm' },
     projectId: 'cr-herps', teamId: 'team-b', coreVersion: 1, overlayRev: 2,
-    parts: { project, template, overlay, transects, speciesPack, attribution, receipts, reviews, corrections, taxonDecisions: [], changeRequestDecisions: [], basemaps, basemapFiles },
+    parts: { project, template, overlay, transects, speciesPack, attribution, receipts, reviews, corrections, taxonDecisions: [], changeRequestDecisions: [], basemaps, basemapFiles, speciesPhotos, speciesPhotoFiles },
   });
 }
 

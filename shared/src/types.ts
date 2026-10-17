@@ -261,6 +261,26 @@ export interface SpeciesPack {
 }
 
 /**
+ * One small photo of a species for the picker and the field notebook, offline. CC BY 4.0 or CC0 only; show
+ * `credit` wherever the photo is visible. Sent HQ → phone in the HQ bundle. Added Sat 17 Oct (additive).
+ */
+export interface SpeciesPhoto {
+  taxonId: string;
+  /** Path inside the bundle, e.g. 'setup/species-photos/gbif-5220796.jpg'. */
+  file: string;
+  bytes: number;
+  sha256: string;
+  widthPx: number;
+  heightPx: number;
+  licence: string;
+  /** "Name · CC BY 4.0 · via iNaturalist / GBIF". **Show it with the photo.** */
+  credit: string;
+  /** The GBIF occurrence the photo belongs to. */
+  source: string;
+  originalUrl?: string;
+}
+
+/**
  * A picture to draw under the transect lines, offline: a satellite image cut to the project area. It is a plain
  * lat/lon grid (EPSG:4326), north up, so its four corners are just `bounds`. Sent HQ → phone in the HQ bundle.
  * Added Sat 17 Oct 17:00 (additive: older apps ignore it).
@@ -683,4 +703,8 @@ export interface HqBundleParts {
   basemaps?: Basemap[];
   /** Picture bytes by basemapId. Only checksum-verified files are returned on read. */
   basemapFiles?: Record<Code, Uint8Array>;
+  /** One small photo per species (optional). */
+  speciesPhotos?: SpeciesPhoto[];
+  /** Photo bytes by taxonId. Only checksum-verified files are returned on read. */
+  speciesPhotoFiles?: Record<string, Uint8Array>;
 }
