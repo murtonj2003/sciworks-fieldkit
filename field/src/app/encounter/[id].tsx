@@ -75,6 +75,7 @@ export default function EncounterScreen() {
             {e.taxon.idBasis === 'scale-key' && <Text style={fs.small}>Suggested by the scale key, chosen by you</Text>}
             <View style={styles.row}>
               <Button label="Pick species" style={styles.flex} onPress={() => router.push({ pathname: '/species/[id]', params: { id } })} />
+              <Button label="Scale key" kind="secondary" style={styles.flex} onPress={() => router.push({ pathname: '/key/[id]', params: { id } })} />
             </View>
             <Chips
               options={ID_BASIS.map((b) => ({ code: b.code, label: b.label }))}
