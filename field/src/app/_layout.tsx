@@ -31,6 +31,7 @@ export default function RootLayout() {
         <Stack.Screen name="survey/[id]" options={{ title: 'Survey' }} />
         <Stack.Screen name="encounter/[id]" options={{ title: 'Animal' }} />
         <Stack.Screen name="species/[id]" options={{ title: 'Choose species' }} />
+        <Stack.Screen name="handover" options={{ title: 'Hand over to HQ' }} />
       </Stack>
     </FieldProvider>
   );

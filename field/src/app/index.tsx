@@ -41,6 +41,7 @@ export default function Home() {
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <CounterBar />
+      {project && <Button label="Send to HQ / receive from HQ" kind="secondary" onPress={() => router.push('/handover')} />}
 
       {recovered > 0 && (
         <Card>
@@ -56,6 +57,7 @@ export default function Home() {
           <H1>Set up this phone</H1>
           <P>Load the project your Data Manager prepared. The demo project is built into the app, so this works offline.</P>
           <Button label={busy ? 'Loading…' : 'Load demo project'} onPress={loadDemo} disabled={busy} />
+          <Button label="Receive a project from HQ (file)" kind="secondary" onPress={() => router.push('/handover')} />
         </Card>
       )}
 
