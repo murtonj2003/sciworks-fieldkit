@@ -16,5 +16,10 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
+  ],
+  "exclude": [
+    "test",
+    "vitest.config.mts",
+    "node_modules"
   ]
 }
