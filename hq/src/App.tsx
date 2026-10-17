@@ -11,6 +11,7 @@ import { DEFAULT_FILTER, Queue, applyFilter, sortRows, type QueueFilter } from '
 import { DevicesPanel, ExportDialog, HqBundleDialog } from './components/Dialogs'
 import { AiPanel } from './components/AiPanel'
 import { FormDialog } from './components/FormDialog'
+import { PointsDialog } from './components/PointsDialog'
 import { runReview, scopeToReview } from './lib/ai/agent'
 import { getApiKey, getAutoReview } from './lib/ai/apiKey'
 import { loadDemoProject, loadSampleFieldBundle } from './lib/demo'
@@ -19,7 +20,7 @@ import { importBundleFile, summaryLine } from './lib/importBundle'
 import { setStatus } from './lib/review'
 import { dataManagerOf, loadSetup } from './lib/setup'
 
-type Dialog = 'none' | 'hq-bundle' | 'export' | 'devices' | 'ai' | 'form'
+type Dialog = 'none' | 'hq-bundle' | 'export' | 'devices' | 'ai' | 'form' | 'points'
 
 export default function App() {
   const setup = useLiveQuery(() => loadSetup(), [], undefined)
@@ -273,6 +274,9 @@ export default function App() {
               <button className="btn btn-quiet" onClick={() => runOne(loadSampleFieldBundle)} disabled={busy || !project}>
                 Import sample Field bundle
               </button>
+              <button className="btn btn-quiet" onClick={() => setDialog('points')} disabled={!project}>
+                Check a list of points
+              </button>
               <button
                 className="btn btn-quiet"
                 onClick={async () => {
@@ -387,6 +391,7 @@ export default function App() {
       {dialog === 'hq-bundle' && project && <HqBundleDialog project={project} onClose={() => setDialog('none')} />}
       {dialog === 'export' && project && setup && <ExportDialog setup={setup} onClose={() => setDialog('none')} onSelect={(k) => (setSelectedKey(k), setDialog('none'))} />}
       {dialog === 'devices' && <DevicesPanel project={project} onClose={() => setDialog('none')} />}
+      {dialog === 'points' && project && <PointsDialog project={project} onClose={() => setDialog('none')} />}
       {dialog === 'form' && <FormDialog project={project} template={setup?.template} me={me.personId} onClose={() => setDialog('none')} />}
       {dialog === 'ai' && (
         <AiPanel
