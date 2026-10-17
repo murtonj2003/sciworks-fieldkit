@@ -7,7 +7,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CounterBar } from '@/components/CounterBar';
-import { Icon } from '@/components/Icon';
+import { BandMarker, Icon } from '@/components/Icon';
 import type { IconName } from '@/components/sprite';
 import { BottomBar, Button, Group, GroupTitle, Row, T, Tag } from '@/components/ui';
 import { listRecords, saveDraftNow, seal } from '@/db/records';
@@ -23,6 +23,10 @@ import { pendingCount } from '@/sync/corrections';
 import { receiveHqBundle, type ReceiveResult } from '@/sync/receiveHq';
 import { makeStyles, useTheme } from '@/theme/ThemeProvider';
 import { radius, type } from '@/theme/theme';
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** '2026-10-16' → '16 Oct'. */
+const shortDate = (d: string) => `${Number(d.slice(8, 10))} ${MONTHS[Number(d.slice(5, 7)) - 1] ?? ''}`;
 
 const useStyles = makeStyles((t) => ({
   wrap: { flex: 1, backgroundColor: t.ground },
@@ -98,10 +102,12 @@ export default function Home() {
           <Icon name={icon} size={18} color={t.ink} />
         </View>
         <View style={{ flex: 1, gap: 1 }}>
-          <Text style={[s.rowTitle, { flex: 0 }]}>{label}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <Text style={[s.rowTitle, { flex: 1 }]}>{label}</Text>
+            {end}
+          </View>
           {sub ? <Text style={[type.sub, { color: t.ink2 }]}>{sub}</Text> : null}
         </View>
-        {end}
         <Icon name="chev" size={16} color={t.ink2} strokeWidth={2.25} />
       </Pressable>
     </View>
@@ -114,7 +120,7 @@ export default function Home() {
           <T v="display">Fieldkit</T>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 }}>
             {person && (
-              <Pressable accessibilityRole="button" accessibilityLabel={`${person.name}, ${team?.name ?? ''}. Switch person.`} onPress={() => router.push('/person')} style={s.pill}>
+              <Pressable accessibilityRole="button" accessibilityLabel={`${person.name}, ${team?.name ?? ''}. Switch person.`} onPress={() => router.push('/person')} hitSlop={{ top: 9, bottom: 9 }} style={s.pill}>
                 <Icon name="user" size={15} color={t.ink2} />
                 <Text style={s.pillText} numberOfLines={1}>
                   {person.name} · {team?.name ?? person.teamId}
@@ -150,9 +156,9 @@ export default function Home() {
 
         {recovered > 0 && (
           <Group>
-            <Row style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-              <Icon name="check-circle" size={20} color={t.onMark} strokeWidth={2} />
-              <T v="sub" style={{ flex: 1 }}>
+            <Row style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', backgroundColor: t.onFill, paddingTop: 11, paddingBottom: 12 }}>
+              <BandMarker band="green" size={20} />
+              <T v="sub" color={t.onInk} style={{ flex: 1 }}>
                 Recovered {recovered} {recovered === 1 ? 'record that was' : 'records that were'} still being typed when the app closed. Nothing was lost.
               </T>
             </Row>
@@ -285,11 +291,10 @@ export default function Home() {
                       >
                         <View style={{ flex: 1, gap: 2 }}>
                           <T v="body">
-                            {sv.transectId} · {sv.date} · {clockOf(sv.startedAt)}
-                            {sv.finishedAt ? `–${clockOf(sv.finishedAt)}` : ''}
+                            {sv.transectId} · {shortDate(sv.date)} · {clockOf(sv.startedAt)}
+                            {sv.finishedAt ? `–${clockOf(sv.finishedAt)}` : ' · in progress'}
                           </T>
                           <T v="sub" dim>
-                            {sv.finishedAt ? '' : 'In progress · '}
                             {n} {n === 1 ? 'animal' : 'animals'}
                             {k > 0 ? ` · ${k} incomplete` : ''}
                           </T>
@@ -310,10 +315,18 @@ export default function Home() {
         )}
 
         {project && (
-          <T v="small" dim style={{ marginTop: 8, marginHorizontal: 4, fontWeight: '400' }}>
-            {project.name} · form {template?.templateId} version {template?.coreVersion}
-            {overlay ? ` + team change ${overlay.overlayRev}` : ''} · {pack?.taxa.length ?? 0} species in the pack. {pack?.disclaimer.split('.')[0]}.
-          </T>
+          <View style={{ marginTop: 16, marginHorizontal: 14, gap: 3 }}>
+            <T v="label">{project.name}</T>
+            <T v="small" dim style={{ fontWeight: '400' }}>
+              Form {template?.templateId} v{template?.coreVersion}
+              {overlay ? ` · team change ${overlay.overlayRev}` : ''} · {pack?.taxa.length ?? 0} species in the pack
+            </T>
+            {pack && (
+              <T v="small" dim style={{ fontWeight: '400' }}>
+                {pack.disclaimer.split('.')[0]}.
+              </T>
+            )}
+          </View>
         )}
       </ScrollView>
 

@@ -27,7 +27,7 @@ export function CounterBar({ onPress }: { onPress?: () => void }) {
         <Text style={num}>{counter.recordsNotWithHq}</Text> {plural(counter.recordsNotWithHq, 'record', 'records')} ·{' '}
         <Text style={num}>{counter.photosNotWithHq}</Text> {plural(counter.photosNotWithHq, 'photo', 'photos')} not with HQ
       </Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 6 }}>
         <View
           style={{
             width: 22,
@@ -36,12 +36,13 @@ export function CounterBar({ onPress }: { onPress?: () => void }) {
             backgroundColor: safe ? t.onInk : t.nearFill,
             alignItems: 'center',
             justifyContent: 'center',
+            marginTop: -1,
           }}
         >
           <Icon name={safe ? 'check' : 'up'} size={14} color={safe ? t.onFill : t.nearInk} strokeWidth={2.5} />
         </View>
         <Text style={[type.sub, { color: sub, flex: 1 }]}>
-          Last handover {daysAgo(counter.lastHandoverAt)} · {counter.totalRecords} {plural(counter.totalRecords, 'record', 'records')} and{' '}
+          {counter.lastHandoverAt ? `Last handover ${daysAgo(counter.lastHandoverAt)}` : 'No handover yet'} · {counter.totalRecords} {plural(counter.totalRecords, 'record', 'records')} and{' '}
           {counter.totalPhotos} {plural(counter.totalPhotos, 'photo', 'photos')} on this phone
         </Text>
       </View>
