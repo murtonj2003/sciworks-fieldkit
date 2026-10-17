@@ -458,25 +458,54 @@ html {
 .hq-note-row p {
   flex: 1;
 }
+/* photos: what the surveyor took ("Image taken") beside the species pack's photo, first in the record */
+.hq-photos-g {
+  margin-bottom: 12px;
+  padding: 6px;
+}
 .hq-photos {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
-  padding: 6px;
 }
 .hq-photos figure {
   margin: 0;
+  padding: 6px;
+  border-radius: var(--r-card);
 }
-.hq-photos img {
+.hq-photos img,
+.hq-photos__ph {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 10;
   object-fit: cover;
-  border-radius: 10px;
-  background: var(--ground);
+  border-radius: var(--r-tile);
+  background: var(--tile);
+}
+.hq-photos__ph {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.hq-photos__ph .fk-ico {
+  width: 24px;
+  height: 24px;
 }
 .hq-photos figcaption {
-  padding: 4px 2px 0;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 2px 0;
+  line-height: 1.3;
+}
+.hq-photos figcaption b {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.hq-photos figcaption span {
   font-size: 12px;
   color: var(--ink-2);
 }
@@ -1356,4 +1385,352 @@ button.pg-frow--more:hover {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+
+/* ---------- top bar: icon buttons name themselves on hover or keyboard focus ---------- */
+.hq-tip {
+  position: relative;
+}
+.hq-tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  z-index: 40;
+  transform: translate(-50%, -2px);
+  padding: 5px 9px 6px;
+  border-radius: 8px;
+  background: var(--pri);
+  color: var(--on-pri);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.12s var(--ease),
+    transform 0.12s var(--ease);
+}
+.hq-tip--start::after {
+  left: 0;
+  transform: translate(0, -2px);
+}
+.hq-tip--end::after {
+  left: auto;
+  right: 0;
+  transform: translate(0, -2px);
+}
+.hq-tip:hover::after,
+.hq-tip:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-delay: 0.25s;
+}
+.hq-tip--start:hover::after,
+.hq-tip--start:focus-visible::after,
+.hq-tip--end:hover::after,
+.hq-tip--end:focus-visible::after {
+  transform: translate(0, 0);
+}
+.hq-menu[open] > .hq-tip::after {
+  opacity: 0;
+}
+.hq-busy-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--near-mark);
+  box-shadow: 0 0 0 2px var(--grey);
+}
+
+/* ---------- project menu: the project chip opens the list of project folders ---------- */
+.hq-proj {
+  cursor: pointer;
+  list-style: none;
+}
+.hq-proj::-webkit-details-marker {
+  display: none;
+}
+.hq-proj:hover,
+.hq-projmenu[open] > .hq-proj {
+  background: var(--grey-hover);
+}
+.hq-proj .hq-proj__chev {
+  width: 15px;
+  height: 15px;
+  margin-left: 2px;
+}
+.hq-menu__body--left {
+  left: 0;
+  right: auto;
+  width: 330px;
+}
+.hq-menu__head {
+  padding: 10px 10px 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.hq-menu__head:first-child {
+  padding-top: 4px;
+}
+.hq-menu__name {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
+}
+.hq-menu__name small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+.hq-menu__body .fk-row .hq-menu__on {
+  margin-left: auto;
+  color: var(--ink);
+}
+.hq-menu__body .fk-row[aria-current='true'] {
+  font-weight: 600;
+}
+.hq-menu__sep {
+  height: 1px;
+  margin: 6px 4px;
+  background: var(--hair);
+}
+
+/* ---------- side panels fold to slim rails (option A); the map takes the room ---------- */
+.fk-cols.hq-cols {
+  grid-template-columns: 360px minmax(0, 1fr) 392px;
+}
+.fk-cols.hq-cols.hq-q-rail {
+  grid-template-columns: 56px minmax(0, 1fr) 392px;
+}
+.fk-cols.hq-cols.hq-r-rail {
+  grid-template-columns: 360px minmax(0, 1fr) 56px;
+}
+.fk-cols.hq-cols.hq-q-rail.hq-r-rail {
+  grid-template-columns: 56px minmax(0, 1fr) 56px;
+}
+.hq-col-h__l,
+.hq-col-h__r {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hq-fold {
+  flex: none;
+}
+.hq-flip {
+  transform: rotate(180deg);
+}
+.hq-rail__h {
+  justify-content: center;
+}
+.hq-rail__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  min-height: 0;
+  padding: 14px 0;
+  border-radius: var(--r-group);
+  background: var(--group);
+  color: var(--ink);
+  cursor: pointer;
+}
+.hq-rail__body:hover {
+  background: var(--grey-hover);
+}
+.hq-rail__n {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.hq-rail__n .fk-ico {
+  width: 18px;
+  height: 18px;
+  color: var(--ink-2);
+}
+.hq-rail__n b {
+  min-width: 28px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 24px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.hq-rail__n.is-flag b {
+  background: var(--near-fill);
+  color: var(--near-ink);
+}
+.hq-rail__st {
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+}
+.hq-rail__sub {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.hq-rail__lbl {
+  margin-top: 4px;
+  overflow: hidden;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------- map: the minus button rests when the whole satellite picture is showing ---------- */
+.fk-zoom button:disabled {
+  color: var(--dis-ink);
+  cursor: default;
+}
+.fk-zoom button:disabled:hover {
+  background: var(--card);
+}
+
+/* ---------- AI reviewer: tags say what it is; results sorted into Drafts · Notes · Summary · Steps ---------- */
+.hq-ai-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+.hq-ai-set {
+  margin-bottom: 14px;
+}
+.hq-ai-key {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 8px 8px 14px;
+  font-size: 14px;
+}
+form.hq-ai-key {
+  padding: 6px;
+}
+.hq-ai-key .hq-input {
+  flex: 1;
+  min-width: 0;
+}
+.hq-ai-set__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 8px 4px;
+}
+.hq-ai-run {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px 10px;
+}
+.hq-ai-run h3 {
+  font-size: 17px;
+  font-weight: 600;
+}
+.hq-ai-tabs {
+  display: flex;
+  margin-bottom: 6px;
+}
+.hq-ai-tabs__n {
+  display: inline-block;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--group);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.hq-ai-tabs > button[aria-checked='false'] .hq-ai-tabs__n {
+  background: var(--card);
+}
+.hq-ai-pane {
+  min-height: 7.5rem;
+  max-height: 18rem;
+  overflow: auto;
+}
+.hq-ai-why {
+  margin-right: auto;
+  align-self: center;
+  color: var(--ink-2);
+}
+.hq-ai-key__lock {
+  flex: none;
+}
+.hq-ai-steps {
+  padding: 8px 8px 2px;
+}
+.hq-ai-item__old,
+.hq-ai-item__chg .fk-ico {
+  color: var(--ink-2);
+}
+.hq-ai-item {
+  position: relative;
+  padding: 11px 14px 12px;
+}
+.hq-ai-item + .hq-ai-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 14px;
+  left: 14px;
+  height: 1px;
+  background: var(--hair);
+}
+.hq-ai-item__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.hq-ai-item__chg {
+  margin-top: 4px;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.hq-ai-item__chg .fk-ico {
+  width: 15px;
+  height: 15px;
+  margin: 0 2px;
+}
+.hq-ai-item__why {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+.hq-ai-none {
+  padding: 14px;
+  font-size: 14px;
+  color: var(--ink-2);
 }

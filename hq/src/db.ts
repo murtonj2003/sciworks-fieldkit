@@ -316,7 +316,18 @@ export class HqDb extends Dexie {
   }
 }
 
-export const db = new HqDb()
+/** Each project folder is its own database, so projects never mix. The one in use is remembered in this browser. */
+export const DEFAULT_DB = 'sciworks-hq'
+export const CURRENT_DB_KEY = 'sciworks-hq.current-db'
+export function currentDbName(): string {
+  try {
+    return localStorage.getItem(CURRENT_DB_KEY) || DEFAULT_DB
+  } catch {
+    return DEFAULT_DB
+  }
+}
+
+export const db = new HqDb(currentDbName())
 
 /** Every table, for transactions that must be all-or-nothing. */
 export const allTables = (d: HqDb = db) => d.tables

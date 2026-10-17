@@ -4,9 +4,10 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { FORMAT_LABELS, TRAIT_LABEL, type Encounter, type FieldDef, type Overlay, type Project, type SpeciesPack, type Survey, type Template } from '@sciworks/shared'
+import { FORMAT_LABELS, TRAIT_LABEL, type Encounter, type FieldDef, type Overlay, type Project, type SpeciesPack, type Survey, type Taxon, type Template } from '@sciworks/shared'
 import { db, type AiNoteRow, type CorrectionRow, type RecordRow } from '../db'
 import { DecidedCard, DraftCard, CharDiff } from '../kit/DidYouMean'
+import { FoldButton } from '../kit/Rail'
 import { Icon, Mark } from '../kit/Icons'
 import { BandText, StatusChip, Tag, WithSpecies } from '../kit/ui'
 import { GROUP_LABEL, ID_BASIS, STATUS_WORD, UNIT_LABEL, fieldsFor, fmtLatLon, fmtNumber, fmtValue, recordTitle, shortLabel, valueAt } from '../lib/format'
@@ -30,6 +31,8 @@ interface DetailProps {
   correctionOpen: boolean
   setCorrectionOpen: (v: boolean) => void
   aiNotes: AiNoteRow[]
+  /** Folds the record panel to a slim rail. */
+  onFold?: () => void
 }
 
 export function Detail(props: DetailProps) {
@@ -39,6 +42,7 @@ export function Detail(props: DetailProps) {
       <section className="fk-col hq-record" aria-label="Record">
         <div className="fk-col-h">
           <h3>Record</h3>
+          {props.onFold && <FoldButton side="right" label="Fold the record away" keyHint="]" onClick={props.onFold} />}
         </div>
         <div className="fk-group hq-empty-col">
           <div className="fk-card">
@@ -64,8 +68,11 @@ export function Detail(props: DetailProps) {
   return (
     <section className="fk-col hq-record" aria-label="Record">
       <div className="fk-col-h">
-        <h3>Record</h3>
-        <span>version {row.rev}</span>
+        <div className="hq-col-h__l">
+          <h3>Record</h3>
+          <span>version {row.rev}</span>
+        </div>
+        {props.onFold && <FoldButton side="right" label="Fold the record away" keyHint="]" onClick={props.onFold} />}
       </div>
       <div className="fk-group fk-det">
         <div className="fk-card">
@@ -111,6 +118,7 @@ export function Detail(props: DetailProps) {
       </div>
 
       <div className="hq-scroll">
+        {e && <Photos recordId={row.id} taxon={speciesPack?.taxa.find((t) => t.taxonId === e.taxon.taxonId)} />}
         {props.correctionOpen && <CorrectionForm row={row} template={template} overlay={overlay} me={me} onDone={() => props.setCorrectionOpen(false)} />}
         {drafts.map((c) => (
           <DraftCard key={c.correctionId} c={c} row={row} label={shortOf(c.fieldPath)} me={me} pack={speciesPack} />
@@ -141,7 +149,6 @@ export function Detail(props: DetailProps) {
         {e && <CoordinateTrail row={row} project={project} />}
         <Fields row={row} fields={fields} project={project} />
         {e && <KeyRun e={e} />}
-        {e && <Photos recordId={row.id} />}
         <Versions row={row} labelOf={labelOf} />
       </div>
     </section>
@@ -406,27 +413,76 @@ function KeyRun({ e }: { e: Encounter }) {
   )
 }
 
-function Photos({ recordId }: { recordId: string }) {
+/** CC licence URL → its short name ('CC BY 4.0', 'CC0'). */
+function licenceName(url: string): string {
+  if (/publicdomain\/zero/.test(url)) return 'CC0'
+  const m = url.match(/licenses\/([a-z-]+)\/([\d.]+)/)
+  return m ? `CC ${m[1]!.toUpperCase()} ${m[2]}` : url
+}
+
+/**
+ * What the surveyor photographed ("Image taken"), beside the species pack's own photo of that species for comparison.
+ * Pack photos are open-licence links (GBIF / iNaturalist): HQ keeps a copy once seen online, and credits each one.
+ */
+function Photos({ recordId, taxon }: { recordId: string; taxon?: Taxon }) {
   const photos = useLiveQuery(() => db.photos.where('recordId').equals(recordId).toArray(), [recordId]) ?? []
   const urls = useMemo(() => photos.map((p) => URL.createObjectURL(new Blob([p.bytes as BlobPart], { type: 'image/jpeg' }))), [photos])
   useEffect(() => () => urls.forEach((u) => URL.revokeObjectURL(u)), [urls])
-  if (!photos.length) return null
+  const ref = taxon?.photos?.[0]
+  const [refFailed, setRefFailed] = useState(false)
+  useEffect(() => setRefFailed(false), [ref?.url])
+  if (!photos.length && !ref) return null
   return (
-    <>
-      <h4 className="fk-gt">Photos</h4>
-      <div className="fk-group">
-        <div className="fk-card hq-photos">
-          {photos.map((p, i) => (
-            <figure key={p.key}>
-              <img src={urls[i]} alt={`${p.meta.role ?? 'Photo'} of the animal`} />
-              <figcaption>
+    <div className="fk-group hq-photos-g">
+      <div className="hq-photos">
+        {photos.map((p, i) => (
+          <figure key={p.key} className="fk-card">
+            <img src={urls[i]} alt={`${p.meta.role ?? 'Photo'} of the animal, taken in the field`} />
+            <figcaption>
+              <b>Image taken</b>
+              <span>
                 {p.meta.role ?? 'photo'} · {p.meta.takenAt.slice(11, 16)}
-              </figcaption>
-            </figure>
-          ))}
-        </div>
+              </span>
+            </figcaption>
+          </figure>
+        ))}
+        {!photos.length && (
+          <figure className="fk-card hq-photos__none">
+            <span className="hq-photos__ph">
+              <Icon name="camera" />
+            </span>
+            <figcaption>
+              <b>Image taken</b>
+              <span>No photo with this record</span>
+            </figcaption>
+          </figure>
+        )}
+        {ref && (
+          <figure className="fk-card">
+            {refFailed ? (
+              <span className="hq-photos__ph">
+                <Icon name="cloud" />
+                Shows when online
+              </span>
+            ) : (
+              <img
+                src={ref.url.replace(/\/original\.(jpe?g|png)$/i, '/medium.$1')}
+                alt={`${taxon!.scientificName}, reference photo from the species pack`}
+                loading="lazy"
+                referrerPolicy="no-referrer"
+                onError={() => setRefFailed(true)}
+              />
+            )}
+            <figcaption>
+              <b>Species pack</b>
+              <span>
+                {ref.rightsHolder} · {licenceName(ref.licence)}
+              </span>
+            </figcaption>
+          </figure>
+        )}
       </div>
-    </>
+    </div>
   )
 }
 

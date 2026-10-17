@@ -52,6 +52,14 @@ const corners = (b: BasemapRow['meta']['bounds']): [[number, number], [number, n
   [b.lonMin, b.latMin],
 ]
 
+/** The zoom at which the picture just covers a w × h px map (MapLibre's world is 512 px wide at zoom 0). */
+function coverZoom(b: BasemapRow['meta']['bounds'], w: number, h: number): number {
+  const y = (lat: number) => (1 - Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360)) / Math.PI) / 2
+  const dx = (b.lonMax - b.lonMin) / 360
+  const dy = y(b.latMin) - y(b.latMax)
+  return Math.max(Math.log2(w / (512 * dx)), Math.log2(h / (512 * dy)))
+}
+
 /** Layers that only show on the satellite picture: white edges under the lines and the selected ring. */
 const SAT_ONLY = ['transect-edge', 'links-edge', 'selected-edge']
 
@@ -92,7 +100,32 @@ export function MapView({ transects, records, selectedKey, onSelect, counter, ba
   const pictures = useRef<BasemapRow['meta'][]>([])
   pictures.current = basemaps.map((b) => b.meta)
   const [inView, setInView] = useState<string[]>([])
+  const [atMin, setAtMin] = useState(false)
   const satellite = layer === 'satellite' && basemaps.length > 0
+  // On Satellite the map stays inside the picture (Jack's pick, Sat 17:40): you can't zoom out past its edges, so
+  // the empty grid never shows. On Plain you can go anywhere.
+  const keepInside = useRef<() => void>(() => undefined)
+  keepInside.current = () => {
+    const map = mapRef.current
+    if (!map) return
+    if (!satellite) {
+      map.setMaxBounds(null)
+      map.setMinZoom(null)
+      return
+    }
+    const b = basemaps.map((x) => x.meta.bounds).reduce((a, c) => ({
+      latMin: Math.min(a.latMin, c.latMin),
+      latMax: Math.max(a.latMax, c.latMax),
+      lonMin: Math.min(a.lonMin, c.lonMin),
+      lonMax: Math.max(a.lonMax, c.lonMax),
+    }))
+    const el = map.getContainer()
+    map.setMinZoom(Math.min(coverZoom(b, el.clientWidth, el.clientHeight), 22))
+    map.setMaxBounds([
+      [b.lonMin, b.latMin],
+      [b.lonMax, b.latMax],
+    ])
+  }
 
   useEffect(() => {
     if (!el.current) return
@@ -105,6 +138,7 @@ export function MapView({ transects, records, selectedKey, onSelect, counter, ba
         .filter((p) => p.bounds.lonMin < v.getEast() && p.bounds.lonMax > v.getWest() && p.bounds.latMin < v.getNorth() && p.bounds.latMax > v.getSouth())
         .map((p) => p.basemapId)
       setInView((was) => (was.join() === seen.join() ? was : seen))
+      setAtMin(map.getZoom() <= map.getMinZoom() + 0.01)
     }
     map.on('move', onMove)
     map.on('load', async () => {
@@ -181,7 +215,11 @@ export function MapView({ transects, records, selectedKey, onSelect, counter, ba
       onMove()
       setReady(true)
     })
-    const ro = new ResizeObserver(() => map.resize())
+    const ro = new ResizeObserver(() => {
+      map.resize()
+      keepInside.current()
+      onMove()
+    })
     ro.observe(el.current)
     return () => {
       ro.disconnect()
@@ -238,6 +276,8 @@ export function MapView({ transects, records, selectedKey, onSelect, counter, ba
     for (const id of SAT_ONLY) map.setLayoutProperty(id, 'visibility', vis)
     map.setLayoutProperty('points', 'icon-image', satellite ? ['concat', ['get', 'icon'], '-sat'] : ['get', 'icon'])
     map.setLayoutProperty('originals', 'icon-image', satellite ? 'm-typed-sat' : 'm-typed')
+    keepInside.current()
+    map.fire('move')
   }, [ready, satellite, basemaps])
 
   // Transect lines, each with its ID at its start (HTML labels: no font tiles needed offline).
@@ -390,7 +430,12 @@ export function MapView({ transects, records, selectedKey, onSelect, counter, ba
         <button aria-label="Zoom in" onClick={() => mapRef.current?.zoomIn()}>
           <Icon name="plus" />
         </button>
-        <button aria-label="Zoom out" onClick={() => mapRef.current?.zoomOut()}>
+        <button
+          aria-label={atMin && satellite ? 'Zoom out (the whole satellite picture is showing)' : 'Zoom out'}
+          title={atMin && satellite ? 'The whole satellite picture is showing' : undefined}
+          disabled={atMin}
+          onClick={() => mapRef.current?.zoomOut()}
+        >
           <Icon name="minus" />
         </button>
       </div>

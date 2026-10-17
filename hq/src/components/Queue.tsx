@@ -2,6 +2,7 @@
 
 import type { Encounter, Project, ReviewStatus } from '@sciworks/shared'
 import type { CorrectionRow, RecordRow } from '../db'
+import { FoldButton } from '../kit/Rail'
 import { Icon } from '../kit/Icons'
 import { StatusChip, Tag } from '../kit/ui'
 import { recordSubtitle, recordTitle } from '../lib/format'
@@ -60,6 +61,8 @@ interface QueueProps {
   /** taxonIds the species pack marks as venomous. */
   venomous: Set<string>
   stats: { toReview: number; flagged: number; approved: number }
+  /** Folds the queue to a slim rail. */
+  onFold?: () => void
 }
 
 function Select<T extends string>({ label, value, def, onChange, options }: { label: string; value: T; def: T; onChange: (v: T) => void; options: [T, string][] }) {
@@ -85,7 +88,10 @@ export function Queue(props: QueueProps) {
   return (
     <section className="fk-col" aria-label="QA queue">
       <div className="fk-col-h">
-        <h3>QA queue</h3>
+        <div className="hq-col-h__l">
+          {props.onFold && <FoldButton side="left" label="Fold the queue away" keyHint="[" onClick={props.onFold} />}
+          <h3>QA queue</h3>
+        </div>
         <span className="fk-stats">
           <b>{stats.toReview}</b> to review · <b>{stats.flagged}</b> flagged · <b>{stats.approved}</b> approved
         </span>
