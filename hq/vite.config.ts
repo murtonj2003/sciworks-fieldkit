@@ -36,15 +36,6 @@ export default defineConfig({
         globPatterns: ['**/*.{js,mjs,css,html,svg,png,zip,woff2}'],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         navigateFallback: 'index.html',
-        // Species photos from the pack are links (open-licence, via GBIF/iNaturalist): once seen online they are
-        // kept, so they still show at base camp with no internet.
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/inaturalist-open-data\.s3\.amazonaws\.com\/photos\//,
-            handler: 'CacheFirst',
-            options: { cacheName: 'species-photos', expiration: { maxEntries: 300 }, cacheableResponse: { statuses: [0, 200] } },
-          },
-        ],
       },
     }),
   ],

@@ -1,6 +1,6 @@
 // HQ → phone bundle, one per team (SHARED-CONTRACT §7.3):
 // set-up (project, current form, transects, species pack, attribution, the team's overlay baseline, the satellite
-// pictures that cover the team's transects) and
+// pictures that cover the team's transects, the species photos) and
 // feedback (a receipt for every (id, rev) received from the team, reviews, APPROVED corrections only, decisions).
 
 import { v7 as uuidv7 } from 'uuid'
@@ -14,7 +14,7 @@ export const HQ_APP_VERSION = '0.1.0'
 export interface HqBundleResult {
   bytes: Uint8Array
   fileName: string
-  counts: { receipts: number; reviews: number; corrections: number; taxonDecisions: number; changeRequestDecisions: number; transects: number; basemaps: number }
+  counts: { receipts: number; reviews: number; corrections: number; taxonDecisions: number; changeRequestDecisions: number; transects: number; basemaps: number; speciesPhotos: number }
 }
 
 export async function makeHqBundle(teamId: string, opts: { allTransects?: boolean } = {}, d: HqDb = db): Promise<HqBundleResult> {
@@ -86,6 +86,12 @@ export async function makeHqBundle(teamId: string, opts: { allTransects?: boolea
   )
   const basemapFiles = Object.fromEntries(basemaps.map((b) => [b.basemapId, stored.find((s) => s.basemapId === b.basemapId)!.bytes]))
 
+  // Species photos for the pack the team gets (every team gets the whole pack), byte for byte as received.
+  const inPack = new Set(setup.speciesPack?.taxa.map((t) => t.taxonId) ?? [])
+  const photoRows = (await d.speciesPhotos.toArray()).filter((p) => inPack.has(p.taxonId))
+  const speciesPhotos = photoRows.map((p) => p.meta)
+  const speciesPhotoFiles = Object.fromEntries(photoRows.map((p) => [p.taxonId, p.bytes]))
+
   const parts: HqBundleParts = {
     project,
     template: setup.template,
@@ -99,6 +105,7 @@ export async function makeHqBundle(teamId: string, opts: { allTransects?: boolea
     taxonDecisions,
     changeRequestDecisions,
     ...(basemaps.length ? { basemaps, basemapFiles } : {}),
+    ...(speciesPhotos.length ? { speciesPhotos, speciesPhotoFiles } : {}),
   }
 
   const header = {
@@ -139,6 +146,7 @@ export async function makeHqBundle(teamId: string, opts: { allTransects?: boolea
       changeRequestDecisions: changeRequestDecisions.length,
       transects: transects?.features.length ?? 0,
       basemaps: basemaps.length,
+      speciesPhotos: speciesPhotos.length,
     },
   }
 }

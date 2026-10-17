@@ -48,7 +48,7 @@ export function HqBundleDialog({ project, onClose }: { project: Project; onClose
       }
     >
       <p>
-        It carries the current form, the team's transects{pictures ? ' with the satellite picture under them' : ''}, the species pack, every
+        It carries the current form, the team's transects{pictures ? ' with the satellite picture under them' : ''}, the species pack and its photos, every
         record HQ has from the team, your review results and the corrections you approved. AirDrop it or copy it to the team's phones.
       </p>
       <div className="fk-group">
@@ -86,7 +86,7 @@ export function HqBundleDialog({ project, onClose }: { project: Project; onClose
               {result.counts.receipts} records confirmed (the phone's "not with HQ" counter drops by these) · {result.counts.reviews} review results ·{' '}
               {result.counts.corrections} approved corrections · {result.counts.taxonDecisions} species decisions · {result.counts.changeRequestDecisions}{' '}
               form-request decisions · {result.counts.transects} transects · {result.counts.basemaps} satellite picture
-              {result.counts.basemaps === 1 ? '' : 's'}.
+              {result.counts.basemaps === 1 ? '' : 's'} · {result.counts.speciesPhotos} species photo{result.counts.speciesPhotos === 1 ? '' : 's'}.
             </span>
           </span>
         </p>

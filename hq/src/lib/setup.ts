@@ -1,4 +1,5 @@
-// HQ's set-up: project, form template (every version kept), transects, species pack, attribution, satellite pictures.
+// HQ's set-up: project, form template (every version kept), transects, species pack and its photos, attribution,
+// satellite pictures.
 
 import { sha256Hex, type Basemap, type HqBundleParts, type Project, type SpeciesPack, type Template, type TransectCollection } from '@sciworks/shared'
 import { db, type HqDb } from '../db'
@@ -69,6 +70,17 @@ export async function applySetup(parts: HqBundleParts, d: HqDb = db): Promise<st
     pictures++
   }
   if (pictures) applied.push(`${pictures} satellite picture${pictures === 1 ? '' : 's'}`)
+  // Species photos, the same way: checksum-checked bytes only, and the same photo again changes nothing.
+  let photos = 0
+  for (const meta of parts.speciesPhotos ?? []) {
+    const bytes = parts.speciesPhotoFiles?.[meta.taxonId]
+    if (!bytes || sha256Hex(bytes) !== meta.sha256) continue
+    const had = await d.speciesPhotos.get(meta.taxonId)
+    if (had?.meta.sha256 === meta.sha256) continue
+    await d.speciesPhotos.put({ taxonId: meta.taxonId, meta, bytes, receivedAt: now })
+    photos++
+  }
+  if (photos) applied.push(`${photos} species photo${photos === 1 ? '' : 's'}`)
   if (parts.template) {
     const existing = await d.templates.get(parts.template.coreVersion)
     if (!existing) {

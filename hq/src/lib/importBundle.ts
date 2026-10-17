@@ -84,6 +84,8 @@ export async function importBundleFile(bytes: Uint8Array, fileName: string, d: H
           attribution: hq.attribution,
           basemaps: hq.basemaps,
           basemapFiles: hq.basemapFiles,
+          speciesPhotos: hq.speciesPhotos,
+          speciesPhotoFiles: hq.speciesPhotoFiles,
         },
         d,
       )

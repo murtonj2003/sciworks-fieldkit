@@ -4,6 +4,7 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type {
   Basemap,
+  SpeciesPhoto,
   ChangeRequest,
   ChangeRequestDecision,
   CoordCheck,
@@ -260,6 +261,15 @@ export interface BasemapRow {
   receivedAt: string
 }
 
+/** A small photo of a species from the set-up bundle, kept so it shows with no internet. Credit it wherever shown. */
+export interface SpeciesPhotoRow {
+  taxonId: string
+  meta: SpeciesPhoto
+  /** The JPEG, exactly as it arrived (its SHA-256 matches meta.sha256: readBundle checks it). */
+  bytes: Uint8Array
+  receivedAt: string
+}
+
 export class HqDb extends Dexie {
   bundles!: EntityTable<RawBundleRow, 'sha256'>
   records!: EntityTable<RecordRow, 'key'>
@@ -281,6 +291,7 @@ export class HqDb extends Dexie {
   aiRuns!: EntityTable<AiRunRow, 'runId'>
   aiNotes!: EntityTable<AiNoteRow, 'id'>
   basemaps!: EntityTable<BasemapRow, 'basemapId'>
+  speciesPhotos!: EntityTable<SpeciesPhotoRow, 'taxonId'>
 
   constructor(name = 'sciworks-hq') {
     super(name)
@@ -312,6 +323,9 @@ export class HqDb extends Dexie {
     })
     this.version(4).stores({
       basemaps: 'basemapId',
+    })
+    this.version(5).stores({
+      speciesPhotos: 'taxonId',
     })
   }
 }

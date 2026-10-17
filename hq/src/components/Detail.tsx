@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { FORMAT_LABELS, TRAIT_LABEL, type Encounter, type FieldDef, type Overlay, type Project, type SpeciesPack, type Survey, type Taxon, type Template } from '@sciworks/shared'
+import { FORMAT_LABELS, TRAIT_LABEL, type Encounter, type FieldDef, type Overlay, type Project, type SpeciesPack, type Survey, type Template } from '@sciworks/shared'
 import { db, type AiNoteRow, type CorrectionRow, type RecordRow } from '../db'
 import { DecidedCard, DraftCard, CharDiff } from '../kit/DidYouMean'
 import { FoldButton } from '../kit/Rail'
@@ -118,7 +118,7 @@ export function Detail(props: DetailProps) {
       </div>
 
       <div className="hq-scroll">
-        {e && <Photos recordId={row.id} taxon={speciesPack?.taxa.find((t) => t.taxonId === e.taxon.taxonId)} />}
+        {e && <Photos recordId={row.id} taxonId={e.taxon.taxonId} speciesName={e.taxon.scientificName} />}
         {props.correctionOpen && <CorrectionForm row={row} template={template} overlay={overlay} me={me} onDone={() => props.setCorrectionOpen(false)} />}
         {drafts.map((c) => (
           <DraftCard key={c.correctionId} c={c} row={row} label={shortOf(c.fieldPath)} me={me} pack={speciesPack} />
@@ -413,24 +413,22 @@ function KeyRun({ e }: { e: Encounter }) {
   )
 }
 
-/** CC licence URL → its short name ('CC BY 4.0', 'CC0'). */
-function licenceName(url: string): string {
-  if (/publicdomain\/zero/.test(url)) return 'CC0'
-  const m = url.match(/licenses\/([a-z-]+)\/([\d.]+)/)
-  return m ? `CC ${m[1]!.toUpperCase()} ${m[2]}` : url
-}
-
 /**
  * What the surveyor photographed ("Image taken"), beside the species pack's own photo of that species for comparison.
- * Pack photos are open-licence links (GBIF / iNaturalist): HQ keeps a copy once seen online, and credits each one.
+ * The pack photo came in the set-up bundle and is stored in HQ, so it shows with no internet; its credit shows with it.
  */
-function Photos({ recordId, taxon }: { recordId: string; taxon?: Taxon }) {
+function Photos({ recordId, taxonId, speciesName }: { recordId: string; taxonId?: string; speciesName?: string }) {
   const photos = useLiveQuery(() => db.photos.where('recordId').equals(recordId).toArray(), [recordId]) ?? []
+  const ref = useLiveQuery(() => (taxonId ? db.speciesPhotos.get(taxonId) : undefined), [taxonId])
   const urls = useMemo(() => photos.map((p) => URL.createObjectURL(new Blob([p.bytes as BlobPart], { type: 'image/jpeg' }))), [photos])
+  const refUrl = useMemo(() => (ref ? URL.createObjectURL(new Blob([ref.bytes as BlobPart], { type: 'image/jpeg' })) : undefined), [ref])
   useEffect(() => () => urls.forEach((u) => URL.revokeObjectURL(u)), [urls])
-  const ref = taxon?.photos?.[0]
-  const [refFailed, setRefFailed] = useState(false)
-  useEffect(() => setRefFailed(false), [ref?.url])
+  useEffect(
+    () => () => {
+      if (refUrl) URL.revokeObjectURL(refUrl)
+    },
+    [refUrl],
+  )
   if (!photos.length && !ref) return null
   return (
     <div className="fk-group hq-photos-g">
@@ -457,27 +455,12 @@ function Photos({ recordId, taxon }: { recordId: string; taxon?: Taxon }) {
             </figcaption>
           </figure>
         )}
-        {ref && (
+        {ref && refUrl && (
           <figure className="fk-card">
-            {refFailed ? (
-              <span className="hq-photos__ph">
-                <Icon name="cloud" />
-                Shows when online
-              </span>
-            ) : (
-              <img
-                src={ref.url.replace(/\/original\.(jpe?g|png)$/i, '/medium.$1')}
-                alt={`${taxon!.scientificName}, reference photo from the species pack`}
-                loading="lazy"
-                referrerPolicy="no-referrer"
-                onError={() => setRefFailed(true)}
-              />
-            )}
+            <img src={refUrl} alt={`${speciesName ?? 'The species'}, reference photo from the species pack`} />
             <figcaption>
               <b>Species pack</b>
-              <span>
-                {ref.rightsHolder} · {licenceName(ref.licence)}
-              </span>
+              <span>{ref.meta.credit}</span>
             </figcaption>
           </figure>
         )}
