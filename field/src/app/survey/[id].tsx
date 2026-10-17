@@ -127,6 +127,8 @@ export default function SurveyScreen() {
 
         {byGroup(fields, ['herp']).length > 0 && <H2>{groupLabel('herp')}</H2>}
         {renderGroup('herp')}
+        {byGroup(fields, ['extras']).length > 0 && <H2>{groupLabel('extras')}</H2>}
+        {renderGroup('extras')}
 
         <H2>Animals ({animals.length})</H2>
         {animals.map((a) => {

@@ -32,6 +32,7 @@ export default function RootLayout() {
         <Stack.Screen name="encounter/[id]" options={{ title: 'Animal' }} />
         <Stack.Screen name="species/[id]" options={{ title: 'Choose species' }} />
         <Stack.Screen name="handover" options={{ title: 'Hand over to HQ' }} />
+        <Stack.Screen name="form-settings" options={{ title: 'Form settings' }} />
       </Stack>
     </FieldProvider>
   );

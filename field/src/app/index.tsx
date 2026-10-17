@@ -94,6 +94,11 @@ export default function Home() {
           </P>
           <P dim>Transects: {team?.transectIds.join(', ') || 'none assigned'}</P>
           <Button label="Switch person" kind="secondary" onPress={() => router.push('/person')} />
+          <Button
+            label={person.role === 'team-lead' ? 'Form settings (change the form offline)' : 'Form settings'}
+            kind="secondary"
+            onPress={() => router.push('/form-settings')}
+          />
         </Card>
       )}
 

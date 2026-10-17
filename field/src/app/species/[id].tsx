@@ -7,6 +7,7 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { s as fs } from '@/components/fields';
 import { Button, P, colors } from '@/components/ui';
 import { getRecord, saveDraftNow } from '@/db/records';
+import { listProvisionalTaxa } from '@/db/team';
 import { touched } from '@/model/factory';
 import { effectiveFields } from '@/model/form';
 import type { LocalEncounter } from '@/model/records';
@@ -14,7 +15,8 @@ import { useField } from '@/state/field';
 
 export default function SpeciesPicker() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { pack, template, overlay, project } = useField();
+  const { pack, template, overlay, project, person } = useField();
+  const provisional = listProvisionalTaxa(person?.teamId);
   const [q, setQ] = useState('');
   const [all, setAll] = useState(false);
 
@@ -68,16 +70,37 @@ export default function SpeciesPicker() {
         keyExtractor={(t) => t.taxonId}
         contentContainerStyle={styles.list}
         ListHeaderComponent={
-          <Button
-            kind="secondary"
-            label="Unidentified (add a photo)"
-            onPress={() =>
-              choose((e) => ({
-                ...e,
-                taxon: { idBasis: 'photo-later', unidentified: true },
-              }))
-            }
-          />
+          <View style={styles.header}>
+            <Button
+              kind="secondary"
+              label="Unidentified (add a photo)"
+              onPress={() =>
+                choose((e) => ({
+                  ...e,
+                  taxon: { idBasis: 'photo-later', unidentified: true },
+                }))
+              }
+            />
+            {provisional.map((t) => (
+              <Pressable
+                key={t.provisionalTaxonId}
+                style={({ pressed }) => [styles.row, styles.provisional, pressed && { opacity: 0.6 }]}
+                onPress={() =>
+                  choose((e) => ({
+                    ...e,
+                    taxon: {
+                      provisionalTaxonId: t.provisionalTaxonId,
+                      scientificName: t.proposedName,
+                      idBasis: e.taxon.idBasis === 'photo-later' || e.taxon.idBasis === 'scale-key' ? 'in-hand' : e.taxon.idBasis,
+                    },
+                  }))
+                }
+              >
+                <Text style={styles.name}>{t.proposedName}</Text>
+                <Text style={fs.small}>Added in the field · provisional until HQ decides</Text>
+              </Pressable>
+            ))}
+          </View>
         }
         renderItem={({ item }) => (
           <Pressable style={({ pressed }) => [styles.row, item.dangerous && styles.danger, pressed && { opacity: 0.6 }]} onPress={() => pickTaxon(item)}>
@@ -100,5 +123,7 @@ const styles = StyleSheet.create({
   list: { padding: 16, paddingTop: 0, gap: 8, paddingBottom: 48 },
   row: { minHeight: 64, borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 12, gap: 2 },
   danger: { borderColor: colors.red, borderWidth: 2 },
+  provisional: { borderStyle: 'dashed', borderWidth: 2 },
+  header: { gap: 8 },
   name: { fontSize: 18, fontWeight: '700', fontStyle: 'italic', color: colors.ink },
 });
