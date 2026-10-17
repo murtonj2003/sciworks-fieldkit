@@ -2,7 +2,8 @@
 
 **Illustrative demo pack, not for field ID.** Built from cited open sources during the Science Works hackathon,
 17 Oct 2026. The pack as a whole is shared under **CC BY 4.0**. Scale counts and sizes are facts; the short
-quoted source wording kept with each value carries its own licence, noted beside it.
+quoted source wording kept with each value carries its own licence, noted beside it. Those quotes are short
+(under 100 characters), kept for citation only, and are not relicensed by the pack's CC BY 4.0.
 
 - Species list: GBIF occurrence facet for the La Selva area, accessed 2026-10-17 (La Selva Biological Station area, Caribbean lowlands, Heredia, Costa Rica).
 - Taxonomic backbone: The Reptile Database via Catalogue of Life / ChecklistBank 2026-06, CC BY 4.0, https://doi.org/10.48580/d37s
