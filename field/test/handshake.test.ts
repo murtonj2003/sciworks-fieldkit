@@ -14,7 +14,7 @@ import { checkCoordinate, parseTyped, type Transect } from '@sciworks/shared';
 import { HqDb, recordKey } from '../../hq/src/db';
 import { makeHqBundle } from '../../hq/src/lib/hqBundle';
 import { importBundleFile } from '../../hq/src/lib/importBundle';
-import { setStatus } from '../../hq/src/lib/review';
+import { approveDraft, createCorrection, setStatus } from '../../hq/src/lib/review';
 
 const fixture = (name: string) => new Uint8Array(fs.readFileSync(new URL(`../../shared/fixtures/${name}`, import.meta.url)));
 const JPEG = new Uint8Array(fs.readFileSync(new URL('../../shared/scripts/assets/photo-dorsal.jpg', import.meta.url)));
@@ -140,5 +140,31 @@ describe('Handshake: Field app ⇄ HQ app (real code on both sides)', () => {
     expect(summary.editedAfterReview).toBe(1);
     const row = await hq.records.get(recordKey('encounter', ids.animal));
     expect(JSON.stringify(row)).toMatch(/edited/);
+  });
+  it('F8: an AI-drafted, Data-Manager-approved fix arrives, is accepted on the phone, and HQ gets the answer', async () => {
+    const draft = await createCorrection(
+      { key: recordKey('encounter', ids.animal), fieldPath: 'svl', proposed: { value: 43.5, unit: 'mm', method: 'squeeze-box' }, reason: 'Test: decimal point', by: 'ai', source: 'ai-agent', asDraft: true },
+      hq,
+    );
+    await approveDraft(draft.correctionId, 'p-dm', {}, hq);
+    const back = await makeHqBundle('team-b', {}, hq);
+    expect(back.counts.corrections).toBe(1);
+
+    const p = await phone();
+    p.receive.receiveHqBundle(back.bytes, back.fileName);
+    const corrections = await import('@/sync/corrections');
+    expect(corrections.pendingCount()).toBe(1);
+    const item = corrections.inbox().find((i) => i.request.correctionId === draft.correctionId)!;
+    expect(item.request.approvedBy).toBe('p-dm');
+    const newRev = corrections.acceptCorrection(item, { personId: 'p-b-1', at: '2026-10-17T22:00:00-06:00', project: p.state().project, transects: p.state().transects });
+    expect(newRev).toBe(3);
+    expect((p.records.getSealed(ids.animal) as { svl: { value: number } }).svl.value).toBe(43.5);
+    expect(p.records.history(ids.animal).map((r) => r.rev)).toEqual([1, 2, 3]); // nothing overwritten
+    expect(corrections.pendingCount()).toBe(0);
+
+    const made = await p.send.makeFieldBundle(p.state(), 'unconfirmed');
+    const summary = await importBundleFile(readOut(made.uri), made.fileName, hq);
+    expect(summary.newCorrectionResponses).toBe(1);
+    expect(summary.updatedRecords).toBe(1);
   });
 });

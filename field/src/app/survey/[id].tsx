@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Chips, FieldInput } from '@/components/fields';
 import { Button, Card, H2, P, colors } from '@/components/ui';
+import { latestReview } from '@/db/feedback';
 import { listRecords, saveDraftNow, seal } from '@/db/records';
 import { useRecord } from '@/hooks/useRecord';
 import { clockOf, nowIso } from '@/lib/time';
@@ -13,6 +14,9 @@ import { GROUPS, byGroup, effectiveFields, getPath, setPath, withDefaults } from
 import { missingForHq, type LocalEncounter, type LocalSurvey } from '@/model/records';
 import { effortPersonHours, isNight, protocolHits, weatherPresets } from '@/model/survey';
 import { useField } from '@/state/field';
+
+const reviewWord = (status: string | undefined) =>
+  status === 'approved' ? ' · HQ approved' : status === 'flagged' ? ' · HQ flagged' : status === 'rejected' ? ' · HQ rejected' : status === 'edited' ? ' · changed since HQ review' : '';
 
 export default function SurveyScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -144,7 +148,12 @@ export default function SurveyScreen() {
               <Text style={styles.small}>
                 {clockOf(a.observedAt)}
                 {a.svl ? ` · SVL ${a.svl.value} mm` : ''}
-                {band ? ` · ${band === 'green' ? '✓ on the line' : band === 'amber' ? '⚠ near the line' : '✗ off the line'}` : ' · no location yet'}
+                {a.location?.check.decision?.kind === 'accepted-suggestion'
+                  ? ' · ✓ fixed with "did you mean?"'
+                  : band
+                    ? ` · ${band === 'green' ? '✓ on the line' : band === 'amber' ? '⚠ near the line' : '✗ off the line'}`
+                    : ' · no location yet'}
+                {reviewWord(latestReview(a.id)?.status)}
               </Text>
             </Pressable>
           );

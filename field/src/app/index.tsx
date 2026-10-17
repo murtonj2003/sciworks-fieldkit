@@ -10,6 +10,7 @@ import { missingForHq, type LocalEncounter, type LocalSurvey } from '@/model/rec
 import { bootInfo } from '@/lib/boot';
 import { DEMO_BUNDLE_NAME, demoHqBundleBytes } from '@/lib/demoBundle';
 import { ROLE_LABEL, useField } from '@/state/field';
+import { pendingCount } from '@/sync/corrections';
 import { receiveHqBundle, type ReceiveResult } from '@/sync/receiveHq';
 
 export default function Home() {
@@ -42,6 +43,9 @@ export default function Home() {
     <ScrollView contentContainerStyle={styles.page}>
       <CounterBar />
       {project && <Button label="Send to HQ / receive from HQ" kind="secondary" onPress={() => router.push('/handover')} />}
+      {person && pendingCount() > 0 && (
+        <Button label={`${pendingCount()} correction${pendingCount() === 1 ? '' : 's'} from HQ to answer`} onPress={() => router.push('/inbox')} />
+      )}
 
       {recovered > 0 && (
         <Card>
