@@ -9,7 +9,8 @@ export async function checkOnline(timeoutMs = 3000): Promise<boolean> {
     // DEV ONLY: a browser blocks reading the reply (CORS), so the preview only asks whether it arrived.
     const web = Platform.OS === 'web';
     const res = await fetch('https://www.gstatic.com/generate_204', { method: 'GET', cache: 'no-store', signal: ctl.signal, ...(web ? { mode: 'no-cors' as RequestMode } : {}) });
-    return web || res.status === 204 || res.ok;
+    // Only the exact 204: a captive portal (field-station WiFi with a login page) answers 200 and is not online.
+    return web || res.status === 204;
   } catch {
     return false;
   } finally {

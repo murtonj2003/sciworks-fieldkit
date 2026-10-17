@@ -78,6 +78,18 @@ const useStyles = makeStyles((t) => ({
   how: { ...type.small, fontWeight: '400', lineHeight: 18, color: t.ink2, textAlign: 'center', paddingTop: 2, paddingHorizontal: 12 },
 }));
 
+/** A zipped file (the bundle), in the kit's 24-grid stroke. */
+function Zip({ color, size = 26 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z" />
+      <Path d="M14 3.5V8h4.5" />
+      <Path d="M11 5.5h1M11 7.5h1M11 9.5h1M11 11.5h1" />
+      <Rect x={10.25} y={13} width={2.5} height={3.5} rx={0.8} />
+    </Svg>
+  );
+}
+
 /** A laptop, drawn in the kit's 24-grid stroke (the sprite has no laptop). */
 function Laptop({ color, size = 26 }: { color: string; size?: number }) {
   return (
@@ -218,7 +230,7 @@ export default function Handover() {
   );
   const phoneState = stage === 'make' ? 'now' : 'done';
   const fileState = stage === 'make' ? 'idle' : stage === 'share' ? 'now' : 'done';
-  const hqState = confirmed ? 'done' : stage === 'done' ? 'wait' : 'idle';
+  const hqState = confirmed ? 'done' : stage === 'done' || offlineEmail ? 'wait' : 'idle';
   const journey = (
     <View style={s.journey} accessibilityLabel={`Phone, then the file, then HQ. Step: ${stage === 'make' ? 'make the file' : stage === 'share' ? 'share it' : 'done'}.`}>
       <View style={s.jRow}>
@@ -226,7 +238,7 @@ export default function Handover() {
         <View style={s.arrow}>
           <Icon name="arrow" size={20} color={t.ink2} />
         </View>
-        {node(made ? `File · ${kb(made.bytes)}` : 'File', <Icon name="bundle" size={26} color={t.ink} strokeWidth={1.75} />, fileState)}
+        {node(made ? `File · ${kb(made.bytes)}` : 'File', <Zip color={t.ink} />, fileState)}
         <View style={s.arrow}>
           <Icon name="arrow" size={20} color={t.ink2} />
         </View>
@@ -264,6 +276,7 @@ export default function Handover() {
           <Text style={s.rowSub13}>{sub}</Text>
         </View>
         {routeTag(tagKind)}
+        <Icon name="chev" size={18} color={t.ink2} />
       </Pressable>
     </View>
   );
@@ -308,13 +321,17 @@ export default function Handover() {
           <Group style={{ marginTop: 10 }}>
             <View style={s.bundle}>
               <View style={s.bundleHead}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-                  <Icon name="check" size={20} color={t.ink} strokeWidth={2.25} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <View style={[s.tile, { width: 40, height: 40 }]}>
+                    <Zip color={t.ink} size={24} />
+                  </View>
                   <Text style={s.bundleTitle}>File made</Text>
                 </View>
                 <Text style={s.rowSub}>{kb(made.bytes)}</Text>
               </View>
-              <Text style={s.bundleFile}>{made.fileName}</Text>
+              <Text style={s.bundleFile} numberOfLines={1} ellipsizeMode="middle">
+                {made.fileName}
+              </Text>
               <Text style={[s.rowSub, { marginTop: 2 }]}>{countsLine(made.counts)}</Text>
               {made.counts.problems.map((p) => (
                 <Text key={p} style={[s.rowSub13, { marginTop: 4 }]}>
@@ -325,33 +342,34 @@ export default function Handover() {
           </Group>
         )}
 
-        {stage === 'share' && made && (
+        {stage === 'share' && made && !offlineEmail && (
           <>
             <GroupTitle>How will it reach HQ?</GroupTitle>
             <Group>
               <View style={s.list}>
                 {routeRow('nearby', 'users', `Nearby: ${NEARBY}`, 'No internet needed · phone and HQ side by side', 'ok', 0)}
                 {routeRow('cable', 'folder', 'Cable or Files', 'No internet needed · plug into the HQ laptop', 'ok', 1)}
-                {routeRow('email', 'send', 'Email (Gmail)', 'Needs internet · waits in the Outbox until you are back online', online === false ? 'off' : online ? 'ok' : 'net', 2)}
+                {routeRow('email', 'send', 'Email (Gmail)', 'Needs internet · waits in the Outbox if offline', online === false ? 'off' : online ? 'ok' : 'net', 2)}
               </View>
             </Group>
-            {offlineEmail && (
-              <View style={s.err} accessibilityRole="alert">
-                <Icon name="warning" size={22} color={t.offTintInk} strokeWidth={2} />
-                <View style={{ flex: 1, gap: 6 }}>
-                  <Text style={s.errTitle}>This won't reach HQ yet</Text>
-                  <Text style={s.errText}>
-                    There's no internet here, so email can't send now. The file is safe on this phone. Hand it over nearby or by cable now, or let
-                    Gmail keep it in the Outbox until you reconnect.
-                  </Text>
-                  <View style={{ gap: 8, marginTop: 4 }}>
-                    <Button label={`Use ${NEARBY} instead`} size={56} onPress={share} />
-                    <Button label="Keep it in the Outbox" kind="white" size={48} onPress={share} />
-                  </View>
-                </View>
-              </View>
-            )}
           </>
+        )}
+        {stage === 'share' && made && offlineEmail && (
+          <View style={[s.err, { flexDirection: 'column', gap: 8 }]} accessibilityRole="alert">
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Icon name="warning" size={22} color={t.offTintInk} strokeWidth={2} />
+              <Text style={s.errTitle}>This won't reach HQ yet</Text>
+            </View>
+            <Text style={s.errText}>
+              There's no internet here, so email can't send now. The file is safe on this phone. Hand it over nearby or by cable now, or let Gmail
+              keep it in the Outbox until you reconnect.
+            </Text>
+            <View style={{ gap: 8, marginTop: 4 }}>
+              <Button label={`Use ${NEARBY} instead`} size={56} onPress={share} />
+              <Button label="Keep it in the Outbox" kind="white" size={48} onPress={share} />
+              <Button kind="link" label="Back to the routes" onPress={() => setOfflineEmail(false)} />
+            </View>
+          </View>
         )}
 
         {stage === 'done' && made && (
