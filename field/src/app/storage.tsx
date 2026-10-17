@@ -3,9 +3,11 @@
 import { Asset } from 'expo-asset';
 import { File } from 'expo-file-system';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, TextInput } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
 
-import { Button, Card, H2, P, colors } from '@/components/ui';
+import { useFieldStyles } from '@/components/fields';
+import { Icon } from '@/components/Icon';
+import { Button, Group, GroupTitle, Row, T } from '@/components/ui';
 import { all, first, run } from '@/db/db';
 import { listPhotos, savePhoto, verifyPhotos } from '@/db/photos';
 import { getRecord, listRecords, saveDraft, saveDraftNow, seal } from '@/db/records';
@@ -15,6 +17,8 @@ import { nowIso } from '@/lib/time';
 import { newEncounter, newSurvey, touched, type StampContext } from '@/model/factory';
 import type { LocalSurvey } from '@/model/records';
 import { useField } from '@/state/field';
+import { makeStyles, useTheme } from '@/theme/ThemeProvider';
+import { type } from '@/theme/theme';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const TEST_JPEG = require('../../../shared/scripts/assets/photo-dorsal.jpg');
@@ -40,6 +44,9 @@ function testSurvey(): LocalSurvey | null {
 
 export default function Storage() {
   const field = useField();
+  const st = useStyles();
+  const fs = useFieldStyles();
+  const { t } = useTheme();
   const [s, setS] = useState(stats);
   const [log, setLog] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -133,65 +140,80 @@ export default function Storage() {
 
   const revs = survey ? all<{ rev: number }>('SELECT rev FROM record_revs WHERE id = ?', [survey.id]).length : 0;
 
+  const line = (l: string, i: number) => {
+    const ok = l.startsWith('✓');
+    const bad = l.startsWith('✗');
+    return (
+      <View key={`${i}-${l}`} style={st.logRow}>
+        {ok || bad ? <Icon name={ok ? 'check' : 'cross'} size={18} color={ok ? t.onMark : t.offMark} strokeWidth={2.25} /> : <Icon name="info" size={18} color={t.ink2} />}
+        <Text style={st.logText}>{l.replace(/^[✓✗]\s*/, '')}</Text>
+      </View>
+    );
+  };
+
   return (
-    <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
-      <Card>
-        <H2>On this phone</H2>
-        <P>
-          {s.records} records ({s.revs} saved versions) · {s.photos} photos · {s.unsealed} being edited
-        </P>
-        <P dim>
-          {s.receipts} HQ receipts · {s.bundlesIn} bundles received · {s.bundlesOut} sent · form versions kept:{' '}
-          {s.templates.join(', ') || 'none'}
-        </P>
-        <P dim>Device {field.deviceId}</P>
-        <P dim>{listPhotos().length} photo files in the app's documents folder</P>
-      </Card>
+    <View style={st.wrap}>
+      <ScrollView contentContainerStyle={st.page} keyboardShouldPersistTaps="handled">
+        <GroupTitle>On this phone</GroupTitle>
+        <Group>
+          <Row style={{ gap: 4 }}>
+            <T v="title">
+              {s.records} records ({s.revs} saved versions) · {s.photos} photos · {s.unsealed} being edited
+            </T>
+            <T v="sub" dim>
+              {s.receipts} HQ receipts · {s.bundlesIn} bundles received · {s.bundlesOut} sent · form versions kept:{' '}
+              {s.templates.join(', ') || 'none'}
+            </T>
+            <T v="sub" dim>
+              {listPhotos().length} photo files in the app's documents folder
+            </T>
+            <T v="small" dim style={{ fontWeight: '400' }}>
+              Device {field.deviceId}
+            </T>
+          </Row>
+          <Button label="Check every photo (SHA-256)" kind="white" size={56} onPress={checkPhotos} disabled={busy} />
+          <Button label="Try to delete a record" kind="white" size={56} onPress={tryDelete} />
+        </Group>
 
-      <Button label="Check every photo (SHA-256)" onPress={checkPhotos} disabled={busy} />
-      <Button label="Try to delete a record" kind="secondary" onPress={tryDelete} />
+        {log.length > 0 && <View style={{ marginTop: 10, gap: 6 }}>{log.map(line)}</View>}
 
-      <Card>
-        <H2>Torture test</H2>
-        <P dim>
-          1. Create 30 records. 2. Type in the box. 3. Force-quit mid-word. 4. Reboot. 5. Reopen: the text, every record and
-          every photo are still here.
-        </P>
-        <Button label={busy ? 'Working…' : 'Create 30 test records with photos'} onPress={create30} disabled={busy || !ctx} />
-        {survey && (
-          <>
-            <P dim>Saved on every keystroke ({revs} sealed versions so far):</P>
-            <TextInput
-              style={styles.input}
-              multiline
-              value={survey.notes ?? ''}
-              onChangeText={typeNote}
-              onBlur={() => {
-                seal(survey.id);
-                refresh();
-              }}
-            />
-          </>
-        )}
-      </Card>
-
-      {log.map((l, i) => (
-        <P key={`${i}-${l}`}>{l}</P>
-      ))}
-    </ScrollView>
+        <GroupTitle>Torture test</GroupTitle>
+        <Group>
+          <Row>
+            <T v="sub" dim>
+              1. Create 30 records. 2. Type in the box. 3. Force-quit mid-word. 4. Reboot. 5. Reopen: the text, every record and
+              every photo are still here.
+            </T>
+          </Row>
+          <Button label={busy ? 'Working…' : 'Create 30 test records with photos'} size={56} onPress={create30} disabled={busy || !ctx} />
+          {survey && (
+            <>
+              <T v="sub" dim style={{ marginHorizontal: 6, marginTop: 4 }}>
+                Saved on every keystroke ({revs} sealed versions so far):
+              </T>
+              <View style={[fs.box, { alignItems: 'flex-start' }]}>
+                <TextInput
+                  style={[fs.text, fs.multiline]}
+                  multiline
+                  value={survey.notes ?? ''}
+                  onChangeText={typeNote}
+                  onBlur={() => {
+                    seal(survey.id);
+                    refresh();
+                  }}
+                />
+              </View>
+            </>
+          )}
+        </Group>
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  page: { padding: 16, gap: 12, paddingBottom: 64 },
-  input: {
-    minHeight: 96,
-    borderWidth: 2,
-    borderColor: colors.line,
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 18,
-    color: colors.ink,
-    textAlignVertical: 'top',
-  },
-});
+const useStyles = makeStyles((t) => ({
+  wrap: { flex: 1, backgroundColor: t.ground },
+  page: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 64 },
+  logRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 6 },
+  logText: { ...type.sub, color: t.ink, flex: 1 },
+}));

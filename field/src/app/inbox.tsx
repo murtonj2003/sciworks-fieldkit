@@ -48,24 +48,24 @@ const useStyles = makeStyles((t) => ({
   leadText: { ...type.small, fontWeight: '400', lineHeight: 17, color: t.ink2, flex: 1 },
   dym: { backgroundColor: t.group, borderRadius: radius.group, paddingTop: 11, paddingHorizontal: 8, paddingBottom: 8, marginBottom: 10 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingHorizontal: 6 },
-  src: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: t.card, borderRadius: radius.pill, paddingHorizontal: 10, minHeight: 28 },
-  srcText: { ...type.small, color: t.ink },
+  src: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: t.card, borderRadius: radius.tag, height: 26, paddingLeft: 7, paddingRight: 9 },
+  srcText: { ...type.small, fontWeight: '600', color: t.ink2 },
   what: { ...type.sub, color: t.ink2, paddingTop: 4, paddingHorizontal: 6 },
   body: { backgroundColor: t.card, borderRadius: radius.card, overflow: 'hidden', marginTop: 10 },
-  lbl: { ...type.title, color: t.ink, paddingTop: 10, paddingHorizontal: 14 },
+  lbl: { ...type.small, fontWeight: '600', color: t.ink2, paddingTop: 10, paddingHorizontal: 14 },
   ctx: { ...type.small, fontWeight: '400', color: t.ink2, paddingTop: 1, paddingHorizontal: 14 },
-  change: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 10, paddingTop: 8, paddingHorizontal: 14, paddingBottom: 12 },
+  change: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 10, rowGap: 4, paddingTop: 8, paddingHorizontal: 14, paddingBottom: 7 },
   old: { fontSize: 20, color: t.ink2, fontVariant: ['tabular-nums'] },
   neu: { ...type.numeral, color: t.ink },
-  unit: { fontSize: 15, fontWeight: '400', color: t.ink2 },
-  cut: { backgroundColor: t.offTint, color: t.offTintInk },
+  unit: { fontSize: 13, fontWeight: '500', color: t.ink2 },
+  cut: { backgroundColor: t.offTint, color: t.offTintInk, textDecorationLine: 'line-through' },
   add: { backgroundColor: t.onFill, color: t.onInk },
   effect: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingVertical: 8, paddingHorizontal: 14, backgroundColor: t.onFill },
   effectText: { ...type.sub, fontWeight: '500', color: t.onInk, flex: 1 },
-  fine: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 8, paddingHorizontal: 6 },
+  fine: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 8, paddingHorizontal: 6, paddingBottom: 6 },
   fineText: { ...type.small, fontWeight: '400', color: t.ink2, flex: 1 },
   label: { ...type.label, color: t.ink, marginTop: 12, marginHorizontal: 6, marginBottom: 6 },
-  actions: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  actions: { flexDirection: 'row', gap: 8, marginTop: 8 },
   done: { backgroundColor: t.group, borderRadius: radius.group, flexDirection: 'row', gap: 12, paddingTop: 12, paddingHorizontal: 14, paddingBottom: 12, marginBottom: 10 },
   doneTitle: { ...type.title, color: t.ink },
   doneText: { ...type.sub, color: t.ink2, marginTop: 2 },
@@ -201,8 +201,8 @@ export default function Inbox() {
           {change(i)}
           {effect && (
             <View style={s.effect}>
-              <View style={{ marginTop: 2 }}>
-                <BandMarker band="green" size={18} />
+              <View style={{ marginTop: 3 }}>
+                <BandMarker band="green" size={14} />
               </View>
               <Text style={s.effectText}>{effect}</Text>
             </View>
@@ -254,11 +254,12 @@ export default function Inbox() {
           <Text style={s.doneTitle}>
             {accepted ? `Accepted (saved as version ${res.newRev})` : res.note ? `Declined: ${res.note}` : 'Declined'}
           </Text>
-          <Text style={s.doneText}>
-            {titleLine(i)}
-            {'\n'}
-            {showValue(i.request.current)} → {showValue(i.request.proposed)}
-          </Text>
+          <Text style={s.doneText}>{titleLine(i)}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }} accessibilityLabel={`${showValue(i.request.current)} to ${showValue(i.request.proposed)}`}>
+            <Text style={[s.doneText, { marginTop: 0 }]}>{showValue(i.request.current)}</Text>
+            <Icon name="arrow" size={14} color={t.ink2} />
+            <Text style={[s.doneText, { marginTop: 0 }]}>{showValue(i.request.proposed)}</Text>
+          </View>
           <Text style={s.doneBy}>{byLine(i)}</Text>
         </View>
       </View>
