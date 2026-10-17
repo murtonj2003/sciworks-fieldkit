@@ -28,10 +28,16 @@ export function astroAtStart(startedAt: string, transect: Transect | undefined):
   return astroFor(startedAt, lat, lon);
 }
 
-export function isNight(survey: LocalSurvey): boolean {
+/** Night = between the sunset astroFor() picked (the last one before the start) and the sunrise after it.
+ * astroFor's `sunrise` is the morning of that sunset's day, so step it forward past the sunset. */
+export function isNight(survey: Pick<LocalSurvey, 'startedAt' | 'astro'>): boolean {
   const a = survey.astro;
-  if (!a) return false;
-  return a.minutesAfterSunsetAtStart > 0 || new Date(survey.startedAt) < new Date(a.sunrise);
+  if (!a?.sunset || !a.sunrise) return false;
+  const start = new Date(survey.startedAt).getTime();
+  const sunset = new Date(a.sunset).getTime();
+  let nextSunrise = new Date(a.sunrise).getTime();
+  while (nextSunrise <= sunset) nextSunrise += 86_400_000;
+  return start > sunset && start < nextSunrise;
 }
 
 export interface WeatherPreset {

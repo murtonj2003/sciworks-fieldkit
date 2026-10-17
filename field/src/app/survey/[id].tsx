@@ -96,14 +96,14 @@ export default function SurveyScreen() {
           </H2>
           <P dim>
             {survey.date} · started {clockOf(survey.startedAt)}
-            {finished ? ` · finished ${clockOf(survey.finishedAt)}` : ''} · {survey.surveyorCount} surveyors
+            {finished ? ` · finished ${clockOf(survey.finishedAt)}` : ''} · {survey.surveyorCount} {survey.surveyorCount === 1 ? 'surveyor' : 'surveyors'}
             {survey.effortPersonHours !== undefined ? ` · ${survey.effortPersonHours} person-hours` : ''}
           </P>
           {survey.astro && (
             <P dim>
               ☀ Sunrise {clockOf(survey.astro.sunrise)} · sunset {clockOf(survey.astro.sunset)} · 🌙 {survey.astro.moonIlluminationPct}%
               lit, {survey.astro.moonAboveHorizonAtStart ? 'up' : 'not up'} at start
-              {survey.astro.minutesAfterSunsetAtStart > 0 ? ` · ${survey.astro.minutesAfterSunsetAtStart} min after sunset` : ''}
+              {isNight(survey) ? ` · ${survey.astro.minutesAfterSunsetAtStart} min after sunset` : ''}
             </P>
           )}
           {missing.length > 0 && <P dim>Still to fill in for HQ: {missing.join(', ')}</P>}
