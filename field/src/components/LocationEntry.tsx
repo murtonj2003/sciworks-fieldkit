@@ -219,7 +219,21 @@ export function LocationEntry({
       <Text style={fs.small}>{FORMAT_LABELS[format]} · type it exactly as the GPS shows it</Text>
       {parsed && 'error' in parsed && <Hint text={parsed.error} tone="info" />}
 
-      {check && words && (
+      {/* Once a suggestion is used, the box shows where the point is now (green). What was typed stays on the
+          record and is named underneath, so nothing is hidden. */}
+      {accepted && acceptedMeasure && check && (
+        <View style={[styles.band, { borderColor: colors.green }]} accessibilityLiveRegion="polite">
+          <Text style={[styles.bandWord, { color: colors.green }]}>✓ On the line (suggestion used)</Text>
+          <Text style={styles.bandDetail}>
+            {acceptedMeasure.offsetM.toFixed(1)} m from {transect.properties.transectId}, {Math.round(acceptedMeasure.chainageM)} m along.
+          </Text>
+          <Text style={styles.flag}>
+            You typed {raw.trim()}, which was {distance(check.offsetM)} off. That is kept on the record.
+          </Text>
+        </View>
+      )}
+
+      {!accepted && check && words && (
         <View style={[styles.band, { borderColor: words.color }]} accessibilityLiveRegion="polite">
           <Text style={[styles.bandWord, { color: words.color }]}>
             {words.icon} {words.word}
@@ -237,16 +251,6 @@ export function LocationEntry({
           points={points}
           transectId={transect.properties.transectId}
         />
-      )}
-
-      {accepted && acceptedMeasure && (
-        <View style={[styles.band, { borderColor: colors.green }]}>
-          <Text style={[styles.bandWord, { color: colors.green }]}>✓ Suggestion used</Text>
-          <Text style={styles.bandDetail}>
-            Now {acceptedMeasure.offsetM.toFixed(1)} m from {transect.properties.transectId}, {Math.round(acceptedMeasure.chainageM)} m
-            along. What you typed is kept on the record.
-          </Text>
-        </View>
       )}
 
       {decision && decision.kind !== 'accepted-suggestion' && (
