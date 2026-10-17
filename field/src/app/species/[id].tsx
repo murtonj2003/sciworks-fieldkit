@@ -1,7 +1,9 @@
 // P5 · Pick a species from the site's pack (or the Team Lead's shortlist), or mark it unidentified.
 // Forgiving search (shared searchTaxa): a misheard or misspelt name still finds the species, marked as a close
-// match so the surveyor checks it. Kit: grey search field, Results group of plain rows, shortlist group, two row
-// buttons pinned at the bottom.
+// match so the surveyor checks it. Layout = comp 4C (fidelity pass, Sat 21:00): a white search field, the best hit
+// alone in a "Top match" tray with a bigger photo, then "Not sure? Compare look-alikes" (each with Guide), then
+// the other hits; every row has an outlined Guide button (Jack's pick). Unidentified + photo and the Scale key sit
+// at the end of the list, then an honest offline line and the pack disclaimer.
 import { searchTaxa, type Taxon, type TaxonMatch } from '@sciworks/shared';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -10,7 +12,7 @@ import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-na
 import { Icon } from '@/components/Icon';
 import { SpeciesPhoto } from '@/components/SpeciesPhoto';
 import { lookAlikes } from '@/lib/speciesGuide';
-import { BottomBar, Button, Group, GroupTitle, T, Tag } from '@/components/ui';
+import { Button, Group, GroupTitle, T, Tag, TrayTitle } from '@/components/ui';
 import { clearFresh, getRecord, listRecords, saveDraftNow } from '@/db/records';
 import { listProvisionalTaxa } from '@/db/team';
 import { touched } from '@/model/factory';
@@ -26,28 +28,29 @@ const WEB_NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as obje
 
 const useStyles = makeStyles((t) => ({
   wrap: { flex: 1, backgroundColor: t.ground },
-  page: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
-  search: { height: 60, borderRadius: radius.card, backgroundColor: t.group, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 14, paddingRight: 4, borderWidth: 2, borderColor: 'transparent' },
-  searchFocus: { borderColor: t.ink },
-  q: { fontSize: 20, color: t.ink, flex: 1, minWidth: 0, minHeight: 56, paddingVertical: 0, ...WEB_NO_OUTLINE },
+  page: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32, gap: 12 },
+  search: { height: 50, borderRadius: radius.card, backgroundColor: t.card, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 14, paddingRight: 2, borderWidth: 1, borderColor: t.hair },
+  searchFocus: { borderColor: t.ink, borderWidth: 1.5 },
+  q: { fontSize: 17, color: t.ink, flex: 1, minWidth: 0, minHeight: 46, paddingVertical: 0, ...WEB_NO_OUTLINE },
   list: { backgroundColor: t.card, borderRadius: radius.card, overflow: 'hidden' },
-  row: { minHeight: 56, paddingVertical: 10, paddingHorizontal: 14, justifyContent: 'center', gap: 3 },
-  rowTall: { minHeight: 70, paddingTop: 11, paddingBottom: 10, justifyContent: 'flex-start' },
-  sep: { height: 1, backgroundColor: t.hair, marginLeft: 88 },
-  prow: { minHeight: 84, flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingLeft: 12, paddingRight: 12 },
-  prowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  sep: { height: 1, backgroundColor: t.hair, marginLeft: 78 },
+  prow: { minHeight: 76, flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9, paddingLeft: 10, paddingRight: 10 },
+  prowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minWidth: 0 },
   fam2: { ...type.sub, color: t.ink2 },
-  guide: { height: 36, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: t.group, alignItems: 'center', justifyContent: 'center' },
-  guideText: { ...type.small, fontWeight: '600', color: t.ink },
-  line: { flexDirection: 'row', alignItems: 'baseline', gap: 12 },
-  name: { ...type.body, fontStyle: 'italic', fontWeight: '600', color: t.ink, flexShrink: 1 },
-  fam: { ...type.sub, color: t.ink2, marginLeft: 'auto' },
-  note: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  guide: { height: 30, paddingHorizontal: 12, borderRadius: 9, borderWidth: 1, borderColor: t.ink, backgroundColor: t.card, alignItems: 'center', justifyContent: 'center' },
+  guideText: { ...type.small, fontSize: 14, fontWeight: '500', color: t.ink },
+  name: { ...type.body, fontSize: 16, lineHeight: 21, fontStyle: 'italic', fontWeight: '600', color: t.ink, flexShrink: 1 },
+  nameBig: { fontSize: 18, lineHeight: 23 },
+  note: { flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 6 },
   noteText: { ...type.sub, color: t.ink2 },
   prov: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.ink2, borderRadius: radius.card, minHeight: 64, paddingVertical: 9, paddingHorizontal: 13, gap: 2, justifyContent: 'center' },
-  rowBtn: { minHeight: 56, borderRadius: radius.card, backgroundColor: t.sec, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18 },
-  rowBtnText: { ...type.title, color: t.ink, flex: 1 },
-  pill: { height: 30, paddingHorizontal: 10, borderRadius: radius.pill, backgroundColor: t.group, alignItems: 'center', justifyContent: 'center', marginRight: 4 },
+  arow: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14 },
+  more: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12 },
+  foot: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingTop: 14, marginHorizontal: 6, borderTopWidth: 1, borderTopColor: t.hair },
+  pill: { height: 30, paddingHorizontal: 10, borderRadius: radius.pill, backgroundColor: t.group, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  // Comp 4C: the white list sits flush in its tray, under the grey heading band.
+  tray: { padding: 0, gap: 0, overflow: 'hidden' },
+  flush: { backgroundColor: t.card, borderRadius: 0 },
   pillText: { ...type.small, fontWeight: '600', color: t.ink },
 }));
 
@@ -60,6 +63,7 @@ export default function SpeciesPicker() {
   const [q, setQ] = useState('');
   const [all, setAll] = useState(false);
   const [focus, setFocus] = useState(false);
+  const [more, setMore] = useState(false);
 
   const subset = useMemo(
     () => (template ? effectiveFields(template, overlay, 'encounter').find((f) => f.type === 'taxon')?.subset : undefined),
@@ -79,6 +83,11 @@ export default function SpeciesPicker() {
     return Math.max(1, sibs.findIndex((o) => o.id === me.id) + 1);
   }, [id]);
   const shortlist = useMemo(() => (subset ? (pack?.taxa ?? []).filter((x) => subset.includes(x.taxonId)) : []), [pack, subset]);
+  const searching = !!q.trim();
+  const top = searching ? rows[0] : undefined;
+  const alikes = useMemo(() => (top && pack ? lookAlikes(top.taxon, pack) : []), [top, pack]);
+  // Other hits, minus any already shown as a look-alike.
+  const rest = searching ? rows.slice(1).filter((r) => !alikes.some((o) => o.taxonId === r.taxon.taxonId)) : [];
 
   function choose(change: (e: LocalEncounter) => LocalEncounter) {
     const e = getRecord<LocalEncounter>(id);
@@ -107,57 +116,54 @@ export default function SpeciesPicker() {
     const typed = q.trim().toLowerCase();
     let n = 0;
     while (n < typed.length && n < name.length && typed[n] === name[n]!.toLowerCase()) n++;
-    if (n < 3) return <Text style={s.name}>{name}</Text>;
+    if (n < 3) return name;
     return (
-      <Text style={s.name}>
+      <>
         <Text style={{ fontWeight: '700' }}>{name.slice(0, n)}</Text>
         {name.slice(n)}
-      </Text>
+      </>
     );
   };
 
-  const speciesRow = (item: RowItem, i: number) => {
-    const close = item.match?.reason === 'spelling' || item.match?.reason === 'sounds-like';
-    return (
-      <View key={item.taxon.taxonId}>
-        {i > 0 && <View style={s.sep} />}
-        <View style={s.prow}>
+  const guideButton = (x: Taxon) => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Field notebook: ${x.scientificName}`}
+      onPress={() => router.push({ pathname: '/notebook/[taxonId]', params: { taxonId: x.taxonId, for: id } })}
+      hitSlop={10}
+      style={({ pressed }) => [s.guide, pressed && { backgroundColor: t.secPress }]}
+    >
+      <Text style={s.guideText}>Guide</Text>
+    </Pressable>
+  );
+
+  /** One species: photo, italic name (never cut short), family + VENOMOUS, Guide. `big` = the Top match. `onPress`
+   * defaults to choosing it; look-alike rows open the compare sheet instead. */
+  const speciesRow = (item: RowItem, i: number, opts: { big?: boolean; onPress?: () => void; label?: string } = {}) => (
+    <View key={item.taxon.taxonId}>
+      {i > 0 && <View style={[s.sep, opts.big && { marginLeft: 94 }]} />}
+      <View style={[s.prow, opts.big && { minHeight: 92 }]}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${item.taxon.scientificName}, ${item.taxon.family ?? ''}${item.taxon.dangerous ? ', venomous' : ''}${close ? ', close match' : ''}`}
-          onPress={() => pickTaxon(item.taxon)}
+          accessibilityLabel={opts.label ?? `${item.taxon.scientificName}, ${item.taxon.family ?? ''}${item.taxon.dangerous ? ', venomous' : ''}`}
+          onPress={opts.onPress ?? (() => pickTaxon(item.taxon))}
           style={({ pressed }) => [s.prowMain, pressed && { opacity: 0.7 }]}
         >
-          <SpeciesPhoto taxon={item.taxon} size={64} />
-          <View style={{ flex: 1, gap: 3 }}>
-          <View style={s.line}>
-            {nameWithMatch(item)}
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-            {item.taxon.family ? <Text style={s.fam2}>{item.taxon.family}</Text> : null}
-            {item.taxon.dangerous && <Tag label="VENOMOUS" venomous />}
-          </View>
-          {close && (
-            <View style={s.note}>
-              <Icon name="spell" size={16} color={t.ink2} />
-              <Text style={s.noteText}>Close match for “{q.trim()}”</Text>
+          <SpeciesPhoto taxon={item.taxon} size={opts.big ? 72 : 56} />
+          <View style={{ flex: 1, gap: 3, minWidth: 0 }}>
+            <Text style={[s.name, opts.big && s.nameBig]}>
+              {opts.big ? nameWithMatch(item) : item.taxon.scientificName}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, rowGap: 4 }}>
+              {item.taxon.family ? <Text style={s.fam2}>{item.taxon.family}</Text> : null}
+              {item.taxon.dangerous && <Tag label="VENOMOUS" venomous />}
             </View>
-          )}
           </View>
         </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Field notebook: ${item.taxon.scientificName}`}
-          onPress={() => router.push({ pathname: '/notebook/[taxonId]', params: { taxonId: item.taxon.taxonId, for: id } })}
-          hitSlop={6}
-          style={({ pressed }) => [s.guide, pressed && { backgroundColor: t.greyPress }]}
-        >
-          <Text style={s.guideText}>Guide</Text>
-        </Pressable>
-        </View>
+        {guideButton(item.taxon)}
       </View>
-    );
-  };
+    </View>
+  );
 
   const total = pack?.taxa.length ?? 0;
 
@@ -165,7 +171,7 @@ export default function SpeciesPicker() {
     <View style={s.wrap}>
       <Stack.Screen
         options={{
-          title: 'Choose species',
+          title: 'Species',
           headerRight: () => (
             <View style={s.pill}>
               <Text style={s.pillText}>Animal {animalNumber}</Text>
@@ -199,10 +205,18 @@ export default function SpeciesPicker() {
           </View>
         )}
 
-        {rows.length > 0 && <GroupTitle>{q.trim() ? 'Results' : subset && !all ? 'Team shortlist' : 'Species in the pack'}</GroupTitle>}
-        <Group style={rows.length === 0 ? { marginTop: 12 } : undefined}>
-          {!q.trim() &&
-            provisional.map((p) => (
+        {searching && top && (
+          <View style={s.note}>
+            <Icon name="spell" size={16} color={t.ink2} />
+            <Text style={s.noteText}>
+              {top.match?.reason === 'spelling' || top.match?.reason === 'sounds-like' ? 'Close match for' : 'Best match for'} <Text style={{ fontStyle: 'italic' }}>{q.trim()}</Text>
+            </Text>
+          </View>
+        )}
+
+        {!searching && provisional.length > 0 && (
+          <Group>
+            {provisional.map((p) => (
               <Pressable
                 key={p.provisionalTaxonId}
                 accessibilityRole="button"
@@ -228,90 +242,98 @@ export default function SpeciesPicker() {
                 <Text style={s.noteText}>Added in the field · provisional until HQ decides</Text>
               </Pressable>
             ))}
-          {rows.length > 0 ? (
-            <View style={s.list}>{rows.map(speciesRow)}</View>
-          ) : (
+          </Group>
+        )}
+
+        {searching && rows.length === 0 && (
+          <Group>
             <View style={[s.list, { paddingVertical: 28, paddingHorizontal: 20, alignItems: 'center', gap: 6 }]}>
               <Icon name="search" size={24} color={t.ink2} />
               <T v="title" style={{ textAlign: 'center' }}>
                 Nothing matches “{q.trim()}”.
               </T>
               <T v="sub" dim style={{ textAlign: 'center' }}>
-                Try fewer letters, or mark it Unidentified + photo.
+                Try fewer letters, or mark it Unidentified + photo below.
               </T>
             </View>
-          )}
-        </Group>
+          </Group>
+        )}
 
-        {!!q.trim() && rows.length > 0 && pack && lookAlikes(rows[0]!.taxon, pack).length > 0 && (
-          <>
-            <GroupTitle>Not sure? Compare look-alikes of {rows[0]!.taxon.scientificName}</GroupTitle>
-            <Group>
-              <View style={s.list}>
-                {lookAlikes(rows[0]!.taxon, pack).map((o, i) => (
-                  <View key={o.taxonId}>
-                    {i > 0 && <View style={s.sep} />}
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Compare ${rows[0]!.taxon.scientificName} with ${o.scientificName}`}
-                      onPress={() => router.push({ pathname: '/compare', params: { a: rows[0]!.taxon.taxonId, b: o.taxonId, for: id } })}
-                      style={({ pressed }) => [s.prow, pressed && { backgroundColor: t.secPress }]}
-                    >
-                      <SpeciesPhoto taxon={o} size={64} />
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={s.name}>{o.scientificName}</Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-                          {o.family ? <Text style={s.fam2}>{o.family}</Text> : null}
-                          {o.dangerous && <Tag label="VENOMOUS" venomous />}
-                        </View>
-                      </View>
-                      <Icon name="chev" size={18} color={t.ink2} />
-                    </Pressable>
-                  </View>
-                ))}
+        {searching && top && (
+          <Group style={s.tray}>
+            <TrayTitle>Top match</TrayTitle>
+            <View style={s.flush}>{speciesRow(top, 0, { big: true })}</View>
+          </Group>
+        )}
+
+        {searching && top && (alikes.length > 0 || rest.length > 0) && (
+          <Group style={s.tray}>
+            {alikes.length > 0 && <TrayTitle>Not sure? Compare look-alikes</TrayTitle>}
+            {alikes.length > 0 && (
+              <View style={s.flush}>
+                {alikes.map((o, i) =>
+                  speciesRow({ taxon: o }, i, {
+                    label: `Compare ${top.taxon.scientificName} with ${o.scientificName}`,
+                    onPress: () => router.push({ pathname: '/compare', params: { a: top.taxon.taxonId, b: o.taxonId, for: id } }),
+                  }),
+                )}
               </View>
-            </Group>
-          </>
+            )}
+            {rest.length > 0 && !more && (
+              <Pressable accessibilityRole="button" onPress={() => setMore(true)} style={({ pressed }) => [s.more, pressed && { opacity: 0.6 }]}>
+                <Text style={[type.sub, { color: t.ink }]}>See more results ({rest.length})</Text>
+                <Icon name="chev" size={18} color={t.ink2} />
+              </Pressable>
+            )}
+            {rest.length > 0 && more && (
+              <>
+                <TrayTitle>More results</TrayTitle>
+                <View style={s.flush}>{rest.map((item, i) => speciesRow(item, i))}</View>
+              </>
+            )}
+          </Group>
         )}
 
-        {!!q.trim() && !!subset && !all && shortlist.length > 0 && (
-          <>
-            <GroupTitle>Team shortlist</GroupTitle>
-            <Group>
-              <View style={s.list}>{shortlist.map((taxon, i) => speciesRow({ taxon }, i))}</View>
-            </Group>
-          </>
+        {!searching && rows.length > 0 && (
+          <Group style={s.tray}>
+            <TrayTitle>{subset && !all ? 'Team shortlist' : 'Species in the pack'}</TrayTitle>
+            <View style={s.flush}>{rows.map((item, i) => speciesRow(item, i))}</View>
+          </Group>
         )}
 
-        {pack && (
-          <T v="small" dim style={{ marginTop: 14, marginHorizontal: 4, fontWeight: '400' }}>
-            {pack.disclaimer}
-          </T>
+        {searching && !!subset && !all && shortlist.length > 0 && (
+          <Group style={s.tray}>
+            <TrayTitle>Team shortlist</TrayTitle>
+            <View style={s.flush}>{shortlist.map((taxon, i) => speciesRow({ taxon }, i))}</View>
+          </Group>
         )}
-      </ScrollView>
 
-      <BottomBar>
-        <Group style={{ gap: 6 }}>
-          <Pressable
-            accessibilityRole="button"
-            style={({ pressed }) => [s.rowBtn, pressed && { backgroundColor: t.secPress }]}
-            onPress={() => choose((e) => ({ ...e, taxon: { idBasis: 'photo-later', unidentified: true } }))}
-          >
-            <Icon name="camera" size={22} color={t.ink} strokeWidth={2} />
-            <Text style={s.rowBtnText}>Unidentified + photo</Text>
-            <Icon name="chev" size={20} color={t.ink2} />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            style={({ pressed }) => [s.rowBtn, pressed && { backgroundColor: t.secPress }]}
-            onPress={() => router.replace({ pathname: '/key/[id]', params: { id } })}
-          >
-            <Icon name="key" size={22} color={t.ink} strokeWidth={2} />
-            <Text style={s.rowBtnText}>Scale key</Text>
-            <Icon name="chev" size={20} color={t.ink2} />
-          </Pressable>
+        <Group style={s.tray}>
+          <TrayTitle>Can't tell?</TrayTitle>
+          <View style={s.flush}>
+            <Pressable accessibilityRole="button" style={({ pressed }) => [s.arow, pressed && { backgroundColor: t.secPress }]} onPress={() => choose((e) => ({ ...e, taxon: { idBasis: 'photo-later', unidentified: true } }))}>
+              <Icon name="camera" size={22} color={t.ink} />
+              <Text style={[type.body, { color: t.ink, flex: 1 }]}>Unidentified + photo</Text>
+              <Icon name="chev" size={18} color={t.ink2} />
+            </Pressable>
+            <View style={[s.sep, { marginLeft: 48 }]} />
+            <Pressable accessibilityRole="button" style={({ pressed }) => [s.arow, pressed && { backgroundColor: t.secPress }]} onPress={() => router.replace({ pathname: '/key/[id]', params: { id } })}>
+              <Icon name="key" size={22} color={t.ink} />
+              <Text style={[type.body, { color: t.ink, flex: 1 }]}>Scale key</Text>
+              <Icon name="chev" size={18} color={t.ink2} />
+            </Pressable>
+          </View>
         </Group>
-      </BottomBar>
+
+        <View style={s.foot}>
+          <Icon name="cloud-off" size={20} color={t.ink2} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={[type.sub, { color: t.ink }]}>Works offline</Text>
+            <Text style={[type.small, { fontWeight: '400', color: t.ink2 }]}>The guide facts are on this phone. Photos show once seen with signal.</Text>
+            {pack && <Text style={[type.small, { fontWeight: '400', color: t.ink2, marginTop: 6 }]}>{pack.disclaimer}</Text>}
+          </View>
+        </View>
+      </ScrollView>
     </View>
   );
 }

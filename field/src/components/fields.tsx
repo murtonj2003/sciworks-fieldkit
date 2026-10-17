@@ -1,6 +1,8 @@
 // One input per FieldDef.type. Every change is reported up at once (the screen saves a draft on each one).
 // Warnings say "Check?" and never stop a save. Look: the kit's inputs (white on a grey group, 60 px, 12 px radius,
 // numbers 24 px tabular with unit + keypad icon) and choice chips (56 px, 14 px radius; selected = ink ring + check).
+// Survey rails (comp 1D, Jack's pick): one line per field inside a white card, short bold label on the left, 48 px
+// chips with a hairline, the chosen one black with white words.
 import type { Measurement } from '@sciworks/shared';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
@@ -93,11 +95,26 @@ export function Hint({ text, tone = 'warn' }: { text: string | null; tone?: 'war
   return <KitHint>{text}</KitHint>;
 }
 
-/** A plain wrapping row, or (rail) a sideways-scrolling one that runs to the group's edge. */
+/** The short name a field goes by on one compact line ("Wind, Beaufort (start)" → "Wind"). */
+const SHORT: Record<string, string> = {
+  'Rain now': 'Rain',
+  'Wind, Beaufort': 'Wind',
+  'Rain in the last 24 h': 'Rain 24 h',
+  'Air temperature': 'Air temp',
+  'Hours since rain': 'Since rain',
+  'Relative humidity': 'Humidity',
+  'Substrate temperature': 'Ground temp',
+};
+export function shortLabel(label: string): string {
+  const base = label.replace(/\s*\((start|finish|end|night surveys)\)\s*$/i, '');
+  return SHORT[base] ?? base;
+}
+
+/** A plain wrapping row, or (rail) a sideways-scrolling one that runs to the card's edge. */
 function Wrap({ rail, style, children }: { rail: boolean; style: StyleProp<ViewStyle>; children: ReactNode }) {
   if (!rail) return <View style={style}>{children}</View>;
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ marginRight: -8 }} contentContainerStyle={[style, { flexWrap: 'nowrap', paddingRight: 24 }]}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={[style, { flexWrap: 'nowrap', paddingRight: 16 }]}>
       {children}
     </ScrollView>
   );
@@ -138,6 +155,7 @@ export function Chips<T extends string | number>({
             key={String(o.code)}
             accessibilityRole={multi ? 'checkbox' : 'radio'}
             accessibilityState={{ checked: on }}
+            hitSlop={rail ? { top: 4, bottom: 4 } : undefined}
             onPress={() => {
               if (multi) {
                 const arr = Array.isArray(value) ? value : [];
@@ -148,14 +166,15 @@ export function Chips<T extends string | number>({
               s.chip,
               grid && { flex: 1, minWidth: 0, paddingHorizontal: 8 },
               grid2 && { flexBasis: '47%', flexGrow: 1, paddingHorizontal: 10 },
-              rail && { minHeight: 48, paddingHorizontal: 14, borderRadius: radius.chip },
+              rail && { minHeight: 40, minWidth: 0, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1, borderColor: t.hair },
               onGround && !on && { backgroundColor: t.grey },
-              on && s.chipOn,
-              pressed && { backgroundColor: onGround ? t.greyPress : t.secPress },
+              on && !rail && s.chipOn,
+              on && rail && { backgroundColor: t.pri, borderColor: t.pri },
+              pressed && { backgroundColor: rail && on ? t.priPress : onGround ? t.greyPress : t.secPress },
             ]}
           >
-            {on && <Icon name="check" size={20} color={t.ink} strokeWidth={2.25} />}
-            <Text style={[s.chipText, on && s.chipTextOn, grid && { textAlign: 'center', flexShrink: 1, lineHeight: 20 }, rail && { fontSize: 15 }]}>{o.label}</Text>
+            {on && !rail && <Icon name="check" size={20} color={t.ink} strokeWidth={2.25} />}
+            <Text style={[s.chipText, on && s.chipTextOn, grid && { textAlign: 'center', flexShrink: 1, lineHeight: 20 }, rail && { fontSize: 15 }, rail && on && { color: t.onPri }]}>{o.label}</Text>
           </Pressable>
         );
       })}
@@ -175,10 +194,13 @@ export function NumberInput({
   accessibilityLabel,
   onBlur,
   boxStyle,
+  compact,
 }: {
   value: number | undefined;
   onChange: (v: number | undefined) => void;
   onBlur?: () => void;
+  /** 48 px grey box with 20 px numbers, for a one-line row on a white card (Survey). */
+  compact?: boolean;
   /** e.g. a grey box when the input sits on a white card (kit `.k-next .fk-num`). */
   boxStyle?: object;
   placeholder?: string;
@@ -202,10 +224,10 @@ export function NumberInput({
   }, [value]);
   return (
     <View style={s.gap}>
-      <View style={[s.box, boxStyle, focus && s.boxFocus, notANumber && s.boxError]}>
+      <View style={[s.box, compact && { minHeight: 48, backgroundColor: t.group }, boxStyle, focus && s.boxFocus, notANumber && s.boxError]}>
         {prefix ? <Text style={s.prefix}>{prefix}</Text> : null}
         <TextInput
-          style={s.numText}
+          style={[s.numText, compact && { fontSize: 20, minHeight: 44 }]}
           value={text}
           accessibilityLabel={accessibilityLabel}
           placeholder={placeholder}
@@ -340,6 +362,7 @@ export function FieldInput({
   compact?: boolean;
 }) {
   const s = useFieldStyles();
+  const { t } = useTheme();
   let body: ReactNode = special ?? null;
   if (!special) {
     switch (field.type) {
@@ -350,6 +373,7 @@ export function FieldInput({
         body = (
           <>
             <NumberInput
+              compact={compact}
               value={value as number | undefined}
               onChange={onChange}
               unit={field.unit ? UNIT_LABEL[field.unit] ?? field.unit : undefined}
@@ -397,12 +421,12 @@ export function FieldInput({
         body = <Text style={s.help}>({field.type} field)</Text>;
     }
   }
-  // Compact choices (Survey): the short label and its rail on one line, so each field takes one line.
-  if (compact && (field.type === 'choice' || field.type === 'multi-choice' || field.type === 'boolean')) {
+  // Compact (Survey, comp 1D): the short bold label and its rail or number box on one line of a white card.
+  if (compact && (field.type === 'choice' || field.type === 'multi-choice' || field.type === 'boolean' || field.type === 'number')) {
     return (
-      <View style={[s.field, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}>
-        <Text style={[s.label, { width: 76, marginHorizontal: 4 }]} numberOfLines={2}>
-          {field.label.replace(/\s*\((start|finish|end)\)\s*$/i, '')}
+      <View style={{ flexDirection: 'row', alignItems: field.type === 'number' ? 'flex-start' : 'center', gap: 8, minHeight: 58, paddingVertical: 8, paddingLeft: 12, paddingRight: field.type === 'number' ? 12 : 0 }}>
+        <Text style={[type.title, { fontSize: 16, color: t.ink, width: 84, flexShrink: 0, paddingTop: field.type === 'number' ? 13 : 0 }]} numberOfLines={2} accessibilityLabel={field.label}>
+          {shortLabel(field.label)}
         </Text>
         <View style={{ flex: 1, minWidth: 0 }}>{body}</View>
       </View>

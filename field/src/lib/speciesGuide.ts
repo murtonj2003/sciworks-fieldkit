@@ -3,6 +3,8 @@
 // photos with credit. No invented descriptions; guide text the pack doesn't carry yet is simply not shown.
 import type { SpeciesPack, Taxon, TaxonPhoto, TraitKey, TraitRange } from '@sciworks/shared';
 
+import type { IconName } from '@/components/sprite';
+
 const COUNT_LABEL: Partial<Record<TraitKey, string>> = {
   dorsalRowsMidbody: 'Midbody scale rows',
   ventrals: 'Ventrals',
@@ -11,6 +13,25 @@ const COUNT_LABEL: Partial<Record<TraitKey, string>> = {
 const CAT_LABEL: Partial<Record<TraitKey, string>> = { analPlate: 'Anal plate', keeled: 'Dorsal scales', loreal: 'Loreal scale', pupil: 'Pupil' };
 
 export const genus = (t: Taxon) => t.scientificName.split(' ')[0] ?? t.scientificName;
+
+/** What a value says when the pack has nothing for that trait (muted on screen, never dressed as a value). */
+export const NO_DATA = 'Not in the pack';
+
+/** A small line icon per trait (comp 4C's notebook rows: eye, scale grid, ruler…). */
+const TRAIT_ICON: Record<string, IconName> = {
+  'Midbody scale rows': 'dots',
+  Ventrals: 'ventrals',
+  Subcaudals: 'tail',
+  'Anal plate': 'plate',
+  'Dorsal scales': 'scales',
+  'Loreal scale': 'scales',
+  Pupil: 'eye',
+  'Snout–vent length': 'ruler',
+  'Total length': 'ruler',
+  Mass: 'info',
+  Size: 'ruler',
+};
+export const traitIcon = (label: string): IconName => TRAIT_ICON[label] ?? 'info';
 
 export function photoOf(t: Taxon): TaxonPhoto | undefined {
   return t.photos?.find((p) => p.url || p.file);
@@ -85,10 +106,13 @@ export function lookAlikes(t: Taxon, pack: SpeciesPack, limit = 3): Taxon[] {
     .map((x) => x.o);
 }
 
+export type CompareRow = { label: string; icon: IconName; a: string; b: string; differ: boolean };
+const SIZE_SHORT: Record<string, string> = { 'Snout–vent length': 'SVL', 'Total length': 'Total length', Mass: 'Mass' };
+
 /** Side by side, trait by trait; `differ` marks a count that does not overlap (a real way to tell them apart). */
-export function compareRows(a: Taxon, b: Taxon): { label: string; a: string; b: string; differ: boolean }[] {
+export function compareRows(a: Taxon, b: Taxon): CompareRow[] {
   const keys: TraitKey[] = ['dorsalRowsMidbody', 'ventrals', 'subcaudals', 'analPlate', 'pupil', 'keeled', 'loreal'];
-  const rows: { label: string; a: string; b: string; differ: boolean }[] = [];
+  const rows: CompareRow[] = [];
   for (const k of keys) {
     const la = traitLines(a).find((x) => x.label === (COUNT_LABEL[k] ?? CAT_LABEL[k]));
     const lb = traitLines(b).find((x) => x.label === (COUNT_LABEL[k] ?? CAT_LABEL[k]));
@@ -96,17 +120,43 @@ export function compareRows(a: Taxon, b: Taxon): { label: string; a: string; b: 
     const differ = COUNT_LABEL[k]
       ? !!pooledRange(a, k) && !!pooledRange(b, k) && !overlap(pooledRange(a, k), pooledRange(b, k))
       : !!la && !!lb && !la.text.split(' or ').some((v) => lb.text.split(' or ').includes(v));
-    rows.push({ label: (COUNT_LABEL[k] ?? CAT_LABEL[k])!, a: la?.text ?? 'no data', b: lb?.text ?? 'no data', differ });
+    const label = (COUNT_LABEL[k] ?? CAT_LABEL[k])!;
+    rows.push({ label, icon: traitIcon(label), a: la?.text ?? NO_DATA, b: lb?.text ?? NO_DATA, differ });
   }
-  // Sizes only side by side when they measure the same thing (an SVL is never set against a total length).
-  const labels = [...new Set([...sizeLines(a), ...sizeLines(b)].map((x) => x.label))];
-  for (const label of labels) {
-    rows.push({
-      label,
-      a: sizeLines(a).find((x) => x.label === label)?.text ?? 'no data',
-      b: sizeLines(b).find((x) => x.label === label)?.text ?? 'no data',
-      differ: false,
-    });
-  }
+  // Sizes in one row only when they measure the same thing (an SVL is never set against a total length); any
+  // others share a "Size" row where each side names its own measure.
+  const sa = sizeLines(a);
+  const sb = sizeLines(b);
+  const same = sa.filter((x) => sb.some((y) => y.label === x.label));
+  for (const x of same) rows.push({ label: x.label, icon: 'ruler', a: x.text, b: sb.find((y) => y.label === x.label)!.text, differ: false });
+  const ra = sa.filter((x) => !same.some((y) => y.label === x.label));
+  const rb = sb.filter((x) => !same.some((y) => y.label === x.label));
+  const named = (list: typeof sa) => list.map((x) => `${SIZE_SHORT[x.label] ?? x.label} ${x.text}`).join('\n');
+  if (ra.length || rb.length) rows.push({ label: 'Size', icon: 'ruler', a: named(ra) || NO_DATA, b: named(rb) || NO_DATA, differ: false });
   return rows;
+}
+
+/** "170–193 (males)" → { value: "170–193", sex: "males" }, so a chip holds the number and the sex sits beside it. */
+export function splitSex(line: string): { value: string; sex?: string } {
+  const m = /^(.*?) \((males|females)\)$/.exec(line);
+  return m ? { value: m[1]!, sex: m[2] } : { value: line };
+}
+
+const abbr = (t: Taxon) => {
+  const [g, sp] = t.scientificName.split(' ');
+  return sp && g ? `${g[0]}. ${sp}` : t.scientificName;
+};
+const spanOf = (r: { min: number; max: number } | null) =>
+  r ? span({ ...(Number.isFinite(r.min) ? { min: r.min } : {}), ...(Number.isFinite(r.max) ? { max: r.max } : {}) }) : '';
+
+/** The first real difference between a look-alike and this species, naming both, e.g. "Ventrals 131–156
+ * (L. ornata 169–194)". Counts are compared over both sexes together, as `compareRows` does. */
+export function firstDifference(self: Taxon, other: Taxon): string | null {
+  for (const k of ['dorsalRowsMidbody', 'ventrals', 'subcaudals'] as TraitKey[]) {
+    const a = pooledRange(self, k);
+    const b = pooledRange(other, k);
+    if (a && b && !overlap(a, b)) return `${COUNT_LABEL[k]} ${spanOf(b)} (${abbr(self)} ${spanOf(a)})`;
+  }
+  const r = compareRows(self, other).find((x) => x.differ);
+  return r ? `${r.label}: ${r.b} (${abbr(self)} ${r.a})` : null;
 }

@@ -64,7 +64,7 @@ function hrefOf(b: StoredBasemap): string {
 }
 
 const useStyles = makeStyles((t) => ({
-  clip: { borderRadius: 8, overflow: 'hidden' },
+  clip: { borderRadius: 12, overflow: 'hidden' },
   foot: { paddingHorizontal: 4, paddingTop: 8, paddingBottom: 6, gap: 6 },
   seg: { flexDirection: 'row', alignSelf: 'flex-start', height: 44, padding: 3, borderRadius: radius.card, backgroundColor: t.segTrack },
   segBtn: { height: 38, minWidth: 88, borderRadius: 9, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12 },
@@ -75,6 +75,21 @@ const useStyles = makeStyles((t) => ({
   segText: { ...type.small, color: t.ink2 },
   segTextOn: { color: t.ink, fontWeight: '600' },
   credit: { ...type.micro, lineHeight: 16, color: t.ink2 },
+  // The licence credit inside the picture (Home preview): small white words on a soft dark shadow.
+  // Bottom-right: the lines run SW → NE, so the start ring sits bottom-left and the credit would cover it.
+  creditOn: {
+    position: 'absolute',
+    right: 8,
+    bottom: 5,
+    maxWidth: '80%',
+    textAlign: 'right',
+    fontSize: 10,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowRadius: 3,
+    textShadowOffset: { width: 0, height: 0.5 },
+  },
 }));
 
 export function TransectMap({
@@ -85,6 +100,7 @@ export function TransectMap({
   height = 190,
   pad = PAD,
   showSwitch = true,
+  bare,
 }: {
   transect: Transect;
   points?: MapPoint[];
@@ -97,6 +113,8 @@ export function TransectMap({
   pad?: number;
   /** The Satellite / Plain switch. The choice is kept on the phone, so a map without it follows the others. */
   showSwitch?: boolean;
+  /** Home's preview (comp 1D): only the route and two hollow end rings; the credit sits inside the picture. */
+  bare?: boolean;
 }) {
   const { t } = useTheme();
   const s = useStyles();
@@ -159,11 +177,17 @@ export function TransectMap({
               </G>
             );
           })}
-          {sat && <Circle cx={start.x} cy={start.y} r={9} fill={HALO} fillOpacity={haloOpacity} />}
-          <Circle cx={start.x} cy={start.y} r={7} fill={ink} />
-          {label(start.x + 11, start.y + 4, 'Start')}
-          <Circle cx={end.x} cy={end.y} r={7} fill={sat ? HALO : t.card} stroke={ink} strokeWidth={2.5} />
-          {label(end.x + 11, end.y + 4, 'End')}
+          {sat && !bare && <Circle cx={start.x} cy={start.y} r={9} fill={HALO} fillOpacity={haloOpacity} />}
+          {bare ? (
+            <Circle cx={start.x} cy={start.y} r={7.5} fill={sat ? HALO : t.card} stroke={ink} strokeWidth={2.5} />
+          ) : (
+            <>
+              <Circle cx={start.x} cy={start.y} r={7} fill={ink} />
+              {label(start.x + 11, start.y + 4, 'Start')}
+            </>
+          )}
+          <Circle cx={end.x} cy={end.y} r={bare ? 7.5 : 7} fill={sat ? HALO : t.card} stroke={ink} strokeWidth={2.5} />
+          {!bare && label(end.x + 11, end.y + 4, 'End')}
           {points.map((p, i) => {
             const q = frame.px(p.lon, p.lat);
             const inside = q.x >= 0 && q.x <= W && q.y >= 0 && q.y <= H;
@@ -185,18 +209,27 @@ export function TransectMap({
               </G>
             );
           })}
-          <G>
-            {sat && <Line x1={W - PAD} y1={18} x2={W - PAD} y2={40} stroke={HALO} strokeOpacity={haloOpacity} strokeWidth={5} strokeLinecap="round" />}
-            <Line x1={W - PAD} y1={18} x2={W - PAD} y2={40} stroke={ink2} strokeWidth={2} />
-            {label(W - PAD, 14, 'N', { weight: '700', color: ink2, anchor: 'middle' })}
-          </G>
-          {/* Scale bar bottom-right: the lines run SW → NE, so Start sits bottom-left and would collide. */}
-          {sat && <Line x1={W - 12 - barPx} y1={H - 10} x2={W - 12} y2={H - 10} stroke={HALO} strokeOpacity={haloOpacity} strokeWidth={5} strokeLinecap="round" />}
-          <Line x1={W - 12 - barPx} y1={H - 10} x2={W - 12} y2={H - 10} stroke={ink2} strokeWidth={2} />
-          {label(W - 12 - barPx - 6, H - 6, bar >= 1000 ? `${bar / 1000} km` : `${bar} m`, { color: ink2, anchor: 'end' })}
+          {!bare && (
+            <>
+              <G>
+                {sat && <Line x1={W - PAD} y1={18} x2={W - PAD} y2={40} stroke={HALO} strokeOpacity={haloOpacity} strokeWidth={5} strokeLinecap="round" />}
+                <Line x1={W - PAD} y1={18} x2={W - PAD} y2={40} stroke={ink2} strokeWidth={2} />
+                {label(W - PAD, 14, 'N', { weight: '700', color: ink2, anchor: 'middle' })}
+              </G>
+              {/* Scale bar bottom-right: the lines run SW → NE, so Start sits bottom-left and would collide. */}
+              {sat && <Line x1={W - 12 - barPx} y1={H - 10} x2={W - 12} y2={H - 10} stroke={HALO} strokeOpacity={haloOpacity} strokeWidth={5} strokeLinecap="round" />}
+              <Line x1={W - 12 - barPx} y1={H - 10} x2={W - 12} y2={H - 10} stroke={ink2} strokeWidth={2} />
+              {label(W - 12 - barPx - 6, H - 6, bar >= 1000 ? `${bar / 1000} km` : `${bar} m`, { color: ink2, anchor: 'end' })}
+            </>
+          )}
         </Svg>
+        {bare && sat && (
+          <Text style={s.creditOn} numberOfLines={3}>
+            {basemap.attribution}
+          </Text>
+        )}
       </View>
-      {basemap && href && (showSwitch || sat) && (
+      {!bare && basemap && href && (showSwitch || sat) && (
         <View style={s.foot}>
           {showSwitch && (
             <View style={s.seg} accessibilityRole="radiogroup" accessibilityLabel="Map background">
@@ -234,7 +267,7 @@ export function TransectThumb({ transect, size = 64, width, point }: { transect:
   const img = basemap ? frame.rect(basemap.bounds) : null;
   const d = pts.map((p) => `${p.x},${p.y}`).join(' ');
   return (
-    <View style={{ width: W, height: size, borderRadius: 10, overflow: 'hidden', backgroundColor: t.tile }} accessibilityElementsHidden importantForAccessibility="no">
+    <View style={{ width: W, height: size, borderRadius: size <= 56 ? 8 : 10, overflow: 'hidden', backgroundColor: t.tile }} accessibilityElementsHidden importantForAccessibility="no">
       <Svg width={W} height={size} viewBox={`0 0 ${W} ${size}`}>
         {href && img && <SvgImage href={href} x={img.x} y={img.y} width={img.width} height={img.height} preserveAspectRatio="none" opacity={t.name === 'night' ? 0.8 : 1} />}
         {href && <Polyline points={d} fill="none" stroke={HALO} strokeOpacity={0.9} strokeWidth={4.5} strokeLinejoin="round" strokeLinecap="round" />}

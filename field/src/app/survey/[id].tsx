@@ -1,9 +1,11 @@
-// P2b / P3 · One walk of one transect. Weather in two taps, sun and moon already filled in, the animals, then
-// Finish. Kit: head card with sun and moon lines, two-column quick-weather presets, fields in groups, protocol
-// warnings as amber hints (never block), animal rows with band marks + status chips.
+// P2b / P3 · One walk of one transect, rebuilt to comp 1D (fidelity pass, Sat 20:40): the title in the top bar, one
+// quiet line for date, sun and moon, then grey trays holding white cards of one-line rows (short bold label, the
+// chips scroll sideways, the chosen one black), quick weather as the first row, the protocol warning as its own
+// amber block with the button beside the words, Animals as one-line rows, the map last. One black Add animal in
+// the bottom bar; Finish survey sits at the end of the page.
 import type { WeatherBlock } from '@sciworks/shared';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { FieldInput } from '@/components/fields';
@@ -11,7 +13,7 @@ import { BandMarker, Icon } from '@/components/Icon';
 import { TransectMap } from '@/components/TransectMap';
 import { TierTag } from '@/components/UploadStatus';
 import { uploadTier } from '@/db/status';
-import { BottomBar, Button, DiscButton, Group, Hint, SavedMark, SectionTitle, StatusChip, T, Tag, type Status } from '@/components/ui';
+import { BottomBar, Button, Group, Hint, SavedMark, StatusChip, T, TrayTitle, type Status } from '@/components/ui';
 import { latestReview } from '@/db/feedback';
 import { createFreshDraft, listRecords } from '@/db/records';
 import { useRecord } from '@/hooks/useRecord';
@@ -30,27 +32,17 @@ const thousands = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!
 
 const useStyles = makeStyles((t) => ({
   wrap: { flex: 1, backgroundColor: t.ground },
-  page: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
-  head: { backgroundColor: t.card, borderRadius: radius.card, paddingVertical: 12, paddingHorizontal: 14 },
-  headTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sky: { marginTop: 7, paddingTop: 7, borderTopWidth: 1, borderTopColor: t.hair, gap: 2 },
-  skyRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 7 },
-  skyText: { ...type.small, fontWeight: '400', color: t.ink2, flex: 1 },
-  mapCard: { backgroundColor: t.card, borderRadius: radius.card, paddingHorizontal: 6, paddingVertical: 4 },
-  help: { ...type.small, fontWeight: '400', lineHeight: 17, color: t.ink2, marginHorizontal: 4, marginTop: 2, marginBottom: 7 },
-  shead: { position: 'absolute', top: 0, left: 0, right: 0, minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 20, backgroundColor: t.ground },
-  sheadText: { ...type.sub, color: t.ink2, flexShrink: 1 },
-  presets: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
-  preset: { width: '48.5%', minHeight: 56, borderRadius: radius.chip, backgroundColor: t.grey, paddingVertical: 8, paddingLeft: 14, paddingRight: 30, justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' },
-  presetOn: { backgroundColor: t.card, borderColor: t.ink },
-  presetTitle: { ...type.title, color: t.ink },
-  presetSub: { ...type.sub, color: t.ink2 },
-  presetCheck: { position: 'absolute', top: 10, right: 10 },
+  page: { paddingHorizontal: 16, paddingTop: 2, paddingBottom: 24, gap: 12 },
+  info: { gap: 3, marginHorizontal: 6, marginBottom: 2 },
+  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
+  infoText: { ...type.sub, color: t.ink2 },
   list: { backgroundColor: t.card, borderRadius: radius.card, overflow: 'hidden' },
-  arow: { minHeight: 64, flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingTop: 11, paddingBottom: 10, paddingHorizontal: 12 },
-  sep: { height: 1, backgroundColor: t.hair, marginLeft: 44 },
-  aHead: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
-  empty: { backgroundColor: t.card, borderRadius: radius.card, paddingVertical: 28, paddingHorizontal: 20, alignItems: 'center', gap: 4 },
+  rsep: { height: 1, backgroundColor: t.hair },
+  qrow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 58, paddingVertical: 8, paddingLeft: 12 },
+  qchip: { minHeight: 40, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1, borderColor: t.hair, backgroundColor: t.card, alignItems: 'center', justifyContent: 'center' },
+  arow: { minHeight: 60, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9, paddingHorizontal: 14 },
+  sep: { height: 1, backgroundColor: t.hair, marginLeft: 46 },
+  empty: { backgroundColor: t.card, borderRadius: radius.card, paddingVertical: 24, paddingHorizontal: 20, alignItems: 'center', gap: 4 },
 }));
 
 export default function SurveyScreen() {
@@ -60,7 +52,6 @@ export default function SurveyScreen() {
   const { record: survey, update } = useRecord<LocalSurvey>(id);
   const s = useStyles();
   const { t } = useTheme();
-  const [folded, setFolded] = useState(false);
   const tz = project?.timeZone;
   const now = () => nowIso(tz);
 
@@ -103,15 +94,34 @@ export default function SurveyScreen() {
       .filter((f) => f.key !== 'finishedAt')
       .filter((f) => !NIGHT_ONLY_PATHS.has(f.path) || night || getPath(survey, f.path) !== undefined);
 
-  const renderGroup = (group: string, after?: ReactNode) => {
-    const list = groupFields(group);
+  const groupLabel = (key: string) => GROUPS.find((g) => g.key === key)?.label ?? key;
+
+  /** A grey tray with its heading inside and one white card of one-line rows; choices before numbers (comp 1D). */
+  const renderGroup = (group: string, first?: ReactNode) => {
+    const list = groupFields(group).sort((a, b) => Number(a.type === 'number') - Number(b.type === 'number'));
     if (list.length === 0) return null;
+    if (list.every((f) => f.type === 'text')) {
+      return (
+        <Group style={{ gap: 6 }}>
+          <TrayTitle>{groupLabel(group)}</TrayTitle>
+          {list.map((f) => (
+            <FieldInput key={f.key} field={f} value={getPath(survey, f.path)} onChange={(v) => set(f.path, v)} nowIso={now} />
+          ))}
+        </Group>
+      );
+    }
     return (
-      <Group style={{ gap: 10, paddingVertical: 10 }}>
-        {list.map((f) => (
-          <FieldInput key={f.key} field={f} value={getPath(survey, f.path)} onChange={(v) => set(f.path, v)} nowIso={now} compact />
-        ))}
-        {after}
+      <Group style={{ gap: 6 }}>
+        <TrayTitle>{groupLabel(group)}</TrayTitle>
+        <View style={s.list}>
+          {first}
+          {list.map((f, i) => (
+            <View key={f.key}>
+              {(i > 0 || first) && <View style={s.rsep} />}
+              <FieldInput field={f} value={getPath(survey, f.path)} onChange={(v) => set(f.path, v)} nowIso={now} compact />
+            </View>
+          ))}
+        </View>
       </Group>
     );
   };
@@ -121,37 +131,31 @@ export default function SurveyScreen() {
   const matches = (w: LocalWeather | undefined, p: WeatherPreset) =>
     !!w && (Object.keys(p.weather) as (keyof WeatherBlock)[]).every((k) => w[k] === p.weather[k as keyof typeof p.weather]);
 
+  /** Quick weather as the card's first row: one tap fills cloud, rain and wind, then fix anything that differs. */
   const presetRow = (block: 'weatherStart' | 'weatherEnd') => (
-    <>
-      <Text style={s.help}>Quick weather: tap one, then fix anything that differs</Text>
-      <View style={s.presets} accessibilityRole="radiogroup" accessibilityLabel="Quick weather">
+    <View style={s.qrow}>
+      <Text style={[type.title, { fontSize: 16, color: t.ink, width: 84, flexShrink: 0 }]}>Quick</Text>
+      <ScrollView horizontal style={{ flex: 1 }} showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8, paddingRight: 16 }} accessibilityRole="radiogroup" accessibilityLabel="Quick weather: tap one, then fix anything that differs">
         {presetsFor(block).map((p) => {
           const on = matches(survey[block], p);
-          const [title, ...rest] = p.label.split(' · ');
+          const [title] = p.label.split(' · ');
           return (
             <Pressable
               key={p.label}
               accessibilityRole="radio"
               accessibilityState={{ checked: on }}
               accessibilityLabel={p.label}
+              hitSlop={{ top: 4, bottom: 4 }}
               onPress={() => update((r) => ({ ...r, [block]: { ...(r[block] ?? { at: now() }), ...p.weather } }))}
-              style={({ pressed }) => [s.preset, on && s.presetOn, pressed && !on && { backgroundColor: t.greyPress }]}
+              style={({ pressed }) => [s.qchip, on && { backgroundColor: t.pri, borderColor: t.pri }, pressed && { backgroundColor: on ? t.priPress : t.secPress }]}
             >
-              <Text style={s.presetTitle}>{title}</Text>
-              {rest.length > 0 && <Text style={s.presetSub}>{rest.join(' · ')}</Text>}
-              {on && (
-                <View style={s.presetCheck}>
-                  <Icon name="check" size={20} color={t.ink} strokeWidth={2.25} />
-                </View>
-              )}
+              <Text style={[type.body, { fontSize: 15, fontWeight: on ? '600' : '500', color: on ? t.onPri : t.ink }]}>{title}</Text>
             </Pressable>
           );
         })}
-      </View>
-    </>
+      </ScrollView>
+    </View>
   );
-
-  const groupLabel = (key: string) => GROUPS.find((g) => g.key === key)?.label ?? key;
 
   const animalRow = (a: LocalEncounter, i: number) => {
     const name = a.taxon.scientificName;
@@ -161,19 +165,7 @@ export default function SurveyScreen() {
     const review = latestReview(a.id)?.status as Status | undefined;
     const incomplete = missingForHq(a);
     const bits = [clockOf(a.observedAt), a.svl ? `SVL ${thousands(a.svl.value)} mm` : null, a.distanceAlongM ? `${thousands(a.distanceAlongM.value)} m along` : null, loc ? null : 'no location yet'].filter(Boolean);
-    const where = loc
-      ? fixed
-        ? 'On the line · fixed with “Did you mean?”'
-        : loc.check.band === 'green'
-          ? 'On the line'
-          : loc.check.band === 'amber'
-            ? 'Near the line'
-            : loc.check.band === 'red'
-              ? 'Off the line'
-              : 'Outside the project area'
-      : incomplete.length > 0
-        ? `Still to fill in for HQ: ${incomplete.join(', ')}`
-        : '';
+    const where = loc ? (fixed ? 'on the line, fixed' : loc.check.band === 'green' ? 'on the line' : loc.check.band === 'amber' ? 'near the line' : loc.check.band === 'red' ? 'off the line' : 'outside the project area') : '';
     return (
       <View key={a.id}>
         {i > 0 && <View style={s.sep} />}
@@ -182,28 +174,17 @@ export default function SurveyScreen() {
           onPress={() => router.push({ pathname: '/encounter/[id]', params: { id: a.id } })}
           style={({ pressed }) => [s.arow, pressed && { backgroundColor: t.secPress }]}
         >
-          <View style={{ marginTop: 1 }}>
-            <BandMarker band={band} size={20} />
-          </View>
-          <View style={{ flex: 1, gap: 2 }}>
-            <View style={s.aHead}>
-              <T italic={!!name} dim={!name} style={{ flex: 1 }}>
-                {name ?? (a.taxon.unidentified ? 'Unidentified' : 'Not chosen yet')}
-              </T>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                {review ? <StatusChip status={review} /> : incomplete.length > 0 ? <Tag label="incomplete" dashed /> : null}
-                <TierTag tier={uploadTier(a.id)} />
-              </View>
-            </View>
-            <T v="sub" dim>
-              {bits.join(' · ')}
+          <BandMarker band={band} size={20} />
+          <View style={{ flex: 1, gap: 2, minWidth: 0 }}>
+            <T italic={!!name} dim={!name} numberOfLines={1}>
+              {name ?? (a.taxon.unidentified ? 'Unidentified' : 'Not chosen yet')}
             </T>
-            {where ? (
-              <T v="small" dim style={{ fontWeight: '400' }}>
-                {where}
-              </T>
-            ) : null}
+            <T v="sub" dim numberOfLines={1} style={{ flexShrink: 1 }}>
+              {[...bits, where].filter(Boolean).join(' · ')}
+            </T>
           </View>
+          {review ? <StatusChip status={review} /> : <TierTag tier={uploadTier(a.id)} />}
+          <Icon name="chev" size={16} color={t.ink2} strokeWidth={2.25} />
         </Pressable>
       </View>
     );
@@ -211,104 +192,63 @@ export default function SurveyScreen() {
 
   return (
     <View style={s.wrap}>
-      <Stack.Screen options={{ title: 'Survey', headerRight: () => <SavedMark /> }} />
-      <ScrollView
-        contentContainerStyle={s.page}
-        keyboardShouldPersistTaps="handled"
-        scrollEventThrottle={32}
-        onScroll={(ev) => {
-          const past = ev.nativeEvent.contentOffset.y > 96;
-          if (past !== folded) setFolded(past);
-        }}
-      >
-        <Group>
-          <View style={s.head}>
-            <View style={s.headTitle}>
-              <Icon name={night ? 'moon' : 'sun'} size={20} color={t.ink2} />
-              <T v="head" style={{ flex: 1 }}>
-                {survey.transectId} · {night ? 'Night survey' : 'Day survey'}
-              </T>
+      <Stack.Screen options={{ title: `${survey.transectId} · ${night ? 'Night' : 'Day'} survey`, headerRight: () => <SavedMark /> }} />
+      <ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
+        <View style={s.info}>
+          <Text style={s.infoText}>
+            {shortDate(survey.date)} · started {clockOf(survey.startedAt)}
+            {finished ? ` · finished ${clockOf(survey.finishedAt)}` : ''} · {survey.surveyorCount} {survey.surveyorCount === 1 ? 'surveyor' : 'surveyors'}
+            {survey.effortPersonHours !== undefined ? ` · ${survey.effortPersonHours} person-hours` : ''}
+          </Text>
+          {survey.astro && (
+            <View style={s.infoRow} accessibilityLabel={`Sunrise ${clockOf(survey.astro.sunrise)}, sunset ${clockOf(survey.astro.sunset)}. Moon ${survey.astro.moonIlluminationPct}% lit, ${survey.astro.moonAboveHorizonAtStart ? 'up' : 'not up'} at start.`}>
+              <Icon name="sun" size={15} color={t.ink2} />
+              <Text style={s.infoText}>
+                {clockOf(survey.astro.sunrise)}–{clockOf(survey.astro.sunset)}
+              </Text>
+              <Icon name="moon" size={15} color={t.ink2} />
+              <Text style={s.infoText}>
+                {survey.astro.moonIlluminationPct}% lit, {survey.astro.moonAboveHorizonAtStart ? 'up' : 'not up'}
+                {night ? ` · ${survey.astro.minutesAfterSunsetAtStart} min after sunset` : ''}
+              </Text>
             </View>
-            <T v="sub" dim style={{ marginTop: 3 }}>
-              {shortDate(survey.date)} · started {clockOf(survey.startedAt)}
-              {finished ? ` · finished ${clockOf(survey.finishedAt)}` : ''} · {survey.surveyorCount} {survey.surveyorCount === 1 ? 'surveyor' : 'surveyors'}
-              {survey.effortPersonHours !== undefined ? ` · ${survey.effortPersonHours} person-hours` : ''}
-            </T>
-            {survey.astro && (
-              <View style={s.sky}>
-                <View style={s.skyRow}>
-                  <Icon name="sun" size={16} color={t.ink} />
-                  <Text style={s.skyText}>
-                    Sunrise {clockOf(survey.astro.sunrise)} · sunset {clockOf(survey.astro.sunset)}
-                  </Text>
-                </View>
-                <View style={s.skyRow}>
-                  <Icon name="moon" size={16} color={t.ink} />
-                  <Text style={s.skyText}>
-                    Moon {survey.astro.moonIlluminationPct}% lit, {survey.astro.moonAboveHorizonAtStart ? 'up' : 'not up'} at start
-                    {night ? ` · ${survey.astro.minutesAfterSunsetAtStart} min after sunset` : ''}
-                  </Text>
-                </View>
-              </View>
-            )}
-          </View>
-        </Group>
-        {missing.length > 0 && (
-          <View style={{ marginTop: 8, marginHorizontal: 4 }}>
-            <Tag label={`incomplete: ${missing.join(', ')}`} dashed />
-          </View>
-        )}
+          )}
+        </View>
 
-        <SectionTitle>{groupLabel('weather-start')}</SectionTitle>
-        {presetRow('weatherStart')}
-        {renderGroup(
-          'weather-start',
-          hits.length > 0 ? (
-            <>
-              {hits.map((h) => (
-                <View key={h.code}>
-                  <Hint
-                    icon="rain"
-                    actions={
-                      <View style={{ flexDirection: 'row' }}>
-                        <Button
-                          label="Yes, carry on"
-                          kind="white"
-                          size={48}
-                          onPress={() =>
-                            update((r) => ({
-                              ...r,
-                              protocolWarnings: [...(r.protocolWarnings ?? []), { code: h.code, message: h.message, acknowledgedAt: now() }],
-                            }))
-                          }
-                        />
-                      </View>
-                    }
-                  >
-                    {h.message}
-                  </Hint>
-                </View>
-              ))}
-            </>
-          ) : null,
-        )}
+        {renderGroup('weather-start', presetRow('weatherStart'))}
+        {hits.map((h) => (
+          <Hint
+            key={h.code}
+            side
+            actions={
+              <Button
+                label="Yes, carry on"
+                kind="white"
+                size={40}
+                lines={1}
+                onPress={() =>
+                  update((r) => ({
+                    ...r,
+                    protocolWarnings: [...(r.protocolWarnings ?? []), { code: h.code, message: h.message, acknowledgedAt: now() }],
+                  }))
+                }
+              />
+            }
+          >
+            {h.message}
+          </Hint>
+        ))}
 
-        {finished && (
-          <>
-            <SectionTitle>{groupLabel('weather-end')}</SectionTitle>
-            {presetRow('weatherEnd')}
-            {renderGroup('weather-end')}
-          </>
-        )}
+        {finished && renderGroup('weather-end', presetRow('weatherEnd'))}
 
-        <SectionTitle>Animals ({animals.length})</SectionTitle>
-        <Group>
+        <Group style={{ gap: 6 }}>
+          <TrayTitle>Animals ({animals.length})</TrayTitle>
           {animals.length > 0 ? (
             <View style={s.list}>{animals.map(animalRow)}</View>
           ) : (
             <View style={s.empty}>
               <View style={{ marginBottom: 6 }}>
-                <Icon name="snake" size={24} color={t.ink2} />
+                <Icon name="snake-coil" size={34} color={t.ink2} strokeWidth={1.4} />
               </View>
               <T v="title">No animals yet</T>
               <T v="sub" dim>
@@ -317,9 +257,15 @@ export default function SurveyScreen() {
             </View>
           )}
         </Group>
+
+        {renderGroup('herp')}
+        {renderGroup('extras')}
+        {renderGroup('notes')}
+
         {transect && (
-          <Group style={{ marginTop: 10 }}>
-            <View style={s.mapCard}>
+          <Group style={{ gap: 6 }}>
+            <TrayTitle>Map</TrayTitle>
+            <View style={[s.list, { paddingHorizontal: 6, paddingVertical: 4 }]}>
               <TransectMap
                 transect={transect}
                 points={animals.flatMap((a, i) =>
@@ -339,32 +285,12 @@ export default function SurveyScreen() {
           </Group>
         )}
 
-        {groupFields('herp').length > 0 && <SectionTitle>{groupLabel('herp')}</SectionTitle>}
-        {renderGroup('herp')}
-        {groupFields('extras').length > 0 && <SectionTitle>{groupLabel('extras')}</SectionTitle>}
-        {renderGroup('extras')}
-
-        <SectionTitle>{groupLabel('notes')}</SectionTitle>
-        {renderGroup('notes')}
+        {!finished && <Button label="Finish survey" kind="grey" size={56} icon="check" onPress={finish} />}
       </ScrollView>
-      {folded && (
-        <View style={s.shead} pointerEvents="none">
-          <Icon name={night ? 'moon' : 'sun'} size={16} color={t.ink} />
-          <Text style={s.sheadText} numberOfLines={1}>
-            <Text style={{ color: t.ink, fontWeight: '600' }}>
-              {survey.transectId} · {night ? 'Night survey' : 'Day survey'}
-            </Text>
-            {' '}· started {clockOf(survey.startedAt)}
-          </Text>
-        </View>
-      )}
 
       <BottomBar>
         {!finished ? (
-          <>
-            <DiscButton label="Add animal" onPress={addAnimal} />
-            <Button label="Finish survey" kind="grey" size={56} onPress={finish} />
-          </>
+          <Button label="Add animal" iconAfter="plus" size={64} onPress={addAnimal} />
         ) : (
           <Button label="Done" size={72} onPress={() => router.back()} />
         )}

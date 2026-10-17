@@ -14,6 +14,19 @@ function tierColors(tier: UploadTier, t: ReturnType<typeof useTheme>['t']) {
   return tier === 'phone' ? { bg: t.offTint, fg: t.offTintInk, mark: t.offMark } : tier === 'sent' ? { bg: t.nearFill, fg: t.nearInk, mark: t.nearMark } : { bg: t.onFill, fg: t.onInk, mark: t.onMark };
 }
 
+/** The small status dot at the end of a transect row on Home (comp 1D): the last walk's tier, or a hollow ring
+ * when the transect hasn't been walked on this phone. */
+export function TierDot({ tier }: { tier: UploadTier | null }) {
+  const { t } = useTheme();
+  if (!tier) return <View accessibilityLabel="Not walked yet" style={{ width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: t.track }} />;
+  return (
+    <View
+      accessibilityLabel={tier === 'phone' ? 'Last walk only on this phone' : tier === 'sent' ? 'Last walk sent, waiting for HQ' : 'Last walk confirmed by HQ'}
+      style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: tierColors(tier, t).mark }}
+    />
+  );
+}
+
 /** "On phone" / "Sent" / "HQ ✓" (drawn tick). */
 export function TierTag({ tier }: { tier: UploadTier }) {
   const { t } = useTheme();
@@ -29,7 +42,7 @@ export function TierTag({ tier }: { tier: UploadTier }) {
   );
 }
 
-/** "1 on phone · 3 sent · 12 confirmed" over a proportional red / amber / green bar. */
+/** "1 on phone · 3 sent · 12 confirmed" in each tier's own ink over a thin red / amber / green bar (comp 2B). */
 export function UploadStrip({ counts }: { counts: Record<UploadTier, number> }) {
   const { t } = useTheme();
   const total = counts.phone + counts.sent + counts.hq;
@@ -38,19 +51,21 @@ export function UploadStrip({ counts }: { counts: Record<UploadTier, number> }) 
     { tier: 'sent', n: counts.sent, word: 'sent' },
     { tier: 'hq', n: counts.hq, word: 'confirmed' },
   ];
+  // Words in the tier's dark ink (red, amber, green); the bar uses the brighter marks.
+  const word = (tier: UploadTier) => (tier === 'phone' ? t.offTintInk : tier === 'sent' ? t.nearInk : t.onInk);
   return (
     <View style={{ gap: 6, marginHorizontal: 4 }} accessibilityLabel={parts.map((p) => `${p.n} ${p.word}`).join(', ')}>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 2 }}>
-        {parts.map((p) => (
-          <View key={p.tier} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: tierColors(p.tier, t).mark }} />
-            <Text style={[type.small, { color: t.ink }]}>
-              <Text style={{ fontWeight: '700', fontVariant: ['tabular-nums'] }}>{p.n}</Text> {p.word}
+      <Text style={[type.sub, { color: t.ink2 }]}>
+        {parts.map((p, i) => (
+          <Text key={p.tier}>
+            {i > 0 ? '  ·  ' : ''}
+            <Text style={{ color: word(p.tier), fontWeight: '600' }}>
+              {p.n} {p.word}
             </Text>
-          </View>
+          </Text>
         ))}
-      </View>
-      <View style={{ flexDirection: 'row', height: 4, borderRadius: 2, overflow: 'hidden', gap: 2 }}>
+      </Text>
+      <View style={{ flexDirection: 'row', height: 3, borderRadius: 2, overflow: 'hidden', gap: 2 }}>
         {total === 0 && <View style={{ flex: 1, backgroundColor: t.track }} />}
         {parts
           .filter((p) => p.n > 0)

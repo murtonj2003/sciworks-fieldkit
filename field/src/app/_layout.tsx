@@ -64,7 +64,19 @@ function Shell() {
         <Stack.Screen name="person" options={{ title: 'Who is using this phone?' }} />
         <Stack.Screen name="profile" options={{ title: 'Profile' }} />
         <Stack.Screen name="notebook/[taxonId]" options={{ title: 'Field notebook' }} />
-        <Stack.Screen name="compare" options={{ title: 'Compare look-alikes', presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true }} />
+        <Stack.Screen
+          name="compare"
+          options={{
+            title: 'Compare look-alikes',
+            headerShown: false,
+            // A sheet over the species list (comp 4C); the browser preview draws its own sheet over a dimmed page.
+            presentation: Platform.OS === 'web' ? 'transparentModal' : 'formSheet',
+            sheetAllowedDetents: [0.7, 0.95],
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 20,
+            contentStyle: Platform.OS === 'web' ? { backgroundColor: 'transparent' } : { backgroundColor: t.card },
+          }}
+        />
         <Stack.Screen name="storage" options={{ title: 'Storage check' }} />
         <Stack.Screen name="survey/new" options={{ title: 'New survey' }} />
         <Stack.Screen name="survey/[id]" options={{ title: 'Survey' }} />

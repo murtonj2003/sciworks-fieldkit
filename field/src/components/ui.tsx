@@ -1,5 +1,6 @@
 // Fieldkit building blocks (Option E · Clean, from design/wireframes/fieldkit.css). Containment, not borders:
-// ground › grey group › white row. Every action is a pill: black primary, white on grey, grey on white.
+// ground › grey group › white row. Every action is a pill: black primary, white on grey, grey on white; Jack's
+// round-2 picks add one outlined pill for a small secondary action beside a black one (Guide, the second Choose).
 // Status is shape + glyph + word. Day and night come from the theme; nothing here hard-codes a colour.
 import type { ReactNode } from 'react';
 import { Pressable, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
@@ -85,6 +86,17 @@ export function Card({ children, style }: { children: ReactNode; style?: StylePr
   );
 }
 
+/** The heading inside a grey tray, above its white card (comps 1D / 4C: "Weather at start", "Top match"). */
+export function TrayTitle({ children, end }: { children: ReactNode; end?: ReactNode }) {
+  const { t } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingTop: 6, paddingBottom: 2, minHeight: 32 }}>
+      <Text style={[type.title, { color: t.ink, flex: 1 }]}>{children}</Text>
+      {end}
+    </View>
+  );
+}
+
 /** 13 px second-ink title that sits above a group. */
 export function GroupTitle({ children }: { children: ReactNode }) {
   const s = useBox();
@@ -115,7 +127,7 @@ export function Pair({ children }: { children: ReactNode }) {
 
 // ---------- buttons ----------
 
-export type ButtonKind = 'primary' | 'secondary' | 'grey' | 'white' | 'link' | 'danger';
+export type ButtonKind = 'primary' | 'secondary' | 'grey' | 'white' | 'outline' | 'link' | 'danger';
 
 export function Button({
   label,
@@ -125,16 +137,26 @@ export function Button({
   icon,
   disabled,
   style,
+  lines = 2,
+  iconAfter,
+  compact,
 }: {
   /** Plain words, or words with an italic species name inside. */
   label: ReactNode;
   onPress: () => void;
-  /** primary = black pill · white = white pill (on grey) · grey/secondary = grey pill (on white or the ground) · link = text button. */
+  /** primary = black pill · white = white pill (on grey) · grey/secondary = grey pill (on white or the ground) ·
+   * outline = white pill with an ink outline (small secondary beside a black one) · link = text button. */
   kind?: ButtonKind;
-  size?: 72 | 64 | 56 | 48;
+  size?: 72 | 64 | 56 | 48 | 40;
   icon?: IconName;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  /** 1 = the label shrinks to fit one line instead of wrapping (half-width buttons in a Pair). */
+  lines?: 1 | 2;
+  /** An icon after the words ("Add animal +", comp 1D). */
+  iconAfter?: IconName;
+  /** 15 px medium words, for two side-by-side choices with long species names (compare). */
+  compact?: boolean;
 }) {
   const { t } = useTheme();
   const k = kind === 'danger' ? 'primary' : kind === 'secondary' ? 'grey' : kind; // Black Pill Rule: no red fills
@@ -152,9 +174,10 @@ export function Button({
       </Pressable>
     );
   }
-  const bg = disabled ? t.disFill : k === 'primary' ? t.pri : k === 'white' ? t.sec : t.grey;
-  const press = k === 'primary' ? t.priPress : k === 'white' ? t.secPress : t.greyPress;
+  const bg = disabled ? t.disFill : k === 'primary' ? t.pri : k === 'white' || k === 'outline' ? t.card : t.grey;
+  const press = k === 'primary' ? t.priPress : k === 'white' || k === 'outline' ? t.secPress : t.greyPress;
   const fg = disabled ? t.disInk : k === 'primary' ? t.onPri : t.ink;
+  const small = size <= 48;
   return (
     <Pressable
       accessibilityRole="button"
@@ -165,21 +188,28 @@ export function Button({
         {
           minHeight: size,
           borderRadius: radius.pill,
-          paddingHorizontal: size >= 64 ? 26 : size === 48 ? 18 : 22,
+          paddingHorizontal: size >= 64 ? 26 : size === 56 ? 22 : size === 48 ? 14 : 12,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 10,
+          gap: small ? 6 : 10,
           backgroundColor: pressed && !disabled ? press : bg,
+          ...(k === 'outline' && !disabled ? { borderWidth: 1.5, borderColor: t.ink } : {}),
           transform: [{ scale: pressed && !disabled ? 0.98 : 1 }],
         },
         style,
       ]}
     >
-      {icon && <Icon name={icon} size={22} color={fg} strokeWidth={2} />}
-      <Text style={[type.title, size === 72 && { fontSize: 20 }, { color: fg, textAlign: 'center' }]} numberOfLines={2}>
+      {icon && <Icon name={icon} size={small ? 18 : 22} color={fg} strokeWidth={2} />}
+      <Text
+        style={[type.title, size === 72 && { fontSize: 20 }, (size === 40 || compact) && { fontSize: 15, lineHeight: 19 }, compact && { fontWeight: '500' }, { color: fg, textAlign: 'center', flexShrink: 1 }]}
+        numberOfLines={lines}
+        adjustsFontSizeToFit={lines === 1}
+        minimumFontScale={0.8}
+      >
         {label}
       </Text>
+      {iconAfter && <Icon name={iconAfter} size={small ? 18 : 22} color={fg} strokeWidth={2.25} />}
     </Pressable>
   );
 }
@@ -241,13 +271,22 @@ export function StatusChip({ status }: { status: Status }) {
 }
 
 /** Amber hint: advises, never blocks. `line` = the quiet one-line flag variant. */
-export function Hint({ children, line, actions, icon = 'warning' }: { children: ReactNode; line?: boolean; actions?: ReactNode; icon?: IconName }) {
+export function Hint({ children, line, actions, icon = 'warning', side }: { children: ReactNode; line?: boolean; actions?: ReactNode; icon?: IconName; side?: boolean }) {
   const { t } = useTheme();
   if (line) {
     return (
       <View style={{ flexDirection: 'row', gap: 8, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'flex-start' }}>
         <Icon name="warning" size={16} color={t.nearMark} strokeWidth={2.25} />
         <Text style={[type.small, { color: t.ink, flex: 1, fontWeight: '400' }]}>{children}</Text>
+      </View>
+    );
+  }
+  if (side) {
+    return (
+      <View style={{ backgroundColor: t.nearFill, borderRadius: radius.group, paddingVertical: 12, paddingLeft: 14, paddingRight: 10, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Icon name={icon} size={26} color={t.nearInk} strokeWidth={1.75} />
+        <Text style={[type.sub, { color: t.nearInk, flex: 1 }]}>{children}</Text>
+        {actions}
       </View>
     );
   }
@@ -307,7 +346,7 @@ export function DiscButton({ label, icon = 'plus', onPress }: { label: string; i
 export function SavedMark() {
   const { t } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingRight: 4 }} accessibilityLabel="Saved on this phone">
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingRight: 10 }} accessibilityLabel="Saved on this phone">
       <Icon name="check" size={18} color={t.onMark} strokeWidth={2.25} />
       <Text style={[type.sub, { color: t.ink2 }]}>Saved</Text>
     </View>

@@ -1,7 +1,8 @@
-// P1 · Home. Large title + person pill + Night switch; the counter (sticky, first) with the red / amber / green
-// upload strip; recovered drafts; the survey in progress; corrections; Transects with satellite thumbnails and a
-// preview map of the chosen one (design pick 1D); Recent surveys and animals with their upload tags (2B); the
-// project line last. Floating black pill nav: Survey · Add animal · Profile (2B). No project yet: Set up this phone.
+// P1 · Home, rebuilt to comp 1D + 2B (fidelity pass, Sat 20:30): large title + Night switch, the person chip on its
+// own line, the counter card with the way into Hand over to HQ inside it (scrolls away), the red / amber / green
+// strip, Transects (60 × 48 satellite thumbs, a status dot, the chosen row ringed) with a bare preview map, one
+// black Start / Continue survey, then Recent (Surveys · Animals). Floating black pill nav (2B). The project line
+// and "Project loaded" now live on Profile. No project yet: Set up this phone.
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -10,11 +11,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CounterBar } from '@/components/CounterBar';
 import { NAV_PILL_CLEARANCE, NavPill } from '@/components/NavPill';
 import { TransectMap, TransectThumb } from '@/components/TransectMap';
-import { TierTag, UploadStrip } from '@/components/UploadStatus';
+import { TierDot, TierTag, UploadStrip } from '@/components/UploadStatus';
 import { tierCounts, uploadTier } from '@/db/status';
 import { BandMarker, Icon } from '@/components/Icon';
 import type { IconName } from '@/components/sprite';
-import { BottomBar, Button, Group, GroupTitle, Row, T, Tag } from '@/components/ui';
+import { BottomBar, Button, Group, Row, T } from '@/components/ui';
 import { createFreshDraft, listRecords } from '@/db/records';
 import { bootInfo, launch } from '@/lib/boot';
 import { ProfileList } from './person';
@@ -37,28 +38,24 @@ const thousands = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!
 
 const useStyles = makeStyles((t) => ({
   wrap: { flex: 1, backgroundColor: t.ground },
-  appbar: { paddingHorizontal: 20, paddingBottom: 12, backgroundColor: t.ground },
-  appRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 44 },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 30, paddingLeft: 8, paddingRight: 10, borderRadius: radius.pill, backgroundColor: t.group, flexShrink: 1 },
-  pillText: { ...type.small, fontWeight: '600', color: t.ink },
-  line: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 4 },
-  iconBtn: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  page: { paddingHorizontal: 16, paddingBottom: 24, gap: 10 },
-  sticky: { backgroundColor: t.ground, paddingBottom: 6 },
-  h2: { marginHorizontal: 4, marginTop: 12 },
+  appbar: { paddingHorizontal: 20, paddingBottom: 8, backgroundColor: t.ground },
+  appRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 48 },
+  title: { fontSize: 34, lineHeight: 40, fontWeight: '700', letterSpacing: -0.8, color: t.ink },
+  chip: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 34, paddingHorizontal: 12, borderRadius: 10, backgroundColor: t.group, marginTop: 4 },
+  chipText: { ...type.sub, color: t.ink },
+  iconBtn: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginRight: -8 },
+  page: { paddingHorizontal: 16, paddingBottom: 24, gap: 12 },
+  h2: { marginHorizontal: 4, marginTop: 10, marginBottom: -4 },
   list: { backgroundColor: t.card, borderRadius: radius.card, overflow: 'hidden' },
   row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingHorizontal: 12 },
-  sep: { height: 1, backgroundColor: t.hair, marginLeft: 54 },
-  sepPlain: { height: 1, backgroundColor: t.hair, marginLeft: 14 },
+  sep: { height: 1, backgroundColor: t.hair, marginLeft: 50 },
   tile: { width: 30, height: 30, borderRadius: radius.tile, backgroundColor: t.tile, alignItems: 'center', justifyContent: 'center' },
   tileDark: { backgroundColor: t.pri },
   rowTitle: { ...type.body, color: t.ink, flex: 1 },
-  current: { paddingVertical: 12, paddingHorizontal: 14, gap: 3 },
-  curTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  trow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 8, paddingRight: 12, borderRadius: radius.card, backgroundColor: t.card, borderWidth: 2, borderColor: 'transparent' },
+  sub: { ...type.sub, color: t.ink2, paddingHorizontal: 10, paddingTop: 4, paddingBottom: 2 },
+  trow: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 8, paddingRight: 14, borderRadius: radius.card, backgroundColor: t.card, borderWidth: 2, borderColor: 'transparent' },
   trowOn: { borderColor: t.ink },
-  trTitle: { ...type.title, color: t.ink },
-  mapCard: { backgroundColor: t.card, borderRadius: radius.card, paddingHorizontal: 6, paddingVertical: 4 },
+  trTitle: { ...type.title, fontSize: 16, fontWeight: '500', color: t.ink },
 }));
 
 export default function Home() {
@@ -69,7 +66,6 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const [profileChosen, setProfileChosen] = useState(launch.profileChosen);
   const [received, setReceived] = useState<ReceiveResult | null>(null);
-  const [showChanges, setShowChanges] = useState(false);
   const [busy, setBusy] = useState(false);
   const [recovered] = useState(() => {
     if (bootInfo.shown) return 0;
@@ -98,7 +94,10 @@ export default function Home() {
   const corrections = person ? pendingCount() : 0;
   const nightNow = t.name === 'night';
   const team = project?.teams.find((x) => x.teamId === person?.teamId);
-  const teamTransects = (transects?.features ?? []).filter((f) => !team || team.transectIds.includes(f.properties.transectId));
+  const ownTransect = (id: string) => !team || team.transectIds.includes(id);
+  // All the project's transects, this team's first (comp 1D shows a list; other teams' rows say whose they are).
+  const teamTransects = [...(transects?.features ?? [])].sort((a, b) => Number(!ownTransect(a.properties.transectId)) - Number(!ownTransect(b.properties.transectId)));
+  const teamOf = (id: string) => project?.teams.find((x) => x.transectIds.includes(id));
   const [picked, setPicked] = useState<string | null>(null);
   const chosenId = picked ?? current?.transectId ?? teamTransects[0]?.properties.transectId ?? null;
   const chosen = teamTransects.find((f) => f.properties.transectId === chosenId) ?? null;
@@ -165,18 +164,12 @@ export default function Home() {
 
   return (
     <View style={s.wrap}>
-      <View style={[s.appbar, { paddingTop: insets.top + 6 }]}>
-        <View style={s.appRow}>
-          <T v="display">Fieldkit</T>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 }}>
-            {person && (
-              <Pressable accessibilityRole="button" accessibilityLabel={`${person.name}, ${team?.name ?? ''}. Switch person.`} onPress={() => router.push('/profile')} hitSlop={{ top: 9, bottom: 9 }} style={s.pill}>
-                <Icon name="user" size={15} color={t.ink2} />
-                <Text style={s.pillText} numberOfLines={1}>
-                  {person.name} · {team?.name ?? person.teamId}
-                </Text>
-              </Pressable>
-            )}
+      <ScrollView contentContainerStyle={[s.page, project && person ? { paddingBottom: NAV_PILL_CLEARANCE } : null]} keyboardShouldPersistTaps="handled">
+        <View style={[s.appbar, { paddingTop: insets.top + 6, marginHorizontal: -16 }]}>
+          <View style={s.appRow}>
+            <Text style={s.title} accessibilityRole="header">
+              Fieldkit
+            </Text>
             <Pressable
               accessibilityRole="switch"
               accessibilityLabel="Night"
@@ -185,38 +178,21 @@ export default function Home() {
               onLongPress={() => setAppearance('auto')}
               style={s.iconBtn}
             >
-              <Icon name={nightNow ? 'sun' : 'moon'} size={22} color={t.ink} strokeWidth={2} />
+              <Icon name={nightNow ? 'sun' : 'moon'} size={24} color={t.ink} strokeWidth={1.75} />
             </Pressable>
           </View>
+          {person && (
+            <Pressable accessibilityRole="button" accessibilityLabel={`${person.name}, ${team?.name ?? ''}. Opens Profile.`} onPress={() => router.push('/profile')} style={({ pressed }) => [s.chip, pressed && { backgroundColor: t.greyPress }]}>
+              <Icon name="users" size={18} color={t.ink} strokeWidth={1.6} />
+              <Text style={s.chipText}>
+                {person.name} · {team?.name ?? person.teamId}
+              </Text>
+            </Pressable>
+          )}
         </View>
-        <View style={s.line}>
-          <Icon name="plane" size={15} color={t.ink2} />
-          <T v="sub" dim>
-            Works offline · saved on this phone
-          </T>
-        </View>
-      </View>
 
-      <ScrollView
-        contentContainerStyle={[s.page, project && person ? { paddingBottom: NAV_PILL_CLEARANCE } : null]}
-        stickyHeaderIndices={project ? [0] : undefined}
-        keyboardShouldPersistTaps="handled"
-      >
-        {project ? (
-          <View style={s.sticky}>
-            <CounterBar onPress={() => router.push('/handover')} />
-          </View>
-        ) : null}
+        {project && person && <CounterBar handover onPress={() => router.push('/handover')} />}
         {project && person && <UploadStrip counts={counts} />}
-        {project && person && (
-          <Button
-            label={field.counter.recordsNotWithHq + field.counter.photosNotWithHq > 0 ? 'Send to HQ' : 'Hand over to HQ'}
-            kind="white"
-            icon="send"
-            size={56}
-            onPress={() => router.push('/handover')}
-          />
-        )}
 
         {recovered > 0 && (
           <Group>
@@ -241,40 +217,20 @@ export default function Home() {
           </Group>
         )}
 
-        {received && (
+        {received && !received.ok && (
           <Group>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ expanded: showChanges }}
-              onPress={() => setShowChanges((v) => !v)}
-              style={({ pressed }) => [s.list, s.row, pressed && { backgroundColor: t.secPress }]}
-            >
-              <View style={[s.tile, received.ok && { backgroundColor: t.onFill }]}>
-                <Icon name={received.ok ? 'check' : 'warning'} size={18} color={received.ok ? t.onInk : t.ink} strokeWidth={2.25} />
+            <Row style={{ gap: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Icon name="warning" size={18} color={t.ink} strokeWidth={2} />
+                <T v="title">Not loaded</T>
               </View>
-              <Text style={s.rowTitle}>
-                {received.ok ? `Project loaded · ${received.changes.length} ${received.changes.length === 1 ? 'change' : 'changes'}` : 'Not loaded'}
-              </Text>
-              <Icon name={showChanges ? 'up' : 'chev-down'} size={16} color={t.ink2} strokeWidth={2.25} />
-            </Pressable>
-            {(showChanges || !received.ok) && (
-              <Row style={{ gap: 6 }}>
-                {received.error && <T v="sub">{received.error}</T>}
-                {received.changes.map((c) => (
-                  <View key={c} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-                    <Icon name="check" size={16} color={t.onMark} strokeWidth={2.25} />
-                    <T v="sub" style={{ flex: 1 }}>
-                      {c}
-                    </T>
-                  </View>
-                ))}
-                {received.warnings.map((w) => (
-                  <T key={w} v="sub" color={t.nearInk}>
-                    {w}
-                  </T>
-                ))}
-              </Row>
-            )}
+              {received.error && <T v="sub">{received.error}</T>}
+              {received.warnings.map((w) => (
+                <T key={w} v="sub" color={t.nearInk}>
+                  {w}
+                </T>
+              ))}
+            </Row>
           </Group>
         )}
 
@@ -287,28 +243,6 @@ export default function Home() {
               </T>
             </Row>
             <Button label="Choose who is using this phone" kind="white" size={56} icon="user" onPress={() => router.push('/person')} />
-          </Group>
-        )}
-
-        {current && (
-          <Group>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.push({ pathname: '/survey/[id]', params: { id: current.id } })}
-              style={({ pressed }) => [s.list, s.current, pressed && { backgroundColor: t.secPress }]}
-            >
-              <View style={s.curTitle}>
-                <Icon name={isNight(current) ? 'moon' : 'sun'} size={20} color={t.ink2} />
-                <T v="head" style={{ flex: 1 }}>
-                  {current.transectId} · {isNight(current) ? 'Night survey' : 'Day survey'}
-                </T>
-                <Icon name="chev" size={16} color={t.ink2} strokeWidth={2.25} />
-              </View>
-              <T v="sub" dim>
-                Started {clockOf(current.startedAt)} · {animalsOf(current).length} {animalsOf(current).length === 1 ? 'animal' : 'animals'}
-                {incompleteOf(current) > 0 ? ` · ${incompleteOf(current)} incomplete` : ''}
-              </T>
-            </Pressable>
           </Group>
         )}
 
@@ -330,49 +264,63 @@ export default function Home() {
 
         {person && teamTransects.length > 0 && (
           <>
-            <T v="head" style={s.h2}>Transects</T>
+            <T v="head" style={s.h2}>
+              Transects
+            </T>
             <Group style={{ gap: 6 }}>
               {teamTransects.map((f) => {
                 const id = f.properties.transectId;
                 const on = id === chosenId;
                 const walked = lastWalked(id);
                 const latest = surveys.find((sv) => sv.transectId === id);
+                const live = current?.transectId === id ? current : null;
+                const other = !ownTransect(id) ? teamOf(id)?.name : undefined;
+                const sub = live
+                  ? `In progress · ${clockOf(live.startedAt)} · ${animalsOf(live).length} ${animalsOf(live).length === 1 ? 'animal' : 'animals'}`
+                  : other && !walked
+                    ? `${other} · ${thousands(f.properties.lengthM)} m`
+                    : `${other ? `${other} · ` : ''}${thousands(f.properties.lengthM)} m · ${walked ? `last walked ${shortDate(walked)}` : 'not walked yet'}`;
                 return (
                   <Pressable
                     key={id}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: on }}
-                    accessibilityLabel={`${id}, ${Math.round(f.properties.lengthM)} metres`}
+                    accessibilityLabel={`${f.properties.name}. ${sub}`}
                     onPress={() => setPicked(id)}
                     style={({ pressed }) => [s.trow, on && s.trowOn, pressed && { backgroundColor: t.secPress }]}
                   >
-                    <TransectThumb transect={f} />
+                    <TransectThumb transect={f} size={48} width={60} />
                     <View style={{ flex: 1, gap: 2 }}>
-                      <Text style={s.trTitle}>{f.properties.name.replace(/\s*\(.*\)\s*$/, '')}</Text>
-                      <T v="sub" dim>
-                        {thousands(f.properties.lengthM)} m · {walked ? `last walked ${shortDate(walked)}` : 'not walked yet'}
+                      <Text style={s.trTitle} numberOfLines={1}>
+                        {f.properties.name.replace(/\s*\(.*\)\s*$/, '')}
+                      </Text>
+                      <T v="sub" dim numberOfLines={1}>
+                        {sub}
                       </T>
                     </View>
-                    {latest && <TierTag tier={uploadTier(latest.id)} />}
+                    <TierDot tier={latest ? uploadTier(latest.id) : null} />
                   </Pressable>
                 );
               })}
-              {chosen && (
-                <View style={s.mapCard}>
-                  <TransectMap transect={chosen} points={chosenPoints} height={170} />
-                </View>
-              )}
-              {chosen && !current && (
-                <Button label={`Start survey on ${chosen.properties.transectId}`} kind="white" size={56} onPress={openSurvey} />
-              )}
+              {chosen && <TransectMap transect={chosen} points={chosenPoints} height={148} bare showSwitch={false} />}
             </Group>
+            {chosen && (
+              <Button
+                label={current ? `Continue survey on ${current.transectId}` : 'Start survey'}
+                size={56}
+                onPress={current ? () => router.push({ pathname: '/survey/[id]', params: { id: current.id } }) : openSurvey}
+              />
+            )}
           </>
         )}
 
         {person && (surveys.length > 0 || recentAnimals.length > 0) && (
           <>
-            <T v="head" style={s.h2}>Recent</T>
+            <T v="head" style={s.h2}>
+              Recent
+            </T>
             <Group style={{ gap: 6 }}>
+              {surveys.length > 0 && <Text style={s.sub}>Surveys</Text>}
               {surveys.length > 0 && (
                 <View style={s.list}>
                   {surveys.slice(0, 4).map((sv, i) => {
@@ -386,26 +334,26 @@ export default function Home() {
                           onPress={() => router.push({ pathname: '/survey/[id]', params: { id: sv.id } })}
                           style={({ pressed }) => [s.row, { minHeight: 62 }, pressed && { backgroundColor: t.secPress }]}
                         >
-                          <View style={s.tile}>
-                            <Icon name={isNight(sv) ? 'moon' : 'sun'} size={18} color={t.ink} />
-                          </View>
+                          <Icon name={isNight(sv) ? 'moon' : 'survey'} size={26} color={t.ink} strokeWidth={1.5} />
                           <View style={{ flex: 1, gap: 2 }}>
                             <T v="body">
-                              {sv.transectId} · {shortDate(sv.date)} · {clockOf(sv.startedAt)}
-                              {sv.finishedAt ? `–${clockOf(sv.finishedAt)}` : ' · in progress'}
+                              {sv.transectId} · {shortDate(sv.date)}
                             </T>
-                            <T v="sub" dim>
-                              {n} {n === 1 ? 'animal' : 'animals'}
-                              {k > 0 ? ` · ${k} incomplete` : ''}
+                            <T v="sub" dim numberOfLines={1}>
+                              {clockOf(sv.startedAt)}
+                              {sv.finishedAt ? `–${clockOf(sv.finishedAt)}` : ' on'} · {n} {n === 1 ? 'animal' : 'animals'}
+                              {k > 0 ? ` · ${k} to fill in` : ''}
                             </T>
                           </View>
                           <TierTag tier={uploadTier(sv.id)} />
+                          <Icon name="chev" size={16} color={t.ink2} strokeWidth={2.25} />
                         </Pressable>
                       </View>
                     );
                   })}
                 </View>
               )}
+              {recentAnimals.length > 0 && <Text style={s.sub}>Animals</Text>}
               {recentAnimals.length > 0 && (
                 <View style={s.list}>
                   {recentAnimals.map((a, i) => (
@@ -416,9 +364,7 @@ export default function Home() {
                         onPress={() => router.push({ pathname: '/encounter/[id]', params: { id: a.id } })}
                         style={({ pressed }) => [s.row, { minHeight: 62 }, pressed && { backgroundColor: t.secPress }]}
                       >
-                        <View style={s.tile}>
-                          <Icon name="snake" size={18} color={t.ink} />
-                        </View>
+                        <Icon name="snake-coil" size={26} color={t.ink} strokeWidth={1.5} />
                         <View style={{ flex: 1, gap: 2 }}>
                           <T v="body" italic={!!a.taxon.scientificName} dim={!a.taxon.scientificName}>
                             {a.taxon.scientificName ?? (a.taxon.unidentified ? 'Unidentified' : 'Not chosen yet')}
@@ -428,6 +374,7 @@ export default function Home() {
                           </T>
                         </View>
                         <TierTag tier={uploadTier(a.id)} />
+                        <Icon name="chev" size={16} color={t.ink2} strokeWidth={2.25} />
                       </Pressable>
                     </View>
                   ))}
@@ -436,30 +383,10 @@ export default function Home() {
             </Group>
           </>
         )}
-        {person && surveys.length === 0 && (
-          <T v="sub" dim style={{ marginHorizontal: 4 }}>
-            No surveys on this phone yet.
-          </T>
-        )}
         {!project && (
           <Group>
             <View style={s.list}>{actionRow('folder', 'Storage check', () => router.push('/storage'), undefined, 0)}</View>
           </Group>
-        )}
-
-        {project && (
-          <View style={{ marginTop: 16, marginHorizontal: 14, gap: 3 }}>
-            <T v="label">{project.name}</T>
-            <T v="small" dim style={{ fontWeight: '400' }}>
-              Form {template?.templateId} v{template?.coreVersion}
-              {overlay ? ` · team change ${overlay.overlayRev}` : ''} · {pack?.taxa.length ?? 0} species in the pack
-            </T>
-            {pack && (
-              <T v="small" dim style={{ fontWeight: '400' }}>
-                {pack.disclaimer.split('.')[0]}.
-              </T>
-            )}
-          </View>
         )}
       </ScrollView>
 
@@ -468,7 +395,7 @@ export default function Home() {
           <Button label={busy ? 'Loading…' : 'Load demo project'} size={64} onPress={loadDemo} disabled={busy} />
         </BottomBar>
       )}
-      {project && person && <NavPill onSurvey={openSurvey} onAdd={current ? addAnimal : openSurvey} onProfile={() => router.push('/profile')} />}
+      {project && person && <NavPill active="survey" onSurvey={openSurvey} onAdd={current ? addAnimal : openSurvey} onProfile={() => router.push('/profile')} />}
     </View>
   );
 }

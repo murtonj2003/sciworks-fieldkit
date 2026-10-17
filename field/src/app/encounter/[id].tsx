@@ -1,12 +1,15 @@
 // One animal. Every field comes from the template + team overlay; every tap is saved. Nothing blocks a save.
+// Layout = comp 3C (fidelity pass, Sat 20:50): a new animal opens on the tile grid (not the long form), a black
+// "Pick species" in the bottom bar until a species is set, big line drawings and green / amber / grey rings,
+// Photos as named slots (Dorsal big; Ventral, Head, More), Done grey until every section is done.
 import { checkRanges, type Encounter, type Transect } from '@sciworks/shared';
 import { Image } from 'expo-image';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Chips, FieldInput, FieldLabel, Hint, NumberInput, useFieldStyles } from '@/components/fields';
-import { BandMarker, Icon } from '@/components/Icon';
+import { Icon } from '@/components/Icon';
 import { LocationEntry } from '@/components/LocationEntry';
 import { TransectThumb } from '@/components/TransectMap';
 import Svg, { Circle } from 'react-native-svg';
@@ -14,7 +17,7 @@ import type { IconName } from '@/components/sprite';
 import { BottomBar, Button, Group, Pair, Row, SectionTitle, T, Tag } from '@/components/ui';
 import { makeStyles, useTheme } from '@/theme/ThemeProvider';
 import { radius, type } from '@/theme/theme';
-import { newId } from '@/db/meta';
+import { getMeta, newId, setMeta } from '@/db/meta';
 import { listPhotos, photoUri, savePhoto } from '@/db/photos';
 import { listRecords } from '@/db/records';
 import { useRecord } from '@/hooks/useRecord';
@@ -34,36 +37,47 @@ const ID_BASIS = [
 type SecKey = 'animal' | 'photos' | 'measurements' | 'location' | 'scales' | 'extras' | 'notes';
 /** The tiles, in the order a surveyor works (design pick 3C). Photos is its own tile so it is never buried. */
 const SECTIONS: { key: SecKey; label: string; icon: IconName }[] = [
-  { key: 'animal', label: 'Animal', icon: 'snake' },
+  { key: 'animal', label: 'Animal', icon: 'snake-coil' },
   { key: 'photos', label: 'Photos', icon: 'camera' },
   { key: 'measurements', label: 'Measure', icon: 'ruler' },
   { key: 'location', label: 'Location', icon: 'map-pin' },
-  { key: 'scales', label: 'Scales', icon: 'key' },
+  { key: 'scales', label: 'Scales', icon: 'scales' },
   { key: 'extras', label: 'Extras', icon: 'sliders' },
-  { key: 'notes', label: 'Notes', icon: 'pencil' },
+  { key: 'notes', label: 'Notes', icon: 'note' },
 ];
 const PHOTO_TARGET = 3; // dorsal, ventral and head if you can
+type Slot = 'dorsal' | 'ventral' | 'head' | 'other';
+const SLOTS: { role: Slot; label: string }[] = [
+  { role: 'dorsal', label: 'Dorsal' },
+  { role: 'ventral', label: 'Ventral' },
+  { role: 'head', label: 'Head' },
+  { role: 'other', label: 'More' },
+];
 const filled = (v: unknown) => v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && v.length === 0);
 
-/** A small progress ring with "n/m" inside: mint when complete, amber when started, grey when empty. */
+/** A progress ring with "n/m" inside: green when complete, amber when started, grey when empty (comp 3C, Jack's
+ * pick: follow the mockup's colours). */
 function Ring({ done, total }: { done: number; total: number }) {
   const { t } = useTheme();
   const r = 22;
   const c = 2 * Math.PI * r;
   const frac = total > 0 ? Math.min(1, done / total) : 0;
-  // Mint only when the section is complete (Mint Means Good); started = ink; empty = the track grey.
-  const color = frac >= 1 ? t.onMark : t.ink;
+  // The comp's softer ring colours by day (a bright amber and a lighter green on a neutral track); night keeps the
+  // dimmed marks.
+  const day = t.name === 'day';
+  const color = frac >= 1 ? (day ? '#4E9F3D' : t.onMark) : day ? '#EDB338' : t.nearMark;
+  const track = day ? '#DDDEE1' : t.track;
   return (
     <View style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={`${done} of ${total}`}>
       <Svg width={52} height={52} viewBox="0 0 52 52" style={{ position: 'absolute' }}>
-        <Circle cx={26} cy={26} r={r} stroke={t.track} strokeWidth={4} fill="none" />
+        <Circle cx={26} cy={26} r={r} stroke={track} strokeWidth={4} fill="none" />
         {frac > 0 && (
           <Circle cx={26} cy={26} r={r} stroke={color} strokeWidth={4} fill="none" strokeDasharray={`${c * frac} ${c}`} strokeLinecap="round" transform="rotate(-90 26 26)" />
         )}
       </Svg>
-      {/* A one-step section (Location) shows no count while empty, as in the comp. */}
-      {!(total === 1 && done === 0) && (
-        <Text style={[type.sub, { fontWeight: '700', color: frac > 0 ? t.ink : t.ink2, fontVariant: ['tabular-nums'] }]}>
+      {/* A one-step section (Location) shows only the ring, as in the comp. */}
+      {total !== 1 && (
+        <Text style={[type.sub, { fontWeight: '600', color: frac > 0 ? t.ink : t.ink2, fontVariant: ['tabular-nums'] }]}>
           {done}/{total}
         </Text>
       )}
@@ -81,13 +95,11 @@ export default function EncounterScreen() {
   const { t } = useTheme();
   const [photoError, setPhotoError] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
-  // Design pick 3C: one section open at a time as a card above the tiles. A new animal opens on Animal; a
+  // Design pick 3C: one section open at a time as a card above the tiles. Every animal opens on the grid; only a
   // pending "Did you mean?" keeps Location open.
   const [open, setOpen] = useState<SecKey | null>(() => {
-    if (!e) return null;
-    const loc = e.location;
-    if (loc && loc.check.band !== 'green' && !loc.check.decision && !loc.original) return 'location';
-    return e.taxon.scientificName || e.taxon.unidentified || e.location ? null : 'animal';
+    const loc = e?.location;
+    return loc && loc.check.band !== 'green' && !loc.check.decision && !loc.original ? 'location' : null;
   });
   const tz = project?.timeZone;
   const now = () => nowIso(tz);
@@ -96,7 +108,7 @@ export default function EncounterScreen() {
 
   // Android can close the app while the camera is open; if so, the photo is picked up here when we come back.
   useEffect(() => {
-    if (id) addPhoto(() => recoverPendingPhoto(id));
+    if (id) addPhoto(() => recoverPendingPhoto(id), (getMeta('pendingPhotoRole') as Slot | null) || undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -121,19 +133,33 @@ export default function EncounterScreen() {
   // While the "Did you mean?" card waits, Done steps back to grey so Use this is the one black pill (never blocks).
   const choicePending = !!e.location && e.location.check.band !== 'green' && !e.location.check.decision && !e.location.original;
 
-  async function addPhoto(get: () => Promise<ShotResult | { error: string } | null>) {
+  /** Each photo fills a named slot: the one tapped, or the next empty of Dorsal, Ventral, Head (then More). */
+  const named = (role: Slot) => photos.find((p) => p.role === role);
+  const slotOf = (role: Slot) => {
+    if (role !== 'other') return named(role);
+    const used = new Set((['dorsal', 'ventral', 'head'] as const).map((r) => named(r)?.photoId));
+    return photos.find((p) => !used.has(p.photoId)); // a second shot of a part, or an older untagged one
+  };
+  const nextSlot = (): Slot => SLOTS.find((x) => x.role !== 'other' && !slotOf(x.role))?.role ?? 'other';
+  async function addPhoto(get: () => Promise<ShotResult | { error: string } | null>, role?: Slot) {
     setPhotoError(null);
     try {
       const shot = await get();
       if (!shot) return;
       if ('error' in shot) return setPhotoError(shot.error);
       const photoId = newId();
-      savePhoto({ photoId, recordId: id, bytes: shot.bytes, widthPx: shot.width, heightPx: shot.height, takenAt: now(), role: 'dorsal' });
+      savePhoto({ photoId, recordId: id, bytes: shot.bytes, widthPx: shot.width, heightPx: shot.height, takenAt: now(), role: role ?? nextSlot() });
       update((r) => ({ ...r, photoIds: [...r.photoIds, photoId] }));
     } catch (err) {
       setPhotoError(String(err));
+    } finally {
+      setMeta('pendingPhotoRole', '');
     }
   }
+  const shoot = (role: Slot = nextSlot()) => {
+    setMeta('pendingPhotoRole', role); // Android may close the app behind the camera; the slot survives that
+    addPhoto(() => takePhoto(id), role);
+  };
 
   const special = (f: EffectiveField) => {
     switch (f.type) {
@@ -159,8 +185,8 @@ export default function EncounterScreen() {
               )}
             </Row>
             <Pair>
-              <Button label="Pick species" kind="white" size={56} icon="search" style={{ flex: 1, paddingHorizontal: 12 }} onPress={() => router.push({ pathname: '/species/[id]', params: { id } })} />
-              <Button label="Scale key" kind="white" size={56} icon="key" style={{ flex: 1, paddingHorizontal: 12 }} onPress={() => router.push({ pathname: '/key/[id]', params: { id } })} />
+              <Button label="Pick species" kind="white" size={56} icon="search" lines={1} style={{ flex: 1, paddingHorizontal: 12 }} onPress={() => router.push({ pathname: '/species/[id]', params: { id } })} />
+              <Button label="Scale key" kind="white" size={56} icon="key" lines={1} style={{ flex: 1, paddingHorizontal: 12 }} onPress={() => router.push({ pathname: '/key/[id]', params: { id } })} />
             </Pair>
             <Text style={[fs.label, { marginTop: 4, marginHorizontal: 4 }]}>ID basis</Text>
             <Chips
@@ -170,23 +196,36 @@ export default function EncounterScreen() {
             />
           </View>
         );
-      case 'photos':
+      case 'photos': {
+        const slot = (x: (typeof SLOTS)[number], big?: boolean) => {
+          const p = slotOf(x.role);
+          return (
+            <View key={x.role} style={{ flex: big ? undefined : 1, gap: 4 }}>
+              <Text style={st.slotLabel}>{x.label}</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={p ? `${x.label} photo` : `Take the ${x.label.toLowerCase()} photo`}
+                disabled={!!p}
+                onPress={() => shoot(x.role)}
+                style={({ pressed }) => [big ? st.slotBig : st.slot, !p && st.slotEmpty, pressed && { backgroundColor: t.secPress }]}
+              >
+                {p ? <Image source={{ uri: photoUri(p.path) }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Icon name="camera" size={big ? 32 : 26} color={t.ink2} strokeWidth={1.6} />}
+              </Pressable>
+            </View>
+          );
+        };
         return (
-          <View style={fs.gap}>
-            {photos.length > 0 && (
-              <View style={st.thumbs}>
-                {photos.map((p) => (
-                  <Image key={p.photoId} source={{ uri: photoUri(p.path) }} style={st.thumb} contentFit="cover" />
-                ))}
-              </View>
-            )}
+          <View style={{ gap: 10 }}>
+            {slot(SLOTS[0]!, true)}
+            <View style={{ flexDirection: 'row', gap: 8 }}>{SLOTS.slice(1).map((x) => slot(x))}</View>
             <Pair>
-              <Button label="Take photo" kind="white" size={56} icon="camera" style={{ flex: 1 }} onPress={() => addPhoto(() => takePhoto(id))} />
-              <Button label="From library" kind="white" size={56} style={{ flex: 1 }} onPress={() => addPhoto(pickPhoto)} />
+              <Button label="Take photo" size={48} icon="camera" lines={1} style={{ flex: 1 }} onPress={() => shoot()} />
+              <Button label="From library" kind="outline" size={48} icon="image" lines={1} style={{ flex: 1 }} onPress={() => addPhoto(pickPhoto)} />
             </Pair>
             <Hint text={photoError} />
           </View>
         );
+      }
       default:
         return undefined;
     }
@@ -213,7 +252,7 @@ export default function EncounterScreen() {
 
   const renderField = (f: EffectiveField) => {
     const sp = special(f);
-    if (f.type === 'taxon') return <View key={f.key}>{sp}</View>;
+    if (f.type === 'taxon' || f.type === 'photos') return <View key={f.key}>{sp}</View>;
     return <FieldInput key={f.key} field={f} value={getPath(e, f.path)} onChange={(v) => set(f.path, v)} nowIso={now} special={sp} />;
   };
 
@@ -292,15 +331,14 @@ export default function EncounterScreen() {
     const sec = SECTIONS.find((x) => x.key === key)!;
     const title = key === 'measurements' ? 'Measurements' : key === 'scales' ? 'Scale counts' : sec.label;
     return (
-      <View key={`open-${key}`} style={key === 'location' ? null : st.openCard}>
+      <View key={`open-${key}`} style={key === 'location' ? null : [st.openCard, key === 'photos' && { backgroundColor: t.card }]}>
         <View style={st.openHead}>
-          <Icon name={sec.icon} size={20} color={t.ink2} />
           <T v="head" style={{ flex: 1 }}>
             {title}
           </T>
-          <Pressable accessibilityRole="button" accessibilityLabel={`Close ${title}`} onPress={() => setOpen(null)} hitSlop={8} style={({ pressed }) => [st.close, pressed && { backgroundColor: t.secPress }]}>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Close ${title}`} onPress={() => setOpen(null)} hitSlop={8} style={({ pressed }) => [st.close, key === 'photos' && { backgroundColor: t.group }, pressed && { backgroundColor: t.secPress }]}>
             <Text style={st.closeText}>Close</Text>
-            <Icon name="up" size={14} color={t.ink} strokeWidth={2.25} />
+            <Icon name="chev-up" size={14} color={t.ink} strokeWidth={2.25} />
           </Pressable>
         </View>
         {body(key)}
@@ -331,9 +369,13 @@ export default function EncounterScreen() {
           {firstPhoto ? (
             <Image source={{ uri: photoUri(firstPhoto.path) }} style={st.tilePhoto} contentFit="cover" />
           ) : key === 'location' && transect ? (
-            <TransectThumb transect={transect} size={72} width={150} point={locPoint} />
+            <TransectThumb transect={transect} size={80} width={146} point={locPoint} />
+          ) : key === 'photos' ? (
+            <View style={[st.tilePhoto, st.slotEmpty, { width: 96 }]}>
+              <Icon name="camera" size={30} color={t.ink2} strokeWidth={1.5} />
+            </View>
           ) : (
-            <Icon name={sec.icon} size={44} color={t.ink} strokeWidth={1.5} />
+            <Icon name={sec.icon} size={60} color={t.ink} strokeWidth={1.15} />
           )}
         </View>
         <Text style={st.tileName}>{sec.label}</Text>
@@ -364,26 +406,10 @@ export default function EncounterScreen() {
         </View>
       )}
       <ScrollView ref={scrollRef} contentContainerStyle={st.page} keyboardShouldPersistTaps="handled">
-        <View style={st.info}>
-          <Icon name="clock" size={16} color={t.ink2} />
-          <Text style={st.infoText}>
-            seen {clockOf(e.observedAt)} · form v{e.coreVersion}
-            {e.overlayRev ? ` + team change ${e.overlayRev}` : ''}
-          </Text>
-        </View>
-        {missing.length > 0 && (
-          <View style={st.todo}>
-            <View style={{ marginTop: 1 }}>
-              <BandMarker band="none" size={18} />
-            </View>
-            <Text style={st.todoText}>
-              <Text style={{ fontWeight: '600' }}>Still to fill in for HQ:</Text> {missing.join(', ')}
-            </Text>
-          </View>
-        )}
-        <View style={st.progress} accessibilityLabel={`${complete} of ${shown.length} sections done`}>
+        <View style={st.progress} accessibilityLabel={`${complete} of ${shown.length} sections done${missing.length ? `. HQ still needs ${missing.join(', ')}` : ''}`}>
           <Text style={st.progressText}>
             {complete} of {shown.length} sections done
+            {missing.length > 0 ? <Text style={{ color: t.ink2 }}>{` · HQ needs ${missing.join(', ')}`}</Text> : null}
           </Text>
           <View style={st.bar}>
             {shown.map((x) => {
@@ -393,19 +419,44 @@ export default function EncounterScreen() {
           </View>
         </View>
         {open && openCard(open)}
-        <View style={st.grid}>{shown.filter((x) => x.key !== open).map((x) => tile(x.key))}</View>
+        <Group style={{ padding: 8 }}>
+          <View style={st.grid}>{shown.filter((x) => x.key !== open).map((x) => tile(x.key))}</View>
+        </Group>
         {e.status === 'void' && <T dim>This record is voided. It is kept, and HQ will see it as voided.</T>}
+        <View style={st.info}>
+          <Icon name="clock" size={15} color={t.ink2} />
+          <Text style={st.infoText}>
+            Seen {clockOf(e.observedAt)} · form v{e.coreVersion}
+            {e.overlayRev ? ` + team change ${e.overlayRev}` : ''}
+          </Text>
+        </View>
       </ScrollView>
       <BottomBar>
-        <Button
-          label="Done"
-          kind={choicePending ? 'grey' : 'primary'}
-          size={choicePending ? 56 : 64}
-          onPress={() => {
-            sealNow();
-            router.back();
-          }}
-        />
+        {!e.taxon.scientificName && !e.taxon.unidentified && !choicePending ? (
+          <Pair>
+            <Button label="Pick species" icon="search" size={56} lines={1} style={{ flex: 1.4 }} onPress={() => router.push({ pathname: '/species/[id]', params: { id } })} />
+            <Button
+              label="Done"
+              kind="grey"
+              size={56}
+              style={{ flex: 1 }}
+              onPress={() => {
+                sealNow();
+                router.back();
+              }}
+            />
+          </Pair>
+        ) : (
+          <Button
+            label="Done"
+            kind={choicePending || complete < shown.length ? 'grey' : 'primary'}
+            size={choicePending ? 56 : 64}
+            onPress={() => {
+              sealNow();
+              router.back();
+            }}
+          />
+        )}
       </BottomBar>
     </View>
   );
@@ -414,27 +465,27 @@ export default function EncounterScreen() {
 const useStyles = makeStyles((t) => ({
   wrap: { flex: 1, backgroundColor: t.ground },
   page: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32 },
-  info: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2, marginHorizontal: 4, marginBottom: 8 },
+  info: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14, marginHorizontal: 6 },
   infoText: { ...type.sub, color: t.ink2, flex: 1 },
-  todo: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingTop: 10, paddingHorizontal: 14, paddingBottom: 11, borderRadius: radius.card, borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.ink2 },
-  todoText: { ...type.sub, color: t.ink, flex: 1 },
-  progress: { gap: 6, marginTop: 12, marginBottom: 10, marginHorizontal: 4 },
-  progressText: { ...type.small, color: t.ink2 },
-  bar: { flexDirection: 'row', gap: 4 },
+  progress: { gap: 8, marginTop: 6, marginBottom: 12, marginHorizontal: 4 },
+  progressText: { ...type.sub, color: t.ink },
+  bar: { flexDirection: 'row', gap: 8 },
   seg: { flex: 1, height: 4, borderRadius: 2 },
   openCard: { backgroundColor: t.group, borderRadius: radius.group, padding: 8, paddingTop: 6, gap: 6, marginBottom: 10 },
   openHead: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 6, minHeight: 48 },
   close: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 36, paddingHorizontal: 12, borderRadius: radius.pill, backgroundColor: t.card },
   closeText: { ...type.small, fontWeight: '600', color: t.ink },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 },
-  tile: { width: '48.5%', minHeight: 150, backgroundColor: t.card, borderRadius: radius.card, padding: 12, alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  tileArt: { height: 72, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
-  tilePhoto: { width: '100%', height: 72, borderRadius: 8, backgroundColor: t.tile },
-  tileName: { ...type.label, color: t.ink },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8 },
+  tile: { width: '48.8%', minHeight: 176, backgroundColor: t.card, borderRadius: radius.card, padding: 12, alignItems: 'center', justifyContent: 'space-between', gap: 6 },
+  tileArt: { height: 80, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
+  tilePhoto: { width: '100%', height: 80, borderRadius: 8, backgroundColor: t.tile, alignItems: 'center', justifyContent: 'center' },
+  tileName: { ...type.title, fontWeight: '500', color: t.ink },
+  slotLabel: { ...type.small, color: t.ink2, marginHorizontal: 2 },
+  slotBig: { width: '100%', aspectRatio: 16 / 9, borderRadius: radius.card, overflow: 'hidden', backgroundColor: t.card, alignItems: 'center', justifyContent: 'center' },
+  slot: { width: '100%', aspectRatio: 1, borderRadius: radius.card, overflow: 'hidden', backgroundColor: t.card, alignItems: 'center', justifyContent: 'center' },
+  slotEmpty: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.ink2, backgroundColor: 'transparent' },
   spName: { fontSize: 22, fontWeight: '700', fontStyle: 'italic', letterSpacing: -0.2, lineHeight: 26, color: t.ink },
   spUnset: { fontStyle: 'normal', fontWeight: '600', color: t.ink2 },
-  thumbs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  thumb: { width: 96, height: 96, borderRadius: radius.card, backgroundColor: t.card },
   saved: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingRight: 12 },
   savedText: { ...type.sub, color: t.ink2 },
   venom: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: t.offTint, paddingVertical: 10, paddingHorizontal: 16 },

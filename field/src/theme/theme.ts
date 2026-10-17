@@ -26,6 +26,8 @@ export interface Tokens {
   segTrack: string;
   segThumb: string;
   onFill: string;
+  /** A softer mint for value chips that mark a real difference (compare, comp 4C). */
+  onTint: string;
   onInk: string;
   onMark: string;
   onGlyph: string;
@@ -45,6 +47,8 @@ export interface Tokens {
   editInk: string;
   focus: string;
   scrim: string;
+  /** "Other apps" slice of the storage ring: a clear mid grey that never blurs into the mint (comp S1). */
+  storageOther: string;
 }
 
 export const day: Tokens = {
@@ -71,6 +75,7 @@ export const day: Tokens = {
   segTrack: '#E6E8EB',
   segThumb: '#FFFFFF',
   onFill: '#B3E8A1',
+  onTint: '#DDF2D4',
   onInk: '#1F4A12',
   onMark: '#2F7A20',
   onGlyph: '#FFFFFF',
@@ -90,6 +95,7 @@ export const day: Tokens = {
   editInk: '#1D1E1F',
   focus: '#1D1E1F',
   scrim: 'rgba(29,30,31,0.34)',
+  storageOther: '#A9ACB0',
 };
 
 export const night: Tokens = {
@@ -116,6 +122,7 @@ export const night: Tokens = {
   segTrack: '#1C1C1E',
   segThumb: '#3A3A3C',
   onFill: '#1F3A1A',
+  onTint: '#1A2B17',
   onInk: '#B3E8A1',
   onMark: '#8FCB7C',
   onGlyph: '#0B0B0C',
@@ -135,6 +142,7 @@ export const night: Tokens = {
   editInk: '#C9C4FA',
   focus: '#D8D5D1',
   scrim: 'rgba(0,0,0,0.6)',
+  storageOther: '#636366',
 };
 
 /** Type scale (kit `--fs-*`). One system family; every number tabular; species italic. */
