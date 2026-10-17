@@ -1,13 +1,17 @@
 // One animal. Every field comes from the template + team overlay; every tap is saved. Nothing blocks a save.
 import { checkRanges, type Encounter, type Transect } from '@sciworks/shared';
 import { Image } from 'expo-image';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
-import { Chips, FieldInput, FieldLabel, Hint, NumberInput, s as fs } from '@/components/fields';
+import { Chips, FieldInput, FieldLabel, Hint, NumberInput, useFieldStyles } from '@/components/fields';
+import { Icon } from '@/components/Icon';
 import { LocationEntry } from '@/components/LocationEntry';
-import { Button, Card, H2, P, colors } from '@/components/ui';
+import type { IconName } from '@/components/sprite';
+import { BottomBar, Button, Group, Pair, Row, SectionTitle, T, Tag } from '@/components/ui';
+import { makeStyles, useTheme } from '@/theme/ThemeProvider';
+import { radius, type } from '@/theme/theme';
 import { newId } from '@/db/meta';
 import { listPhotos, photoUri, savePhoto } from '@/db/photos';
 import { listRecords } from '@/db/records';
@@ -30,6 +34,9 @@ export default function EncounterScreen() {
   const field = useField();
   const { project, template, overlay, transects, pack, person } = field;
   const { record: e, update, sealNow } = useRecord<LocalEncounter>(id);
+  const st = useStyles();
+  const fs = useFieldStyles();
+  const { t } = useTheme();
   const [photoError, setPhotoError] = useState<string | null>(null);
   const tz = project?.timeZone;
   const now = () => nowIso(tz);
@@ -42,7 +49,7 @@ export default function EncounterScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  if (!e || !project || !template || !person) return <P>Animal not found.</P>;
+  if (!e || !project || !template || !person) return <T>Animal not found.</T>;
 
   const transect = transects?.features.find((f) => f.properties.transectId === e.transectId) as Transect | undefined;
   const taxon = pack?.taxa.find((t) => t.taxonId === e.taxon.taxonId);
@@ -56,6 +63,12 @@ export default function EncounterScreen() {
     .find((c) => c !== undefined);
 
   const set = (path: string, value: unknown) => update((r) => setPath(r, path, value));
+  const siblings = listRecords<LocalEncounter>('encounter')
+    .filter((o) => o.surveyId === e.surveyId && o.status === 'active')
+    .sort((a, b) => a.observedAt.localeCompare(b.observedAt));
+  const number = Math.max(1, siblings.findIndex((o) => o.id === e.id) + 1);
+  // While the "Did you mean?" card waits, Done steps back to grey so Use this is the one black pill (never blocks).
+  const choicePending = !!e.location && e.location.check.band !== 'green' && !e.location.check.decision && !e.location.original;
 
   async function addPhoto(get: () => Promise<ShotResult | { error: string } | null>) {
     setPhotoError(null);
@@ -76,15 +89,27 @@ export default function EncounterScreen() {
       case 'taxon':
         return (
           <View style={fs.gap}>
-            <Text style={[styles.species, !e.taxon.scientificName && styles.unset]}>
-              {e.taxon.scientificName ?? (e.taxon.unidentified ? 'Unidentified (photo for later)' : 'Not chosen yet')}
-            </Text>
-            {taxon?.commonName && <Text style={fs.small}>{taxon.commonName} · {taxon.family}</Text>}
-            {e.taxon.idBasis === 'scale-key' && <Text style={fs.small}>Suggested by the scale key, chosen by you</Text>}
-            <View style={styles.row}>
-              <Button label="Pick species" style={styles.flex} onPress={() => router.push({ pathname: '/species/[id]', params: { id } })} />
-              <Button label="Scale key" kind="secondary" style={styles.flex} onPress={() => router.push({ pathname: '/key/[id]', params: { id } })} />
-            </View>
+            <Row>
+              <T v="head" italic={!!e.taxon.scientificName} dim={!e.taxon.scientificName}>
+                {e.taxon.scientificName ?? (e.taxon.unidentified ? 'Unidentified (photo for later)' : 'Not chosen yet')}
+              </T>
+              {taxon?.commonName && (
+                <T v="sub" dim>
+                  {taxon.commonName} · {taxon.family}
+                </T>
+              )}
+              {taxon?.dangerous && <Tag label="VENOMOUS" venomous />}
+              {e.taxon.idBasis === 'scale-key' && (
+                <T v="sub" dim>
+                  Suggested by the scale key, chosen by you
+                </T>
+              )}
+            </Row>
+            <Pair>
+              <Button label="Pick species" kind="white" size={56} icon="search" style={{ flex: 1 }} onPress={() => router.push({ pathname: '/species/[id]', params: { id } })} />
+              <Button label="Scale key" kind="white" size={56} icon="key" style={{ flex: 1 }} onPress={() => router.push({ pathname: '/key/[id]', params: { id } })} />
+            </Pair>
+            <Text style={[fs.help, { marginTop: 4 }]}>How it was identified</Text>
             <Chips
               options={ID_BASIS.map((b) => ({ code: b.code, label: b.label }))}
               value={e.taxon.idBasis === 'scale-key' ? undefined : e.taxon.idBasis}
@@ -95,124 +120,163 @@ export default function EncounterScreen() {
       case 'photos':
         return (
           <View style={fs.gap}>
-            <View style={styles.thumbs}>
-              {photos.map((p) => (
-                <Image key={p.photoId} source={{ uri: photoUri(p.path) }} style={styles.thumb} contentFit="cover" />
-              ))}
-            </View>
-            <View style={styles.row}>
-              <Button label="Take photo" style={styles.flex} onPress={() => addPhoto(() => takePhoto(id))} />
-              <Button label="From library" kind="secondary" style={styles.flex} onPress={() => addPhoto(pickPhoto)} />
-            </View>
+            {photos.length > 0 && (
+              <View style={st.thumbs}>
+                {photos.map((p) => (
+                  <Image key={p.photoId} source={{ uri: photoUri(p.path) }} style={st.thumb} contentFit="cover" />
+                ))}
+              </View>
+            )}
+            <Pair>
+              <Button label="Take photo" kind="white" size={56} icon="camera" style={{ flex: 1 }} onPress={() => addPhoto(() => takePhoto(id))} />
+              <Button label="From library" kind="white" size={56} style={{ flex: 1 }} onPress={() => addPhoto(pickPhoto)} />
+            </Pair>
             <Hint text={photoError} />
           </View>
-        );
-      case 'location':
-        return transect ? (
-          <LocationEntry
-            location={e.location}
-            transect={transect}
-            project={project}
-            personId={person.personId}
-            now={now}
-            previousChainageM={previousChainageM}
-            typedDistanceM={e.distanceAlongM?.source === 'typed' ? e.distanceAlongM.value : undefined}
-            onChange={({ location, distance }) =>
-              update((r) => {
-                const next = { ...r, location };
-                const d = nextDistance(r.distanceAlongM, distance);
-                if (d) next.distanceAlongM = d;
-                else delete next.distanceAlongM;
-                return next;
-              })
-            }
-          />
-        ) : (
-          <Hint text={`Transect ${e.transectId} is not on this phone.`} />
         );
       default:
         return undefined;
     }
   };
 
+  const distanceField = (f: EffectiveField) => (
+    <View key={f.key} style={fs.field}>
+      <FieldLabel field={f} />
+      <NumberInput
+        value={e.distanceAlongM?.value}
+        unit="m"
+        accessibilityLabel={f.label}
+        onChange={(v) => set('distanceAlongM', v === undefined ? undefined : { value: v, source: 'typed' })}
+      />
+      <Text style={fs.help}>
+        {e.distanceAlongM?.source === 'auto'
+          ? 'Filled in from the checked point. Type over it to change.'
+          : e.distanceAlongM
+            ? 'Typed by you.'
+            : 'Fills in automatically once the point is on the line.'}
+      </Text>
+    </View>
+  );
+
   const renderField = (f: EffectiveField) => {
-    if (f.key === 'distanceAlongM') {
-      return (
-        <View key={f.key} style={fs.field}>
-          <FieldLabel field={f} />
-          <NumberInput
-            value={e.distanceAlongM?.value}
-            onChange={(v) => set('distanceAlongM', v === undefined ? undefined : { value: v, source: 'typed' })}
-          />
-          <Text style={fs.small}>
-            {e.distanceAlongM?.source === 'auto'
-              ? 'Filled in from the checked point. Type over it to change.'
-              : e.distanceAlongM
-                ? 'Typed by you.'
-                : 'Fills in automatically once the point is on the line.'}
-          </Text>
-        </View>
-      );
-    }
     const sp = special(f);
     return <FieldInput key={f.key} field={f} value={getPath(e, f.path)} onChange={(v) => set(f.path, v)} nowIso={now} special={sp} />;
   };
 
+  const SECTION_ICON: Record<string, IconName> = {
+    animal: 'snake',
+    measurements: 'ruler',
+    location: 'map-pin',
+    scales: 'key',
+    extras: 'sliders',
+    notes: 'pencil',
+  };
+  const SECTION_LABEL: Record<string, string> = { location: 'Location' }; // DESIGN-HANDOFF §1.2: "Where" → "Location"
+
   const section = (group: string) => {
     const list = byGroup(fields, [group]);
     if (list.length === 0) return null;
+    const title = SECTION_LABEL[group] ?? GROUPS.find((g) => g.key === group)?.label ?? group;
+    if (group === 'location') {
+      const loc = list.find((f) => f.type === 'location');
+      const dist = list.find((f) => f.key === 'distanceAlongM');
+      return (
+        <View key={group}>
+          <SectionTitle icon={SECTION_ICON[group]}>{title}</SectionTitle>
+          {loc && transect ? (
+            <LocationEntry
+              location={e.location}
+              transect={transect}
+              project={project}
+              personId={person.personId}
+              now={now}
+              previousChainageM={previousChainageM}
+              typedDistanceM={e.distanceAlongM?.source === 'typed' ? e.distanceAlongM.value : undefined}
+              distanceField={dist ? distanceField(dist) : undefined}
+              onChange={({ location, distance }) =>
+                update((r) => {
+                  const next = { ...r, location };
+                  const d = nextDistance(r.distanceAlongM, distance);
+                  if (d) next.distanceAlongM = d;
+                  else delete next.distanceAlongM;
+                  return next;
+                })
+              }
+            />
+          ) : (
+            <Hint text={`Transect ${e.transectId} is not on this phone.`} />
+          )}
+        </View>
+      );
+    }
     return (
-      <View key={group} style={styles.section}>
-        <H2>{GROUPS.find((g) => g.key === group)?.label ?? group}</H2>
-        {list.map(renderField)}
+      <View key={group}>
+        <SectionTitle icon={SECTION_ICON[group]}>{title}</SectionTitle>
+        <Group style={{ gap: 10, paddingVertical: 10 }}>{list.map(renderField)}</Group>
         {group === 'measurements' &&
-          rangeWarnings.map((w) => <Hint key={w.fieldPath + w.message} text={w.message} />)}
+          rangeWarnings.map((w) => (
+            <View key={w.fieldPath + w.message} style={{ marginTop: 8 }}>
+              <Hint text={w.message} />
+            </View>
+          ))}
       </View>
     );
   };
 
   return (
-    <View style={styles.wrap}>
-      <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
-        {taxon?.dangerous && (
-          <View style={styles.dangerBanner} accessibilityRole="alert">
-            <Text style={styles.dangerText}>⚠ VENOMOUS: {taxon.scientificName}. Do not handle without the protocol.</Text>
-          </View>
-        )}
-        <Card>
-          <P dim>
-            {e.transectId} · seen {clockOf(e.observedAt)} · form v{e.coreVersion}
+    <View style={st.wrap}>
+      <Stack.Screen
+        options={{
+          title: `Animal ${number} · ${e.transectId}`,
+          headerRight: () => (
+            <View style={st.saved} accessibilityLabel="Saved on this phone">
+              <Icon name="check" size={18} color={t.onMark} strokeWidth={2.25} />
+              <Text style={st.savedText}>Saved</Text>
+            </View>
+          ),
+        }}
+      />
+      {taxon?.dangerous && (
+        <View style={st.venom} accessibilityRole="alert">
+          <Tag label="VENOMOUS" venomous />
+          <Text style={st.venomText}>
+            <Text style={{ fontStyle: 'italic' }}>{taxon.scientificName}</Text>. Do not handle without the protocol.
+          </Text>
+        </View>
+      )}
+      <ScrollView contentContainerStyle={st.page} keyboardShouldPersistTaps="handled">
+        <View style={st.metaRow}>
+          <T v="sub" dim>
+            Seen {clockOf(e.observedAt)} · form version {e.coreVersion}
             {e.overlayRev ? ` + team change ${e.overlayRev}` : ''}
-          </P>
-          {missing.length > 0 && <P dim>Still to fill in for HQ: {missing.join(', ')}</P>}
-        </Card>
+          </T>
+          {missing.length > 0 && <Tag label={`incomplete: ${missing.join(', ')}`} dashed />}
+        </View>
         {['animal', 'measurements', 'location', 'scales', 'extras', 'notes'].map(section)}
-        {e.status === 'void' && <P>This record is voided. It is kept, and HQ will see it as voided.</P>}
+        {e.status === 'void' && <T dim>This record is voided. It is kept, and HQ will see it as voided.</T>}
       </ScrollView>
-      <View style={styles.bottom}>
+      <BottomBar>
         <Button
           label="Done"
+          kind={choicePending ? 'grey' : 'primary'}
           onPress={() => {
             sealNow();
             router.back();
           }}
         />
-      </View>
+      </BottomBar>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: '#FFFFFF' },
-  page: { padding: 16, gap: 10, paddingBottom: 32 },
-  section: { gap: 6 },
-  bottom: { padding: 16, borderTopWidth: 1, borderTopColor: '#DDDDDD' },
-  row: { flexDirection: 'row', gap: 10 },
-  flex: { flex: 1 },
-  species: { fontSize: 22, fontWeight: '800', fontStyle: 'italic', color: colors.ink },
-  unset: { fontStyle: 'normal', color: colors.dim },
-  thumbs: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  thumb: { width: 96, height: 96, borderRadius: 8, backgroundColor: '#EEEEEE' },
-  dangerBanner: { backgroundColor: colors.red, borderRadius: 12, padding: 14 },
-  dangerText: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
-});
+const useStyles = makeStyles((t) => ({
+  wrap: { flex: 1, backgroundColor: t.ground },
+  page: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32 },
+  metaRow: { gap: 6, marginHorizontal: 4 },
+  thumbs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  thumb: { width: 96, height: 96, borderRadius: radius.card, backgroundColor: t.card },
+  saved: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingRight: 4 },
+  savedText: { ...type.sub, color: t.ink2 },
+  venom: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: t.offTint, paddingVertical: 10, paddingHorizontal: 16 },
+  venomText: { ...type.sub, color: t.offTintInk, flex: 1, fontWeight: '600' },
+}));

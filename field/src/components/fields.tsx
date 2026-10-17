@@ -1,30 +1,96 @@
 // One input per FieldDef.type. Every change is reported up at once (the screen saves a draft on each one).
-// Warnings say "Check?" and never stop a save.
+// Warnings say "Check?" and never stop a save. Look: the kit's inputs (white on a grey group, 60 px, 12 px radius,
+// numbers 24 px tabular with unit + keypad icon) and choice chips (56 px, 14 px radius; selected = ink ring + check).
 import type { Measurement } from '@sciworks/shared';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { clockOf } from '@/lib/time';
 import { SCALE_PRECISION_G, UNIT_LABEL, rangeHint, type EffectiveField } from '@/model/form';
+import { makeStyles, useTheme } from '@/theme/ThemeProvider';
+import { day, radius, type } from '@/theme/theme';
 
-import { colors } from './ui';
+import { Icon } from './Icon';
+import { Hint as KitHint, Tag } from './ui';
+
+/** Browser preview only: hide the browser's own focus outline (the kit draws its own ink ring). */
+const WEB_NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {};
+
+export const useFieldStyles = makeStyles((t) => ({
+  field: { gap: 6, paddingVertical: 4 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginHorizontal: 4 },
+  label: { ...type.label, color: t.ink },
+  unit: { fontWeight: '400', color: t.ink2 },
+  help: { ...type.small, fontWeight: '400', color: t.ink2, marginHorizontal: 4 },
+  small: { ...type.sub, color: t.ink2 },
+  gap: { gap: 8 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    minHeight: 56,
+    minWidth: 56,
+    paddingHorizontal: 18,
+    borderRadius: radius.chip,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    backgroundColor: t.card,
+  },
+  chipOn: { borderColor: t.ink },
+  chipText: { ...type.body, color: t.ink },
+  chipTextOn: { fontWeight: '600' },
+  box: {
+    minHeight: 60,
+    borderRadius: radius.card,
+    backgroundColor: t.card,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 12,
+    paddingRight: 4,
+    gap: 7,
+  },
+  boxFocus: { borderColor: t.ink },
+  boxError: { borderColor: t.offMark },
+  numText: { ...type.input, color: t.ink, flex: 1, minWidth: 0, paddingVertical: 0, minHeight: 56, ...WEB_NO_OUTLINE },
+  prefix: { ...type.input, color: t.ink2 },
+  unitText: { ...type.body, fontWeight: '500', color: t.ink2 },
+  kb: { width: 36, height: 48, alignItems: 'center', justifyContent: 'center' },
+  text: { ...type.body, color: t.ink, flex: 1, minWidth: 0, minHeight: 56, paddingVertical: 0, ...WEB_NO_OUTLINE },
+  multiline: { minHeight: 104, paddingTop: 14, textAlignVertical: 'top' },
+  input: {
+    minHeight: 60,
+    borderRadius: radius.card,
+    paddingHorizontal: 14,
+    ...type.body,
+    color: t.ink,
+    backgroundColor: t.card,
+  },
+  timeRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  time: { ...type.numeral, color: t.ink, minWidth: 90 },
+  unitInline: { fontWeight: '400', color: t.ink2 },
+}));
 
 export function FieldLabel({ field, extra }: { field: EffectiveField; extra?: ReactNode }) {
+  const s = useFieldStyles();
   return (
     <View style={s.labelRow}>
-      <Text style={s.label}>
-        {field.label}
-        {field.unit ? <Text style={s.unit}> ({UNIT_LABEL[field.unit] ?? field.unit})</Text> : null}
-        {field.origin === 'team' ? <Text style={s.team}>  team field</Text> : null}
-      </Text>
+      <Text style={s.label}>{field.label}</Text>
+      {field.origin === 'team' ? <Tag label="Team field" icon="users" /> : null}
       {extra}
     </View>
   );
 }
 
+/** "Check?" and other hints: amber, advise, never block. `tone="info"` is a plain second-ink line. */
 export function Hint({ text, tone = 'warn' }: { text: string | null; tone?: 'warn' | 'info' }) {
+  const s = useFieldStyles();
   if (!text) return null;
-  return <Text style={[s.hint, tone === 'warn' ? s.hintWarn : s.hintInfo]}>{tone === 'warn' ? '⚠ ' : ''}{text}</Text>;
+  if (tone === 'info') return <Text style={s.help}>{text}</Text>;
+  return <KitHint>{text}</KitHint>;
 }
 
 export function Chips<T extends string | number>({
@@ -38,6 +104,8 @@ export function Chips<T extends string | number>({
   onChange: (v: T | T[] | undefined) => void;
   multi?: boolean;
 }) {
+  const s = useFieldStyles();
+  const { t } = useTheme();
   const selected = (code: T) => (Array.isArray(value) ? value.includes(code) : value === code);
   return (
     <View style={s.chips}>
@@ -54,12 +122,10 @@ export function Chips<T extends string | number>({
                 onChange(on ? arr.filter((c) => c !== o.code) : [...arr, o.code]);
               } else onChange(on ? undefined : o.code);
             }}
-            style={({ pressed }) => [s.chip, on && s.chipOn, pressed && s.pressed]}
+            style={({ pressed }) => [s.chip, on && s.chipOn, pressed && { backgroundColor: t.secPress }]}
           >
-            <Text style={[s.chipText, on && s.chipTextOn]}>
-              {on ? '✓ ' : ''}
-              {o.label}
-            </Text>
+            {on && <Icon name="check" size={18} color={t.ink} strokeWidth={2.25} />}
+            <Text style={[s.chipText, on && s.chipTextOn]}>{o.label}</Text>
           </Pressable>
         );
       })}
@@ -74,57 +140,86 @@ export function NumberInput({
   onChange,
   placeholder,
   integer,
+  unit,
+  prefix,
+  accessibilityLabel,
 }: {
   value: number | undefined;
   onChange: (v: number | undefined) => void;
   placeholder?: string;
   integer?: boolean;
+  unit?: string;
+  prefix?: string;
+  accessibilityLabel?: string;
 }) {
+  const s = useFieldStyles();
+  const { t } = useTheme();
+  const [focus, setFocus] = useState(false);
   const [text, setText] = useState(value === undefined ? '' : String(value));
-  const parse = (t: string) => (t.trim() === '' ? undefined : Number(t.trim().replace(',', '.')));
+  const parse = (x: string) => (x.trim() === '' ? undefined : Number(x.trim().replace(',', '.')));
   const typed = parse(text);
   const notANumber = typed !== undefined && Number.isNaN(typed);
   useEffect(() => {
     // Only follow the stored value when it changed from outside (e.g. a correction was accepted).
-    const t = parse(text);
-    if (t !== value && !(t !== undefined && Number.isNaN(t))) setText(value === undefined ? '' : String(value));
+    const x = parse(text);
+    if (x !== value && !(x !== undefined && Number.isNaN(x))) setText(value === undefined ? '' : String(value));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
   return (
     <View style={s.gap}>
-      <TextInput
-        style={s.input}
-        value={text}
-        placeholder={placeholder ?? '—'}
-        placeholderTextColor={colors.dim}
-        keyboardType={integer ? 'number-pad' : 'decimal-pad'}
-        returnKeyType="done"
-        onChangeText={(t) => {
-          setText(t);
-          const n = parse(t);
-          if (n !== undefined && Number.isNaN(n)) return; // not a number yet: keep what is saved
-          onChange(n);
-        }}
-      />
+      <View style={[s.box, focus && s.boxFocus, notANumber && s.boxError]}>
+        {prefix ? <Text style={s.prefix}>{prefix}</Text> : null}
+        <TextInput
+          style={s.numText}
+          value={text}
+          accessibilityLabel={accessibilityLabel}
+          placeholder={placeholder}
+          placeholderTextColor={t.ink2}
+          keyboardType={integer ? 'number-pad' : 'decimal-pad'}
+          returnKeyType="done"
+          onFocus={() => setFocus(true)}
+          onBlur={() => setFocus(false)}
+          onChangeText={(x) => {
+            setText(x);
+            const n = parse(x);
+            if (n !== undefined && Number.isNaN(n)) return; // not a number yet: keep what is saved
+            onChange(n);
+          }}
+        />
+        {unit ? <Text style={s.unitText}>{unit}</Text> : null}
+        <View style={s.kb} accessibilityElementsHidden importantForAccessibility="no">
+          <Icon name="keypad" size={20} color={t.ink2} />
+        </View>
+      </View>
       {notANumber && (
-        <Text style={[s.hint, s.hintWarn]}>
-          ⚠ Not a number, so not saved{value !== undefined ? ` (still ${value})` : ''}. Fix it, or clear the box.
-        </Text>
+        <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', marginHorizontal: 4 }}>
+          <Icon name="warning" size={16} color={t.offTintInk} />
+          <Text style={[type.sub, { color: t.offTintInk, flex: 1 }]}>
+            Not a number, so not saved{value !== undefined ? ` (still ${value})` : ''}. Fix it, or clear the box.
+          </Text>
+        </View>
       )}
     </View>
   );
 }
 
-export function TextBox({ value, onChange, multiline }: { value: string | undefined; onChange: (v: string | undefined) => void; multiline?: boolean }) {
+export function TextBox({ value, onChange, multiline, placeholder }: { value: string | undefined; onChange: (v: string | undefined) => void; multiline?: boolean; placeholder?: string }) {
+  const s = useFieldStyles();
+  const { t } = useTheme();
+  const [focus, setFocus] = useState(false);
   return (
-    <TextInput
-      style={[s.input, multiline && s.multiline]}
-      value={value ?? ''}
-      multiline={multiline}
-      placeholder="—"
-      placeholderTextColor={colors.dim}
-      onChangeText={(t) => onChange(t === '' ? undefined : t)}
-    />
+    <View style={[s.box, focus && s.boxFocus, multiline && { alignItems: 'flex-start' }]}>
+      <TextInput
+        style={[s.text, multiline && s.multiline]}
+        value={value ?? ''}
+        multiline={multiline}
+        placeholder={placeholder}
+        placeholderTextColor={t.ink2}
+        onFocus={() => setFocus(true)}
+        onBlur={() => setFocus(false)}
+        onChangeText={(x) => onChange(x === '' ? undefined : x)}
+      />
+    </View>
   );
 }
 
@@ -137,6 +232,7 @@ export function MeasurementInput({
   value: (Measurement & { scaleUsed?: string }) | undefined;
   onChange: (v: (Measurement & { scaleUsed?: string }) | undefined) => void;
 }) {
+  const s = useFieldStyles();
   const unit = field.unit ?? 'mm';
   const isMass = field.key === 'mass';
   const [method, setMethod] = useState<string | undefined>(value?.method ?? (field.default as string | undefined));
@@ -153,11 +249,11 @@ export function MeasurementInput({
   };
   return (
     <View style={s.gap}>
-      <NumberInput value={value?.value} onChange={(n) => onChange(build(n, method))} />
+      <NumberInput value={value?.value} unit={UNIT_LABEL[unit] ?? unit} onChange={(n) => onChange(build(n, method))} accessibilityLabel={field.label} />
       <Hint text={rangeHint(field, value?.value)} />
       {field.choices && field.choices.length > 0 && (
         <>
-          <Text style={s.small}>{isMass ? 'Scale used' : 'Method'}</Text>
+          <Text style={[s.help, { marginTop: 4 }]}>{isMass ? 'Scale used' : 'Method'}</Text>
           <Chips
             options={field.choices}
             value={method}
@@ -174,10 +270,13 @@ export function MeasurementInput({
 }
 
 export function TimeInput({ value, onChange, nowIso }: { value: string | undefined; onChange: (v: string) => void; nowIso: () => string }) {
+  const s = useFieldStyles();
+  const { t } = useTheme();
   return (
     <View style={s.timeRow}>
       <Text style={s.time}>{clockOf(value)}</Text>
-      <Pressable style={({ pressed }) => [s.chip, pressed && s.pressed]} onPress={() => onChange(nowIso())}>
+      <Pressable style={({ pressed }) => [s.chip, pressed && { backgroundColor: t.secPress }]} onPress={() => onChange(nowIso())}>
+        <Icon name="clock" size={18} color={t.ink} />
         <Text style={s.chipText}>Set to now</Text>
       </Pressable>
     </View>
@@ -199,6 +298,7 @@ export function FieldInput({
   nowIso: () => string;
   special?: ReactNode;
 }) {
+  const s = useFieldStyles();
   let body: ReactNode = special ?? null;
   if (!special) {
     switch (field.type) {
@@ -211,7 +311,9 @@ export function FieldInput({
             <NumberInput
               value={value as number | undefined}
               onChange={onChange}
+              unit={field.unit ? UNIT_LABEL[field.unit] ?? field.unit : undefined}
               integer={field.path.startsWith('scaleCounts.') || field.key === 'surveyorCount'}
+              accessibilityLabel={field.label}
             />
             <Hint text={rangeHint(field, value as number | undefined)} />
           </>
@@ -247,56 +349,25 @@ export function FieldInput({
         body = <TimeInput value={value as string | undefined} onChange={onChange} nowIso={nowIso} />;
         break;
       default:
-        body = <Text style={s.small}>({field.type} field)</Text>;
+        body = <Text style={s.help}>({field.type} field)</Text>;
     }
   }
   return (
     <View style={s.field}>
       <FieldLabel field={field} />
-      {field.help ? <Text style={s.small}>{field.help}</Text> : null}
+      {field.help ? <Text style={s.help}>{field.help}</Text> : null}
       {body}
     </View>
   );
 }
 
+/** Static day styles for screens not yet moved onto the theme (legacy `s as fs` imports). */
 export const s = StyleSheet.create({
-  field: { gap: 8, paddingVertical: 6 },
-  labelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  label: { fontSize: 18, fontWeight: '700', color: colors.ink },
-  unit: { fontWeight: '400', color: colors.dim },
-  team: { fontSize: 14, fontWeight: '600', color: colors.primary },
-  small: { fontSize: 15, color: colors.dim },
+  field: { gap: 6, paddingVertical: 4 },
+  label: { ...type.label, color: day.ink },
+  unit: { fontWeight: '400', color: day.ink2 },
+  small: { ...type.sub, color: day.ink2 },
   gap: { gap: 8 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    minHeight: 56,
-    minWidth: 56,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.line,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.paper,
-  },
-  chipOn: { borderColor: colors.primary, backgroundColor: colors.primary },
-  chipText: { fontSize: 17, fontWeight: '600', color: colors.ink },
-  chipTextOn: { color: '#FFFFFF' },
-  pressed: { opacity: 0.6 },
-  input: {
-    minHeight: 60,
-    borderWidth: 2,
-    borderColor: colors.line,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    fontSize: 22,
-    color: colors.ink,
-    backgroundColor: colors.paper,
-  },
-  multiline: { minHeight: 110, fontSize: 18, paddingTop: 12, textAlignVertical: 'top' },
-  hint: { fontSize: 16, fontWeight: '600' },
-  hintWarn: { color: colors.amber },
-  hintInfo: { color: colors.dim },
-  timeRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  time: { fontSize: 28, fontWeight: '800', color: colors.ink, minWidth: 90 },
+  input: { minHeight: 60, borderRadius: radius.card, paddingHorizontal: 14, ...type.body, color: day.ink, backgroundColor: day.card },
+  multiline: { minHeight: 104, paddingTop: 14, textAlignVertical: 'top' },
 });

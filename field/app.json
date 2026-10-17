@@ -1,24 +1,22 @@
 {
   "expo": {
-    "name": "Sci-works Field",
+    "name": "Fieldkit",
     "slug": "sciworks-field",
     "version": "0.1.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icon-fieldkit-1024.png",
     "scheme": "sciworksfield",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/icon-fieldkit-1024.png",
       "bundleIdentifier": "org.sciworks.field",
       "supportsTablet": false
     },
     "android": {
       "package": "org.sciworks.field",
       "adaptiveIcon": {
-        "backgroundColor": "#1B2A22",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#F2F2F3",
+        "foregroundImage": "./assets/images/icon-fieldkit-1024.png"
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
@@ -27,7 +25,7 @@
       ]
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -35,9 +33,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#1B2A22",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#FBFAFA",
+          "image": "./assets/images/icon-fieldkit-1024.png",
+          "imageWidth": 120
         }
       ],
       "expo-sqlite",

@@ -2,6 +2,7 @@
   "name": "field",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "license": "MIT",
   "dependencies": {
     "@expo/ui": "~57.0.25",
     "@sciworks/shared": "*",
@@ -45,6 +46,7 @@
     "@types/react": "~19.2.2",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~57.0.2",
+    "sql.js": "^1.13.0",
     "typescript": "~6.0.3"
   },
   "scripts": {
