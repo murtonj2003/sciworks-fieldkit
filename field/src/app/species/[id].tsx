@@ -9,7 +9,7 @@ import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-na
 
 import { Icon } from '@/components/Icon';
 import { BottomBar, Button, Group, GroupTitle, T, Tag } from '@/components/ui';
-import { getRecord, listRecords, saveDraftNow } from '@/db/records';
+import { clearFresh, getRecord, listRecords, saveDraftNow } from '@/db/records';
 import { listProvisionalTaxa } from '@/db/team';
 import { touched } from '@/model/factory';
 import { effectiveFields } from '@/model/form';
@@ -77,6 +77,7 @@ export default function SpeciesPicker() {
     const e = getRecord<LocalEncounter>(id);
     if (!e) return;
     saveDraftNow(touched(change(e), project?.timeZone));
+    clearFresh(id); // a species was chosen: keep this animal
     router.back();
   }
 

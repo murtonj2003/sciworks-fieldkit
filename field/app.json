@@ -35,7 +35,11 @@
         {
           "backgroundColor": "#FBFAFA",
           "image": "./assets/images/icon-fieldkit-1024.png",
-          "imageWidth": 120
+          "imageWidth": 120,
+          "dark": {
+            "backgroundColor": "#0B0B0C",
+            "image": "./assets/images/icon-fieldkit-1024.png"
+          }
         }
       ],
       "expo-sqlite",
@@ -74,6 +78,16 @@
       "url": "https://u.expo.dev/f016d1fa-2d5d-4dcd-817d-450dd5173edb",
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0
+    },
+    "splash": {
+      "image": "./assets/images/icon-fieldkit-1024.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FBFAFA",
+      "dark": {
+        "image": "./assets/images/icon-fieldkit-1024.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#0B0B0C"
+      }
     }
   }
 }

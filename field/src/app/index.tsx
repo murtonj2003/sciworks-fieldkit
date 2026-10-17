@@ -10,8 +10,9 @@ import { CounterBar } from '@/components/CounterBar';
 import { BandMarker, Icon } from '@/components/Icon';
 import type { IconName } from '@/components/sprite';
 import { BottomBar, Button, Group, GroupTitle, Row, T, Tag } from '@/components/ui';
-import { listRecords, saveDraftNow, seal } from '@/db/records';
-import { bootInfo } from '@/lib/boot';
+import { createFreshDraft, listRecords } from '@/db/records';
+import { bootInfo, launch } from '@/lib/boot';
+import { ProfileList } from './person';
 import { DEMO_BUNDLE_NAME, demoHqBundleBytes } from '@/lib/demoBundle';
 import { clockOf } from '@/lib/time';
 import { newEncounter } from '@/model/factory';
@@ -55,6 +56,7 @@ export default function Home() {
   const s = useStyles();
   const { t, setAppearance } = useTheme();
   const insets = useSafeAreaInsets();
+  const [profileChosen, setProfileChosen] = useState(launch.profileChosen);
   const [received, setReceived] = useState<ReceiveResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [recovered] = useState(() => {
@@ -89,8 +91,7 @@ export default function Home() {
     if (!project || !template || !person || !current) return;
     const ctx = { project, template, person, deviceId: field.deviceId, overlayRev: overlay?.overlayRev ?? 0 };
     const e = withDefaults(newEncounter(ctx, current), effectiveFields(template, overlay, 'encounter'));
-    saveDraftNow(e);
-    seal(e.id);
+    createFreshDraft(e); // counted only once something is entered
     router.push({ pathname: '/encounter/[id]', params: { id: e.id } });
   }
 
@@ -112,6 +113,23 @@ export default function Home() {
       </Pressable>
     </View>
   );
+
+  // Launch gate: once a project is on the phone, "Select your profile" opens before the dashboard.
+  if (project && !profileChosen) {
+    return (
+      <View style={s.wrap}>
+        <View style={[s.appbar, { paddingTop: insets.top + 6 }]}>
+          <T v="display">Select your profile</T>
+        </View>
+        <ProfileList
+          onChosen={() => {
+            launch.profileChosen = true;
+            setProfileChosen(true);
+          }}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={s.wrap}>

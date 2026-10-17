@@ -133,11 +133,46 @@ export function seal(id: string): number | null {
   return sealedRev;
 }
 
-/** Seal every unsealed draft: on app start (crash recovery) and before making a bundle. */
+// ---------- fresh records ("Add animal" pressed, nothing entered yet) ----------
+// A new animal starts as a draft only. Until someone enters something it is "fresh": leaving it (Back, Done, a
+// crash) throws the empty draft away, so the "not with HQ" counter only counts animals that hold data. It was
+// never sealed, so no rev is ever deleted (record_revs stays append-only).
+
+const freshKey = (id: string) => `fresh:${id}`;
+
+/** Write a brand-new record as a fresh draft (not sealed, not counted until something is entered). */
+export function createFreshDraft(record: LocalRecord): void {
+  saveDraftNow(record);
+  run('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)', [freshKey(record.id), '1']);
+}
+
+export function isFresh(id: string): boolean {
+  return !!first<{ value: string }>('SELECT value FROM meta WHERE key = ?', [freshKey(id)]);
+}
+
+/** The first real entry: from now on the record is kept and sealed like any other. */
+export function clearFresh(id: string): void {
+  run('DELETE FROM meta WHERE key = ?', [freshKey(id)]);
+}
+
+/** Leaving a record: seal it, or drop it if it is still fresh and was never sealed. */
+export function sealOrDiscard(id: string): number | null {
+  flushDrafts();
+  if (isFresh(id) && latestRev(id) === 0) {
+    run('DELETE FROM drafts WHERE id = ?', [id]);
+    clearFresh(id);
+    return null;
+  }
+  clearFresh(id);
+  return seal(id);
+}
+
+/** Seal every unsealed draft: on app start (crash recovery) and before making a bundle. Fresh empty animals
+ * are dropped, not sealed. */
 export function sealAll(): number {
   flushDrafts();
   const ids = all<{ id: string }>('SELECT id FROM drafts WHERE dirty = 1').map((r) => r.id);
-  return ids.filter((id) => seal(id) !== null).length;
+  return ids.filter((id) => sealOrDiscard(id) !== null).length;
 }
 
 /** Flush typed values the moment the app leaves the foreground. */

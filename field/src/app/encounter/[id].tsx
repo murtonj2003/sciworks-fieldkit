@@ -33,7 +33,7 @@ export default function EncounterScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const field = useField();
   const { project, template, overlay, transects, pack, person } = field;
-  const { record: e, update, sealNow } = useRecord<LocalEncounter>(id);
+  const { record: e, update, sealNow } = useRecord<LocalEncounter>(id, { owner: true });
   const st = useStyles();
   const fs = useFieldStyles();
   const { t } = useTheme();

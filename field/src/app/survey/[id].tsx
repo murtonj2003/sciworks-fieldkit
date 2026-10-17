@@ -11,7 +11,7 @@ import { BandMarker, Icon } from '@/components/Icon';
 import { TransectMap } from '@/components/TransectMap';
 import { BottomBar, Button, DiscButton, Group, Hint, SavedMark, SectionTitle, StatusChip, T, Tag, type Status } from '@/components/ui';
 import { latestReview } from '@/db/feedback';
-import { listRecords, saveDraftNow, seal } from '@/db/records';
+import { createFreshDraft, listRecords } from '@/db/records';
 import { useRecord } from '@/hooks/useRecord';
 import { clockOf, nowIso } from '@/lib/time';
 import { newEncounter } from '@/model/factory';
@@ -82,8 +82,7 @@ export default function SurveyScreen() {
     if (!project || !template || !person || !survey) return;
     const ctx = { project, template, person, deviceId: field.deviceId, overlayRev: overlay?.overlayRev ?? 0 };
     const e = withDefaults(newEncounter(ctx, survey), effectiveFields(template, overlay, 'encounter'));
-    saveDraftNow(e);
-    seal(e.id);
+    createFreshDraft(e); // counted only once something is entered
     router.push({ pathname: '/encounter/[id]', params: { id: e.id } });
   }
 

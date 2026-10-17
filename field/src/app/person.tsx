@@ -22,7 +22,8 @@ const useStyles = makeStyles((t) => ({
   sub: { ...type.sub, color: t.ink2 },
 }));
 
-export default function PersonPicker() {
+/** The profile list, grouped by team. Used as the launch gate (Home) and the Switch person screen. */
+export function ProfileList({ onChosen }: { onChosen: () => void }) {
   const { project, person, choosePerson } = useField();
   const s = useStyles();
   const { t } = useTheme();
@@ -51,7 +52,7 @@ export default function PersonPicker() {
                           accessibilityLabel={`${p.name}, ${ROLE_LABEL[p.role]}`}
                           onPress={() => {
                             choosePerson(p.personId);
-                            router.back();
+                            onChosen();
                           }}
                           style={({ pressed }) => [s.row, pressed && { backgroundColor: t.secPress }]}
                         >
@@ -74,4 +75,8 @@ export default function PersonPicker() {
       </ScrollView>
     </View>
   );
+}
+
+export default function PersonPicker() {
+  return <ProfileList onChosen={() => router.back()} />;
 }
