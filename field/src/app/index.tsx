@@ -4,7 +4,7 @@
 // black Start / Continue survey, then Recent (Surveys · Animals). Floating black pill nav (2B). The project line
 // and "Project loaded" now live on Profile. No project yet: Set up this phone.
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -27,6 +27,7 @@ import { missingForHq, type LocalEncounter, type LocalSurvey } from '@/model/rec
 import { isNight } from '@/model/survey';
 import { useField } from '@/state/field';
 import { pendingCount } from '@/sync/corrections';
+import { markDemoApplied, refreshDemoSetup } from '@/sync/demoRefresh';
 import { receiveHqBundle, type ReceiveResult } from '@/sync/receiveHq';
 import { makeStyles, useTheme } from '@/theme/ThemeProvider';
 import { radius, type } from '@/theme/theme';
@@ -77,7 +78,9 @@ export default function Home() {
     setBusy(true);
     try {
       const bytes = await demoHqBundleBytes();
-      setReceived(receiveHqBundle(bytes, DEMO_BUNDLE_NAME));
+      const r = receiveHqBundle(bytes, DEMO_BUNDLE_NAME);
+      if (r.ok) markDemoApplied(bytes);
+      setReceived(r);
       field.refresh();
     } catch (e) {
       setReceived({ ok: false, changes: [], warnings: [], error: String(e) });
@@ -85,6 +88,24 @@ export default function Home() {
       setBusy(false);
     }
   }
+
+  // A phone that loaded an older copy of the demo picks up what this version adds (the satellite picture, the
+  // species photos) once, quietly; records are never touched (sync/demoRefresh.ts).
+  useEffect(() => {
+    if (!project) return;
+    let live = true;
+    demoHqBundleBytes()
+      .then((bytes) => {
+        if (!live) return;
+        const r = refreshDemoSetup(bytes, DEMO_BUNDLE_NAME);
+        if (r?.ok && r.changes.length > 0) field.refresh();
+      })
+      .catch(() => {}); // the demo copy is a convenience; Home works without it
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.projectId]);
 
   const surveys = person ? listRecords<LocalSurvey>('survey').sort((a, b) => b.startedAt.localeCompare(a.startedAt)) : [];
   const encounters = person ? listRecords<LocalEncounter>('encounter') : [];
